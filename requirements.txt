@@ -1,0 +1,3 @@
+numpy>=1.19.5
+psutil>=5.8.0
+pyinjector>=1.0.6

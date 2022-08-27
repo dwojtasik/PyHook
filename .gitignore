@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+PyHook/__pycache__/
+Addon/Debug/
+Addon/Release/
+Addon/x64/
+
+# Boost headers
+Addon/include/boost/
+
+# Distribution / packaging
+build/
+dist/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# VScode
+.vscode/
+
+# VisualStudio
+Addon/.vs/
+Addon/*.filters
+Addon/*.user
