@@ -11,7 +11,7 @@ call conda activate pyhook32
 call conda install pip -y
 pip install -r requirements.txt
 pip install pyinstaller
-pyinstaller --onefile --name=PyHook-%VERSION%-win32 .\PyHook\PyHook.py
+pyinstaller --collect-all pyinjector --onefile --name=PyHook-%VERSION%-win32 .\PyHook\PyHook.py
 call conda deactivate
 set CONDA_FORCE_32BIT=
 
@@ -21,5 +21,5 @@ call conda activate pyhook64
 call conda install pip -y
 pip install -r requirements.txt
 pip install pyinstaller
-pyinstaller --onefile --name=PyHook-%VERSION%-win_amd64 .\PyHook\PyHook.py
+pyinstaller --collect-all pyinjector --onefile --name=PyHook-%VERSION%-win_amd64 .\PyHook\PyHook.py
 call conda deactivate
