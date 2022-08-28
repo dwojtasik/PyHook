@@ -23,7 +23,7 @@ using namespace reshade::api;
 
 struct SharedData
 {
-    unsigned long long int frame_count;
+    uint64_t frame_count;
     uint32_t width;
     uint32_t height;
     uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];
@@ -68,9 +68,52 @@ static void init_shmem(DWORD pid)
     sprintf_s(shmem_name_with_pid, "%hs%lu", SHMEM_NAME, pid);
     shm = windows_shared_memory(open_or_create, shmem_name_with_pid, read_write, sizeof(SharedData));
     region = mapped_region(shm, read_write);
-    std::memset(region.get_address(), 0, region.get_size());
+    memset(region.get_address(), 0, region.get_size());
     shared_data = reinterpret_cast<SharedData*>(region.get_address());
     reshade_log(shmem_name_with_pid, " initialized @", shared_data);
+}
+
+static void init_st_resource(device* const device, resource back_buffer)
+{
+    // Create staging resource
+    const resource_desc desc = device->get_resource_desc(back_buffer);
+    const format format = format_to_default_typed(desc.texture.format, 0);
+    shared_data->width = desc.texture.width;
+    shared_data->height = desc.texture.height;
+
+    device->create_resource(
+        resource_desc(shared_data->width, shared_data->height, 1, 1, format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest),
+        nullptr,
+        resource_usage::cpu_access,
+        &st_resource
+    );
+
+    initialized = true;
+}
+
+static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
+{
+    // Disable multisampling
+    // TODO: Call this immediately after addon registraton!
+    back_buffer_desc.texture.samples = 1;
+    return true;
+}
+
+static void on_destroy_swapchain(swapchain* swapchain)
+{
+    if (initialized) {
+        device* const device = swapchain->get_device();
+        device->destroy_resource(st_resource);
+        uint64_t frame_count = shared_data->frame_count;
+        memset(shared_data, 0, region.get_size());
+        shared_data->frame_count = frame_count;
+        initialized = false;
+    }
+}
+
+static void on_init_swapchain(swapchain* swapchain)
+{
+    init_st_resource(swapchain->get_device(), swapchain->get_current_back_buffer());
 }
 
 static void on_present(command_queue* queue, swapchain* swapchain, const rect*, const rect*, uint32_t, const rect*)
@@ -78,23 +121,11 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     device* const device = swapchain->get_device();
     resource back_buffer = swapchain->get_current_back_buffer();
 
-    // Create staging resource
     if (!initialized) {
-        const resource_desc desc = device->get_resource_desc(swapchain->get_current_back_buffer());
-        const format format = format_to_default_typed(desc.texture.format, 0);
-        shared_data->width = desc.texture.width;
-        shared_data->height = desc.texture.height;
-
-        device->create_resource(
-            resource_desc(shared_data->width, shared_data->height, 1, 1, format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest),
-            nullptr,
-            resource_usage::cpu_access,
-            &st_resource
-        );
-        initialized = true;
+        init_st_resource(device, back_buffer);
     }
 
-    // Copy from backbuffer
+    // Copy from back buffer
     command_list* const cmd_list = queue->get_immediate_command_list();
     cmd_list->barrier(back_buffer, resource_usage::present, resource_usage::copy_source);
     cmd_list->barrier(st_resource, resource_usage::cpu_access, resource_usage::copy_dest);
@@ -142,7 +173,7 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     }
     device->unmap_texture_region(st_resource, 0);
 
-    // Copy to backbuffer
+    // Copy to back buffer
     command_list* const new_cmd_list = queue->get_immediate_command_list();
     new_cmd_list->barrier(st_resource, reshade::api::resource_usage::cpu_access, reshade::api::resource_usage::copy_source);
     new_cmd_list->barrier(back_buffer, reshade::api::resource_usage::render_target, reshade::api::resource_usage::copy_dest);
@@ -150,6 +181,22 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     new_cmd_list->barrier(st_resource, reshade::api::resource_usage::copy_source, reshade::api::resource_usage::cpu_access);
     new_cmd_list->barrier(back_buffer, reshade::api::resource_usage::copy_dest, reshade::api::resource_usage::render_target);
     queue->flush_immediate_command_list();
+}
+
+static void register_events()
+{
+    reshade::register_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
+    reshade::register_event<reshade::addon_event::create_swapchain>(on_create_swapchain);
+    reshade::register_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
+    reshade::register_event<reshade::addon_event::present>(on_present);
+}
+
+static void unregister_events()
+{
+    reshade::unregister_event<reshade::addon_event::present>(on_present);
+    reshade::unregister_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
+    reshade::unregister_event<reshade::addon_event::create_swapchain>(on_create_swapchain);
+    reshade::unregister_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
@@ -163,10 +210,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         }
         init_events(pid);
         init_shmem(pid);
-        reshade::register_event<reshade::addon_event::present>(on_present);
+        register_events();
         break;
     case DLL_PROCESS_DETACH:
-        reshade::unregister_event<reshade::addon_event::present>(on_present);
+        unregister_events();
         reshade::unregister_addon(hModule);
         break;
     }
