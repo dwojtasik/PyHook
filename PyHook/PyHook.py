@@ -34,6 +34,16 @@ def _get_logger() -> logging.Logger:
     return logger
 
 
+def _wait_on_exit(code: int) -> None:
+    """Waits for dummy input to display errors before exiting.
+
+    Args:
+        code (int): The exit code.
+    """
+    input('Press any key to exit...')
+    exit(code)
+
+
 def _decode_frame(data) -> np.array:
     """Decodes frame from shared data as image in numpy array format.
 
@@ -80,8 +90,8 @@ def _process_frame(frame: np.array, width: int, height: int, frame_num: int) -> 
 
 def _main():
     """Scipt entrypoint"""
-    logger = _get_logger()
     try:
+        logger = _get_logger()
         addon_handler = get_reshade_addon_handler()
         memory_manager = MemoryManager(addon_handler.pid)
         logger.info(f'Detected process: {addon_handler.get_info()}')
@@ -106,13 +116,15 @@ def _main():
         logger.error('Cannot find addon file.')
         logger.info(
             'Make sure that *.addon file is built and exists in PyHook directory.')
-        exit(1)
+        _wait_on_exit(1)
     except ReShadeNotFoundException:
         logger.error('Cannot find any active process with ReShade loaded.')
         if not is_started_as_admin():
             logger.info('Try to run this program as administrator.')
-        exit(1)
-
+        _wait_on_exit(1)
+    except Exception as ex:
+        logger.error('Unhandled exception occurres.', ex)
+        _wait_on_exit(1)
 
 if __name__ == '__main__':
     _main()

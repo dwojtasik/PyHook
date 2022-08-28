@@ -52,6 +52,10 @@ Then open \*.sln project and build given release.
 
 History
 =======
+DEV / NEXT
+----------
+- Fixed error display on app exit.
+
 0.0.1 (2022-08-27)
 ------------------
 - Initial version.
