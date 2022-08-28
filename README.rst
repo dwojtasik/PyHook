@@ -54,6 +54,8 @@ History
 =======
 DEV / NEXT
 ----------
+- Added shared data refresh on in-game settings changes.
+- Disabled multisampling on swapchain creation.
 - Fixed error display on app exit.
 
 0.0.1 (2022-08-27)
