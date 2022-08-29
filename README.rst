@@ -54,6 +54,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added multisampling error in PyHook.
 - Added pipeline processing for dynamic effects loading.
 - Added shared data refresh on in-game settings changes.
 - Disabled multisampling on swapchain creation.

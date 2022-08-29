@@ -23,6 +23,7 @@ class SharedData(Structure):
     frame_count (c_longlong): Actual frame count calculated since addon initialization.
     width (c_uint32): Frame width in pixels.
     height (c_uint32): Frame height in pixels.
+    multisampled (c_bool): Flag if buffer is using multisampling.
     frame (FRAME_ARRAY): Frame data as array in format [R,G,B,R,G,B,R,G,B...].
         Each pixel RGB component is stored in c_uint8 format.
         Pixels are read row by row from top left frame corner.
@@ -33,6 +34,7 @@ class SharedData(Structure):
         ('frame_count', c_longlong),
         ('width', c_uint32),
         ('height', c_uint32),
+        ('multisampled', c_bool),
         ('frame', FRAME_ARRAY),
     ]
 

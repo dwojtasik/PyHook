@@ -26,6 +26,7 @@ struct SharedData
     uint64_t frame_count;
     uint32_t width;
     uint32_t height;
+    bool multisampled;
     uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];
 };
 
@@ -78,6 +79,7 @@ static void init_st_resource(device* const device, resource back_buffer)
     // Create staging resource
     const resource_desc desc = device->get_resource_desc(back_buffer);
     const format format = format_to_default_typed(desc.texture.format, 0);
+    shared_data->multisampled = desc.texture.samples > 1;
     shared_data->width = desc.texture.width;
     shared_data->height = desc.texture.height;
 
@@ -93,8 +95,7 @@ static void init_st_resource(device* const device, resource back_buffer)
 
 static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
 {
-    // Disable multisampling
-    // TODO: Call this immediately after addon registraton!
+    // Automatically disable multisampling whenever possible
     back_buffer_desc.texture.samples = 1;
     return true;
 }
@@ -123,6 +124,13 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     if (!initialized) {
         init_st_resource(device, back_buffer);
+    }
+
+    // Multisampled buffer cannot be processed
+    if (shared_data->multisampled) {
+        SetEvent(lock_event);
+        WaitForSingleObject(unlock_event, INFINITE);
+        return;
     }
 
     // Copy from back buffer
@@ -175,11 +183,11 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     // Copy to back buffer
     command_list* const new_cmd_list = queue->get_immediate_command_list();
-    new_cmd_list->barrier(st_resource, reshade::api::resource_usage::cpu_access, reshade::api::resource_usage::copy_source);
-    new_cmd_list->barrier(back_buffer, reshade::api::resource_usage::render_target, reshade::api::resource_usage::copy_dest);
+    new_cmd_list->barrier(st_resource, resource_usage::cpu_access, resource_usage::copy_source);
+    new_cmd_list->barrier(back_buffer, resource_usage::render_target, resource_usage::copy_dest);
     new_cmd_list->copy_resource(st_resource, back_buffer);
-    new_cmd_list->barrier(st_resource, reshade::api::resource_usage::copy_source, reshade::api::resource_usage::cpu_access);
-    new_cmd_list->barrier(back_buffer, reshade::api::resource_usage::copy_dest, reshade::api::resource_usage::render_target);
+    new_cmd_list->barrier(st_resource, resource_usage::copy_source, resource_usage::cpu_access);
+    new_cmd_list->barrier(back_buffer, resource_usage::copy_dest, resource_usage::render_target);
     queue->flush_immediate_command_list();
 }
 

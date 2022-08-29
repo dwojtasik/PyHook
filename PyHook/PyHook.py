@@ -92,9 +92,17 @@ def _main():
             logger.error(f'-- Cannot inject addon into given process. {ex}')
             exit(1)
         logger.info(f'-- Started processing...')
+        displayed_ms_error = False
         while True:
             memory_manager.wait()
             data = memory_manager.read_shared_data()
+            # Multisampled buffer cannot be processed
+            if data.multisampled:
+                if not displayed_ms_error:
+                    logger.error(f'Disable multisampling (MSAA) in game to process frames!')
+                    displayed_ms_error = True
+                memory_manager.unlock()
+                continue
             frame = _decode_frame(data)
             frame = pipeline.process_frame(
                 frame, data.width, data.height, data.frame_count)
