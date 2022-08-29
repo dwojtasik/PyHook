@@ -40,7 +40,7 @@ _RESHADE_VALID_DLL_NAMES = [
 
 
 class AddonNotFoundException(Exception):
-    """Raised when addon DLL file is not found."""
+    """Raised when addon DLL file cannot be found."""
     pass
 
 
@@ -69,8 +69,8 @@ class AddonHandler:
     addon_path (str): The absolute path to addon DLL file.
 
     Raises:
-        NotAReShadeProcessException: If process does not have required ReShade version loaded.
-        AddonNotFoundException: If process does not have required ReShade version loaded.
+        NotAReShadeProcessException: When process does not have required ReShade version loaded.
+        AddonNotFoundException: When addon DLL file cannot be found.
     """
 
     def __init__(self, process: psutil.Process):
@@ -106,7 +106,7 @@ class AddonHandler:
             str: The absolute path to addon DLL file.
 
         Raises:
-            AddonNotFoundException: If addon DLL file cannot be found.
+            AddonNotFoundException: When addon DLL file cannot be found.
         """
         PATHS = _ADDON_PATHS_64BIT if self.is_64_bit else _ADDON_PATHS_32BIT
         for path in PATHS:
@@ -172,7 +172,7 @@ def _get_dll_extern_variable(dll_handle: CDLL, variable_name: str, out_type: T) 
         T: The DLL's extern C variable casted to valid Python type using ctypes.
 
     Raises:
-        ValueError: If variable cannot be read.
+        ValueError: When variable cannot be read.
     """
     try:
         return out_type.in_dll(dll_handle, variable_name).value
@@ -188,7 +188,7 @@ def get_reshade_addon_handler() -> AddonHandler:
         AddonHandler: The handler for PyHook addon management.
 
     Raises:
-        ReShadeNotFindException: If required ReShade version is not loaded in any active process
+        ReShadeNotFindException: When required ReShade version is not loaded in any active process
     """
     for process in psutil.process_iter():
         try:

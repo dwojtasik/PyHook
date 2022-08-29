@@ -51,7 +51,7 @@ def is_process_64_bit(pid) -> bool:
         bool: True if process is 64 bit.
 
     Raises:
-        ValueError: If given PID does not exists.
+        ValueError: When given PID does not exists.
     """
     if not pid_exists(pid):
         raise ValueError(f'Process with PID={pid} does not exists')

@@ -54,6 +54,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added pipeline processing for dynamic effects loading.
 - Added shared data refresh on in-game settings changes.
 - Disabled multisampling on swapchain creation.
 - Fixed error display on app exit.

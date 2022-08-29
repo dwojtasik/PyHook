@@ -17,6 +17,7 @@ import numpy as np
 from dll_utils import (AddonNotFoundException, ReShadeNotFoundException,
                        get_reshade_addon_handler)
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
+from pipeline import PipelinesDirNotFoundError, load_pipelines
 from win_utils import is_started_as_admin
 
 
@@ -41,7 +42,7 @@ def _wait_on_exit(code: int) -> None:
         code (int): The exit code.
     """
     input('Press any key to exit...')
-    exit(code)
+    sys.exit(code)
 
 
 def _decode_frame(data) -> np.array:
@@ -69,29 +70,16 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def _process_frame(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
-    """Frame processing function.
-
-    NOTE: Dummy processing for now, to test if everything works as expected.
-          Simply set red channel to 255 for each pixel.
-
-    Args:
-        frame (numpy.array): The frame image as numpy array.
-        width (int): The frame width in pixels.
-        height (int): The frame height in pixels.
-        frame_num (int): The frame number.
-
-    Returns:
-        numpy.array: The processed frame image as numpy array.
-    """
-    frame[:, :, 0] = 255
-    return frame
-
-
 def _main():
     """Scipt entrypoint"""
     try:
         logger = _get_logger()
+        pipelines = load_pipelines(logger)
+        if len(pipelines) == 0:
+            logger.error('Cannot find any pipeline to process.')
+            _wait_on_exit(1)
+        # For now select any pipeline for testing
+        pipeline = list(pipelines.values())[0]
         addon_handler = get_reshade_addon_handler()
         memory_manager = MemoryManager(addon_handler.pid)
         logger.info(f'Detected process: {addon_handler.get_info()}')
@@ -108,10 +96,15 @@ def _main():
             memory_manager.wait()
             data = memory_manager.read_shared_data()
             frame = _decode_frame(data)
-            frame = _process_frame(
+            frame = pipeline.process_frame(
                 frame, data.width, data.height, data.frame_count)
             _encode_frame(data, frame)
             memory_manager.unlock()
+    except PipelinesDirNotFoundError:
+        logger.error('Cannot find pipelines directory.')
+        logger.info(
+            'Make sure pipelines directory exists in PyHook directory.')
+        _wait_on_exit(1)
     except AddonNotFoundException:
         logger.error('Cannot find addon file.')
         logger.info(
@@ -125,6 +118,7 @@ def _main():
     except Exception as ex:
         logger.error('Unhandled exception occurres.', ex)
         _wait_on_exit(1)
+
 
 if __name__ == '__main__':
     _main()
