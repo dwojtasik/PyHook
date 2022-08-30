@@ -35,13 +35,16 @@ class Pipeline:
     """Pipeline definition for frame processing.
 
     path (str): Path to pipeline file.
-    name (str): Unique pipeline name.
+    name (str): Pipeline name.
     on_frame_process (Callable[[numpy.array, int, int, int], numpy.array]): Callback for frame
         processing function. Array shape must remain unchanged after processing.
     on_load (Callable[[], None], optional): Callback for pipeline loading. Should create all
         necessary objects that will be later used in on_frame_process callback.
     on_unload (Callable[[], None], optional): Callback for pipeline unloading. Should clear and
         remove all objects that are no longer used.
+    version (str, optional): Pipeline version.
+    desc (str, optional): Pipeline description.
+    file (str): Pipeline filename.
     """
 
     def __init__(
@@ -50,13 +53,18 @@ class Pipeline:
         name: str,
         on_frame_process: Callable[[np.array, int, int, int], np.array],
         on_load: Callable[[], None] = None,
-        on_unload: Callable[[], None] = None
+        on_unload: Callable[[], None] = None,
+        version: str = None,
+        desc: str = None
     ):
         self.path = path
+        self.file = basename(path)
         self.name = name
         self.on_load = on_load
         self.on_frame_process = on_frame_process
         self.on_unload = on_unload
+        self.version = version
+        self.desc = desc
 
     def load(self) -> None:
         """Calls on_load callback to initialize pipeline"""
@@ -116,7 +124,9 @@ def _build_pipeline(module: 'sys.ModuleType', name: str, path: str) -> Pipeline:
         path, name, module.on_frame_process,
         on_load=None if not hasattr(module, "on_load") else module.on_load,
         on_unload=None if not hasattr(
-            module, "on_unload") else module.on_unload
+            module, "on_unload") else module.on_unload,
+        version="" if not hasattr(module, "version") else module.version,
+        desc="" if not hasattr(module, "desc") else module.desc
     )
 
 
@@ -127,7 +137,7 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
         logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
 
     Returns:
-        Dict[str, Pipeline]: Name to pipeline map.
+        Dict[str, Pipeline]: File to pipeline map.
 
     Raises:
         PipelinesDirNotFoundError: When pipelines directory does not exists.
@@ -150,7 +160,7 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
             pipeline = _build_pipeline(module, module_name, path)
-            pipelines[pipeline.name] = pipeline
+            pipelines[pipeline.file] = pipeline
         except Exception as ex:
             if logger is not None:
                 logger.error(f'Cannot load pipeline file "{path}"', ex)

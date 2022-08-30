@@ -25,6 +25,7 @@ Requirements
 
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ >= 3.7
+- `Dear ImGui <https://github.com/ocornut/imgui>`_
 - `Boost <https://www.boost.org/>`_ (used for Interprocessed shared memory)
 - `numpy <https://pypi.org/project/numpy/>`_
 - `psutil <https://pypi.org/project/psutil/>`_
@@ -54,6 +55,9 @@ History
 =======
 DEV / NEXT
 ----------
+- Added pipeline lifecycle support (load/process/unload).
+- Added pipeline ordering and selection GUI in ReShade addon UI.
+- Added shared memory for configuration.
 - Added multisampling error in PyHook.
 - Added pipeline processing for dynamic effects loading.
 - Added shared data refresh on in-game settings changes.

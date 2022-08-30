@@ -1,0 +1,22 @@
+import numpy as np
+
+name = "Pipeline name up to 64 characters."
+# OPTIONAL
+version = "0.0.1" # Version string up to 12 characters
+# OPTIONAL
+desc = "Pipeline description up to 512 characters."
+
+# OPTIONAL
+def on_load() -> None:
+    # Should initialize all necessary objects for processing
+    pass
+
+def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
+    # Should process frame
+    # Frame shape has to remain unchanged after processing
+    return frame
+
+# OPTIONAL
+def on_unload() -> None:
+    # Should destroy all necessary objects for processing
+    pass

@@ -3,19 +3,25 @@
  * SPDX-License-Identifier: MIT
  */
 
+#define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
+
+#include <imgui.h>
 #include <reshade.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
+#include <map>
 #include <sstream>
 
 const int MAX_WIDTH = 3840;
 const int MAX_HEIGHT = 2160;
+const int MAX_PIPELINES = 100;
 
 const char* SHMEM_NAME = "PyHookSHMEM_";
+const char* SHCFG_NAME = "PyHookSHCFG_";
 const char* EVENT_LOCK_NAME = "PyHookEvLOCK_";
 const char* EVENT_UNLOCK_NAME = "PyHookEvUNLOCK_";
 
-extern "C" __declspec(dllexport) const char* NAME = "PyHookAddon";
+extern "C" __declspec(dllexport) const char* NAME = "PyHook";
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed buffers to Python pipeline.";
 
 using namespace boost::interprocess;
@@ -30,13 +36,47 @@ struct SharedData
     uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];
 };
 
+struct ActivePipelineData
+{
+    bool enabled;
+    char file[64];
+};
+
+struct PipelineData : ActivePipelineData
+{
+    char name[64];
+    char version[12];
+    char desc[512];
+};
+
+struct ActiveConfigData
+{
+    bool modified;
+};
+
+struct SharedConfigData : ActiveConfigData
+{
+    int count;
+    char order[MAX_PIPELINES][64];
+    PipelineData pipelines[MAX_PIPELINES];
+};
+
 static bool initialized = false;
+static resource st_resource;
+
 static HANDLE lock_event;
 static HANDLE unlock_event;
+
 static windows_shared_memory shm;
-static mapped_region region;
+static mapped_region shm_region;
 static SharedData* shared_data;
-static resource st_resource;
+
+static windows_shared_memory shc;
+static mapped_region shc_region;
+static SharedConfigData* shared_cfg;
+
+static int selected_pipeline = INT_MAX;
+static int hovered_pipeline = INT_MAX;
 
 template<typename... Args>
 static void reshade_log(Args... inputs)
@@ -68,10 +108,18 @@ static void init_shmem(DWORD pid)
     char shmem_name_with_pid[64];
     sprintf_s(shmem_name_with_pid, "%hs%lu", SHMEM_NAME, pid);
     shm = windows_shared_memory(open_or_create, shmem_name_with_pid, read_write, sizeof(SharedData));
-    region = mapped_region(shm, read_write);
-    memset(region.get_address(), 0, region.get_size());
-    shared_data = reinterpret_cast<SharedData*>(region.get_address());
+    shm_region = mapped_region(shm, read_write);
+    memset(shm_region.get_address(), 0, shm_region.get_size());
+    shared_data = reinterpret_cast<SharedData*>(shm_region.get_address());
     reshade_log(shmem_name_with_pid, " initialized @", shared_data);
+
+    char shcfg_name_with_pid[64];
+    sprintf_s(shcfg_name_with_pid, "%hs%lu", SHCFG_NAME, pid);
+    shc = windows_shared_memory(open_or_create, shcfg_name_with_pid, read_write, sizeof(SharedConfigData));
+    shc_region = mapped_region(shc, read_write);
+    memset(shc_region.get_address(), 0, shc_region.get_size());
+    shared_cfg = reinterpret_cast<SharedConfigData*>(shc_region.get_address());
+    reshade_log(shcfg_name_with_pid, " initialized @", shared_cfg);
 }
 
 static void init_st_resource(device* const device, resource back_buffer)
@@ -106,7 +154,7 @@ static void on_destroy_swapchain(swapchain* swapchain)
         device* const device = swapchain->get_device();
         device->destroy_resource(st_resource);
         uint64_t frame_count = shared_data->frame_count;
-        memset(shared_data, 0, region.get_size());
+        memset(shared_data, 0, shm_region.get_size());
         shared_data->frame_count = frame_count;
         initialized = false;
     }
@@ -121,6 +169,8 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 {
     device* const device = swapchain->get_device();
     resource back_buffer = swapchain->get_current_back_buffer();
+
+    shared_data->frame_count++;
 
     if (!initialized) {
         init_st_resource(device, back_buffer);
@@ -158,8 +208,6 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
         }
     }
 
-    shared_data->frame_count++;
-
     // Enable Python processiong
     SetEvent(lock_event);
     // Process in Python pipeline
@@ -191,6 +239,90 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     queue->flush_immediate_command_list();
 }
 
+static void draw_overlay(effect_runtime* runtime)
+{
+    bool modified = false;
+    ImGui::AlignTextToFramePadding();
+    ImGui::BeginChild("##PyHookPipelines", ImVec2(0, 250), true, ImGuiWindowFlags_NoMove);
+
+    std::map<std::string, PipelineData*> pipeline_map{};
+    for (int idx = 0; idx < shared_cfg->count; idx++) {
+        PipelineData* pdata = &shared_cfg->pipelines[idx];
+        pipeline_map[pdata->file] = pdata;
+    }
+
+    for (int idx = 0; idx < shared_cfg->count; idx++) {
+        PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
+        bool pipeline_enabled = pdata->enabled;
+
+        ImGui::PushID(pdata->file);
+        ImGui::AlignTextToFramePadding();
+        ImGui::BeginGroup();
+
+        const bool draw_border = selected_pipeline == idx;
+        if (draw_border)
+            ImGui::Separator();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[pdata->enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
+        std::stringstream label;
+        label << pdata->name;
+        if (strlen(pdata->version) > 0) {
+            label << " " << pdata->version;
+        }
+        label << " [" << pdata->file << "]";
+        if (ImGui::Checkbox(label.str().c_str(), &pipeline_enabled)) {
+            ImVec2 move = ImGui::GetMouseDragDelta();
+            if (move.x == 0 && move.y == 0) {
+                pdata->enabled = pipeline_enabled;
+                modified = true;
+            }
+        }
+
+        ImGui::PopStyleColor();
+
+        if (ImGui::IsItemActive())
+            selected_pipeline = idx;
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
+            hovered_pipeline = idx;
+
+        if (ImGui::IsItemHovered() && !ImGui::IsMouseDragging(ImGuiMouseButton_Left) && (strlen(pdata->version) > 0))
+        {
+            ImGui::SetTooltip(pdata->desc);
+        }
+
+        if (draw_border)
+            ImGui::Separator();
+
+        ImGui::EndGroup();
+        ImGui::Spacing();
+        ImGui::PopID();
+    }
+    ImGui::EndChild();
+
+    if (selected_pipeline < shared_cfg->count && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        if (hovered_pipeline < shared_cfg->count && hovered_pipeline != selected_pipeline)
+        {
+            if (hovered_pipeline < selected_pipeline)
+                for (int i = selected_pipeline; hovered_pipeline < i; --i)
+                    std::swap(shared_cfg->order[i - 1], shared_cfg->order[i]);
+            else
+                for (int i = selected_pipeline; i < hovered_pipeline; ++i)
+                    std::swap(shared_cfg->order[i], shared_cfg->order[i + 1]);
+            selected_pipeline = hovered_pipeline;
+            modified = true;
+        }
+    }
+    else
+    {
+        selected_pipeline = INT_MAX;
+    }
+
+    if (modified) {
+        shared_cfg->modified = modified;
+    }
+}
+
 static void register_events()
 {
     reshade::register_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
@@ -219,9 +351,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         init_events(pid);
         init_shmem(pid);
         register_events();
+        reshade::register_overlay(nullptr, draw_overlay);
         break;
     case DLL_PROCESS_DETACH:
         unregister_events();
+        reshade::unregister_overlay(nullptr, draw_overlay);
         reshade::unregister_addon(hModule);
         break;
     }

@@ -1,6 +1,8 @@
 import numpy as np
 
-name = "b_test"
+name = "Test-Blue"
+version = "0.0.1"
+desc = "Dummy pipeline for testing. Maximizes blue channel."
 
 def on_load() -> None:
     print(f'Pipeline="{name}" was loaded.')

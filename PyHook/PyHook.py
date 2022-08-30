@@ -73,13 +73,12 @@ def _encode_frame(data, frame) -> None:
 def _main():
     """Scipt entrypoint"""
     try:
+        displayed_ms_error = False
         logger = _get_logger()
         pipelines = load_pipelines(logger)
         if len(pipelines) == 0:
             logger.error('Cannot find any pipeline to process.')
             _wait_on_exit(1)
-        # For now select any pipeline for testing
-        pipeline = list(pipelines.values())[0]
         addon_handler = get_reshade_addon_handler()
         memory_manager = MemoryManager(addon_handler.pid)
         logger.info(f'Detected process: {addon_handler.get_info()}')
@@ -91,21 +90,34 @@ def _main():
         except Exception as ex:
             logger.error(f'-- Cannot inject addon into given process. {ex}')
             exit(1)
+        logger.info(f'-- Writing configuration to addon...')
+        memory_manager.write_shared_pipelines(list(pipelines.values()))
         logger.info(f'-- Started processing...')
-        displayed_ms_error = False
         while True:
             memory_manager.wait()
             data = memory_manager.read_shared_data()
             # Multisampled buffer cannot be processed
             if data.multisampled:
                 if not displayed_ms_error:
-                    logger.error(f'Disable multisampling (MSAA) in game to process frames!')
+                    logger.error(
+                        'Disable multisampling (MSAA) in game to process frames!')
                     displayed_ms_error = True
                 memory_manager.unlock()
                 continue
+            active_pipelines, to_unload, to_load = memory_manager.read_pipelines()
+            for unload_pipeline in to_unload:
+                pipelines[unload_pipeline].unload()
+            for load_pipeline in to_load:
+                pipelines[load_pipeline].load()
+            # Skip if user didn't select any pipeline
+            if len(active_pipelines) == 0:
+                memory_manager.unlock()
+                continue
+            # Process all selected pipelines in order
             frame = _decode_frame(data)
-            frame = pipeline.process_frame(
-                frame, data.width, data.height, data.frame_count)
+            for active_pipeline in active_pipelines:
+                frame = pipelines[active_pipeline].process_frame(
+                    frame, data.width, data.height, data.frame_count)
             _encode_frame(data, frame)
             memory_manager.unlock()
     except PipelinesDirNotFoundError:
