@@ -28,8 +28,8 @@ Requirements
 Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
-- `Python <https://www.python.org/>`_ >= 3.7
-- `numpy <https://pypi.org/project/numpy/>`_
+- `Python <https://www.python.org/>`_ >= 3.7 (for pipelines)
+- `numpy <https://pypi.org/project/numpy/>`_ (for pipelines)
 
 Build
 -----
@@ -63,6 +63,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added AI pipeline example using https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2
 - Added pipeline lifecycle support (load/process/unload).
 - Added pipeline ordering and selection GUI in ReShade addon UI.
 - Added shared memory for configuration.
