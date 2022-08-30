@@ -18,16 +18,24 @@ Features
 - automatic ReShade detection and DLL validation
 - automatic addon DLL injection
 - shared memory as storage
+- dynamic pipelines ordering in ReShade UI via addon
+- pipeline lifecycle support (load/process/unload)
 - frame processing in Python via ``numpy`` array
 
 Requirements
 ============
 
+Runtime
+-------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ >= 3.7
+- `numpy <https://pypi.org/project/numpy/>`_
+
+Build
+-----
+- Same as runtime
 - `Dear ImGui <https://github.com/ocornut/imgui>`_
 - `Boost <https://www.boost.org/>`_ (used for Interprocessed shared memory)
-- `numpy <https://pypi.org/project/numpy/>`_
 - `psutil <https://pypi.org/project/psutil/>`_
 - `pyinjector <https://pypi.org/project/pyinjector/>`_
 
