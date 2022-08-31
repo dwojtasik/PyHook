@@ -9,7 +9,7 @@ settings = {
     "R": build_variable(0, -255, 255, 1, "Red channel modifier."),
     "G": build_variable(0, -255, 255, 1, "Green channel modifier."),
     "B": build_variable(0, -255, 255, 1, "Blue channel modifier."),
-    "Brightness": build_variable(0.5, 0.0, 1.0, 0.01, "Value multiplier that will be applied for each channel."),
+    "Brightness": build_variable(0.5, 0.0, 1.0, 0.01, "Brightness setting."),
     "Invert": build_variable(False, None, None, None, "Invert all colors.")
 }
 
