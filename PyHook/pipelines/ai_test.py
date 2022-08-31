@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import os
 import torch
@@ -5,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
 
-name = "Test-AI"
+name = "AI Fast style transfer"
 version = "0.0.1"
 desc = "Torch pipeline for fast style transfer."
 
@@ -113,12 +114,17 @@ def on_load() -> None:
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global transform, net
+    scale = 0.75
     with torch.no_grad():
+        if scale != 1:
+            frame = cv2.resize(frame, (int(scale * width), int(scale * height)))
         t = transform(frame)
         res = net(t)[0]
         img = res.permute(1, 2, 0).clamp(0, 255)
         img = img.cpu().numpy()
         img = img.astype("uint8")
+        if scale != 1:
+            img = cv2.resize(img, (width, height))
         return img
 
 def on_unload() -> None:

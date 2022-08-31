@@ -111,8 +111,8 @@ class MemoryManager:
     _unlock_event (HANDLE): Unlock event handle. When in signaled state it allows
         to process data in ReShade addon part.
     _shmem (mmap.mmap): Shared memory using memory-mapped file object for frame processing.
-    _shpipe (mmap.mmap): Shared memory using memory-mapped file object for pipeline selection.
-    _last_pipelines (List[str]): List of active pipelines order.
+    _shcfg (mmap.mmap): Shared memory using memory-mapped file object for configuration.
+    _active_pipelines (List[str]): List of active pipelines order.
     """
 
     _EVENT_LOCK_NAME = "PyHookEvLOCK_"
