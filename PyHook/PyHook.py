@@ -53,6 +53,8 @@ def _decode_frame(data) -> np.array:
 
     Returns:
         numpy.array: The frame image as numpy array.
+            Array has to be 3-D with height, width, channels as dimensions.
+            Array has to contains uint8 values.
     """
     arr = np.ctypeslib.as_array(data.frame)[:3 * data.width * data.height]
     return arr.reshape((data.height, data.width, 3))
@@ -64,6 +66,8 @@ def _encode_frame(data, frame) -> None:
     Args:
         data (SharedData): The shared data to store frame C array.
         array (numpy.array): The frame image as numpy array.
+            Array has to be 3-D with height, width, channels as dimensions.
+            Array has to contains uint8 values.
     """
     arr = np.zeros(SIZE_ARRAY, dtype=np.uint8)
     arr[:3 * data.width * data.height] = frame.ravel()
@@ -104,11 +108,17 @@ def _main():
                     displayed_ms_error = True
                 memory_manager.unlock()
                 continue
-            active_pipelines, to_unload, to_load = memory_manager.read_pipelines()
+            active_pipelines, to_unload, to_load, changes = memory_manager.read_pipelines()
             for unload_pipeline in to_unload:
                 pipelines[unload_pipeline].unload()
             for load_pipeline in to_load:
                 pipelines[load_pipeline].load()
+            for update_pipeline, settings in changes.items():
+                is_active = update_pipeline in active_pipelines
+                for k, v in settings.items():
+                    pipelines[update_pipeline].change_settings(
+                        is_active, k, v
+                    )
             # Skip if user didn't select any pipeline
             if len(active_pipelines) == 0:
                 memory_manager.unlock()

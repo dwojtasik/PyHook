@@ -1,19 +1,56 @@
+# Optional PyHook utils import
+# Should be used to build/read settings values and for resolving resources paths
+# Check docstrings for more informations
+from utils import build_variable, read_value, resolve_path
+# Optional numpy import
 import numpy as np
 
-name = "Pipeline name up to 64 characters."
+name = "Pipeline name up to 64 characters"
 # OPTIONAL
-version = "0.0.1" # Version string up to 12 characters
+# Version string up to 12 characters.
+version = "0.0.1"
 # OPTIONAL
 desc = "Pipeline description up to 512 characters."
 
 # OPTIONAL
+# Variables that pipeline can use.
+# Contains up to 10 variables, use utils to create variable data.
+settings = {                     # Util method to build variable.
+                                 # Needs values in order: initial, min, max, step (for slider).
+                                 # Supports bool, int and float.
+                                 # For bool set None value for min, max and step [see below 'Bool example'].
+    'Label up to 32 characters': build_variable(1, 0, 10, 1, "Variable tooltip up to 128 characters."),
+    'Bool example': build_variable(False, None, None, None, "Test bool variable."),
+    'Int example': build_variable(1, 0, 10, 1, "Test int variable."),
+    'Float example': build_variable(1.0, 0.0, 10.0, 1.0, "Test float variable.")
+}
+
+# OPTIONAL
+def before_change_settings(key: str, value: float) -> None:
+    # Called right before the settings change.
+    # Check which variable will be changed with 'key'.
+    # New value will be supplied here as float, so parse it respectivly to bool or int if needed.
+    # Should reinit all objects connected to given 'key'.
+    pass
+
+# OPTIONAL
+def after_change_settings(key: str, value: float) -> None:
+    # Called right after the settings change.
+    # Check which variable was changed with 'key'.
+    # New value will be supplied here as float, so parse it respectivly to bool or int if needed.
+    # Should reinit all objects connected to given 'key'.
+    pass
+
+# OPTIONAL
 def on_load() -> None:
-    # Should initialize all necessary objects for processing
+    # Should initialize all necessary objects for processing.
     pass
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
-    # Should process frame
-    # Frame shape has to remain unchanged after processing
+    # Should process frame.
+    # Frame array shape has to remain unchanged after processing.
+    # Array has to be 3-D with height, width, channels as dimensions.
+    # Array has to contains uint8 values.
     return frame
 
 # OPTIONAL

@@ -15,6 +15,7 @@
 const int MAX_WIDTH = 3840;
 const int MAX_HEIGHT = 2160;
 const int MAX_PIPELINES = 100;
+const int MAX_PIPELINE_VARS = 10;
 
 const char* SHMEM_NAME = "PyHookSHMEM_";
 const char* SHCFG_NAME = "PyHookSHCFG_";
@@ -36,10 +37,25 @@ struct SharedData
     uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];
 };
 
+struct PipelineVar
+{
+    bool modified;
+    char key[32];
+    float value;
+    short type;
+    float min;
+    float max;
+    float step;
+    char tooltip[128];
+};
+
 struct ActivePipelineData
 {
     bool enabled;
+    bool modified;
     char file[64];
+    int var_count;
+    PipelineVar settings[MAX_PIPELINE_VARS];
 };
 
 struct PipelineData : ActivePipelineData
@@ -172,9 +188,8 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     shared_data->frame_count++;
 
-    if (!initialized) {
+    if (!initialized)
         init_st_resource(device, back_buffer);
-    }
 
     // Multisampled buffer cannot be processed
     if (shared_data->multisampled) {
@@ -239,11 +254,34 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     queue->flush_immediate_command_list();
 }
 
+bool SliderWithSteps(PipelineVar* pvar, bool is_float)
+{
+    char format_float[] = "%.0f";
+    if (is_float)
+        for (float x = 1.0f; x * pvar->step < 1.0f && format_float[2] < '9'; x *= 10.0f)
+            ++format_float[2];
+
+    char value_display[24] = {};
+    sprintf_s(value_display, is_float ? format_float : "%0.0f", pvar->value);
+
+    const int step_count = int((pvar->max - pvar->min) / pvar->step);
+    int int_val = int((pvar->value - pvar->min) / pvar->step);
+    const bool modified = ImGui::SliderInt(pvar->key, &int_val, 0, step_count, value_display);
+
+    if (is_float)
+        pvar->value = pvar->min + float(int_val) * pvar->step;
+    else
+        pvar->value = int(pvar->min + float(int_val) * pvar->step);
+    return modified;
+}
+
 static void draw_overlay(effect_runtime* runtime)
 {
     bool modified = false;
+    bool display_settings = false;
+
     ImGui::AlignTextToFramePadding();
-    ImGui::BeginChild("##PyHookPipelines", ImVec2(0, 250), true, ImGuiWindowFlags_NoMove);
+    ImGui::BeginChild("##PyHookPipelines", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
 
     std::map<std::string, PipelineData*> pipeline_map{};
     for (int idx = 0; idx < shared_cfg->count; idx++) {
@@ -266,9 +304,8 @@ static void draw_overlay(effect_runtime* runtime)
         ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[pdata->enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
         std::stringstream label;
         label << pdata->name;
-        if (strlen(pdata->version) > 0) {
+        if (strlen(pdata->version) > 0)
             label << " " << pdata->version;
-        }
         label << " [" << pdata->file << "]";
         if (ImGui::Checkbox(label.str().c_str(), &pipeline_enabled)) {
             ImVec2 move = ImGui::GetMouseDragDelta();
@@ -284,11 +321,8 @@ static void draw_overlay(effect_runtime* runtime)
             selected_pipeline = idx;
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
             hovered_pipeline = idx;
-
         if (ImGui::IsItemHovered() && !ImGui::IsMouseDragging(ImGuiMouseButton_Left) && (strlen(pdata->version) > 0))
-        {
             ImGui::SetTooltip(pdata->desc);
-        }
 
         if (draw_border)
             ImGui::Separator();
@@ -296,6 +330,9 @@ static void draw_overlay(effect_runtime* runtime)
         ImGui::EndGroup();
         ImGui::Spacing();
         ImGui::PopID();
+
+        if (pdata->enabled && !display_settings && pdata->var_count > 0)
+            display_settings = true;
     }
     ImGui::EndChild();
 
@@ -314,13 +351,73 @@ static void draw_overlay(effect_runtime* runtime)
         }
     }
     else
-    {
         selected_pipeline = INT_MAX;
+
+    if (display_settings) {
+        ImGui::AlignTextToFramePadding();
+        ImGui::BeginChild("##PyHookSettings", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
+
+        for (int idx = 0; idx < shared_cfg->count; idx++) {
+            PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
+            bool p_modified = false;
+            if (pdata->enabled && pdata->var_count > 0) {
+                ImGui::AlignTextToFramePadding();
+                std::stringstream label;
+                label << pdata->name;
+                if (strlen(pdata->version) > 0)
+                    label << " " << pdata->version;
+                label << " [" << pdata->file << "]";
+                if (ImGui::CollapsingHeader(label.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+                    for (int var_idx = 0; var_idx < pdata->var_count; var_idx++) {
+                        PipelineVar* pvar = &pdata->settings[var_idx];
+                        bool var_modifed = false;
+
+                        ImGui::PushID(pdata->file, pvar->key);
+                        ImGui::AlignTextToFramePadding();
+
+                        if (pvar->type == 0) {
+                            bool checked = pvar->value == 1.0f;
+                            if (ImGui::Checkbox(pvar->key, &checked)) {
+                                pvar->value = checked ? 1.0f : 0.0f;
+                                var_modifed = true;
+                            }
+                        }
+                        else if (pvar->type == 1) {
+                            if (SliderWithSteps(pvar, false)) {
+                                var_modifed = true;
+                            }
+                        }
+                        else {
+                            if (SliderWithSteps(pvar, true)) {
+                                var_modifed = true;
+                            }
+                        }
+
+                        if (ImGui::IsItemHovered() && (strlen(pvar->tooltip) > 0))
+                            ImGui::SetTooltip(pvar->tooltip);
+
+                        ImGui::Spacing();
+                        ImGui::PopID();
+
+                        if (var_modifed) {
+                            pvar->modified = var_modifed;
+                            p_modified = true;
+                        }
+                    }
+                }
+                ImGui::Separator();
+            }
+            if (p_modified) {
+                pdata->modified = true;
+                modified = true;
+            }
+        }
+
+        ImGui::EndChild();
     }
 
-    if (modified) {
+    if (modified)
         shared_cfg->modified = modified;
-    }
 }
 
 static void register_events()

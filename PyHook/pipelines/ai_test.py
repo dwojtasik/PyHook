@@ -1,17 +1,19 @@
 import cv2
 import numpy as np
-import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import transforms
 
+from utils import build_variable, read_value, resolve_path
+
 name = "AI Fast style transfer"
 version = "0.0.1"
 desc = "Torch pipeline for fast style transfer."
 
-def resolve_path(filename: str) -> str:
-    return os.path.dirname(os.path.abspath(__file__)) + '/' + filename
+settings = {
+    "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing.")
+}
 
 # Following code is using:
 # Fast neural style with MobileNetV2 bottleneck blocks
@@ -114,7 +116,7 @@ def on_load() -> None:
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global transform, net
-    scale = 0.75
+    scale = read_value(settings, "Scale")
     with torch.no_grad():
         if scale != 1:
             frame = cv2.resize(frame, (int(scale * width), int(scale * height)))

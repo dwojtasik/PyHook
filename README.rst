@@ -18,8 +18,9 @@ Features
 - automatic ReShade detection and DLL validation
 - automatic addon DLL injection
 - shared memory as storage
-- dynamic pipelines ordering in ReShade UI via addon
+- dynamic pipelines ordering and settings in ReShade UI via addon
 - pipeline lifecycle support (load/process/unload)
+- pipeline settings callbacks (before and after change)
 - frame processing in Python via ``numpy`` array
 
 Requirements
@@ -30,6 +31,7 @@ Runtime
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ >= 3.7 (for pipelines)
 - `numpy <https://pypi.org/project/numpy/>`_ (for pipelines)
+- Only for specific pipelines: Any libraries that are required by pipelines code
 
 Build
 -----
@@ -48,8 +50,7 @@ You can download selected binary files from `Releases <https://github.com/dwojta
 2. Start game with `ReShade <https://reshade.me/>`_ installed.
 3. Start PyHook.exe.
 
-If antyvirus detects PyHook as dangerous software add exception for it.
-It is due to DLL injection capabilities.
+If antyvirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 
 Build
 =====
@@ -63,6 +64,12 @@ History
 =======
 DEV / NEXT
 ----------
+- Updated pipeline template.
+- Added new callbacks for settings changes (before and after change).
+- Added ReShade UI for pipeline settings in ImGui.
+- Added pipeline utils to faster pipeline creation.
+- Added dynamic pipeline variables parsing.
+- Added shared memory segment for pipeline settings.
 - Added AI pipeline example using https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2
 - Added pipeline lifecycle support (load/process/unload).
 - Added pipeline ordering and selection GUI in ReShade addon UI.
