@@ -44,6 +44,11 @@ class AddonNotFoundException(Exception):
     pass
 
 
+class ProcessNotFoundException(Exception):
+    """Raised when process with given PID does not exists."""
+    pass
+
+
 class ReShadeNotFoundException(Exception):
     """Raised when required version of ReShade is not loaded in any active process."""
     pass
@@ -63,6 +68,8 @@ class AddonHandler:
     - injects PyHook addon DLL.
 
     process (psutil.Process): The process to validate and addon injection.
+    verify (bool, optional): Flag if PyHook should verify if required version of ReShade is loaded.
+        Defaults to True.
     process_name (str): The process name.
     pid (int): The process ID.
     is_64_bit (bool): Flag if given process is 64 bit.
@@ -73,16 +80,17 @@ class AddonHandler:
         AddonNotFoundException: When addon DLL file cannot be found.
     """
 
-    def __init__(self, process: psutil.Process):
-        self._matching_dlls = list(filter(
+    def __init__(self, process: psutil.Process, verify: bool = True):
+        self.verify = verify
+        self._matching_dlls = [] if not verify else list(filter(
             lambda path: basename(path) in _RESHADE_VALID_DLL_NAMES,
             [dll_info.path for dll_info in process.memory_maps()]
         ))
-        if self._matching_dlls:
+        if not verify or self._matching_dlls:
             self.process_name = process.name()
             self.pid = process.pid
             self.is_64_bit = is_process_64_bit(self.pid)
-            if self._has_loaded_reshade():
+            if not verify or self._has_loaded_reshade():
                 self.addon_path = self._find_addon_path()
                 return
         raise NotAReShadeProcessException()
@@ -93,6 +101,8 @@ class AddonHandler:
         Returns:
             str: The textual informations about handler.
         """
+        if not self.verify:
+            return f'{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}]'
         return f'{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}] with ReShade v{self.reshade_version} @ {self.reshade_path}'
 
     def inject_addon(self) -> None:
@@ -181,15 +191,24 @@ def _get_dll_extern_variable(dll_handle: CDLL, variable_name: str, out_type: T) 
             f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}')
 
 
-def get_reshade_addon_handler() -> AddonHandler:
+def get_reshade_addon_handler(pid: int = None) -> AddonHandler:
     """Returns addon handler with required process information.
+
+    Args:
+        pid (int, optional): PID of ReShade owner process.
+            If supplied PyHook will skip tests for ReShade!
 
     Returns:
         AddonHandler: The handler for PyHook addon management.
 
     Raises:
-        ReShadeNotFindException: When required ReShade version is not loaded in any active process
+        ProcessNotFoundException: When process with PID does not exists.
+        ReShadeNotFindException: When required ReShade version is not loaded in any active process.
     """
+    if pid is not None:
+        if not psutil.pid_exists(pid):
+            raise ProcessNotFoundException()
+        return AddonHandler(psutil.Process(pid), False)
     for process in psutil.process_iter():
         try:
             return AddonHandler(process)

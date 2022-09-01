@@ -13,9 +13,9 @@ import logging
 import sys
 
 import numpy as np
+import psutil
 
-from dll_utils import (AddonNotFoundException, ReShadeNotFoundException,
-                       get_reshade_addon_handler)
+from dll_utils import *
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
 from pipeline import PipelinesDirNotFoundError, load_pipelines
 from win_utils import is_started_as_admin
@@ -74,6 +74,16 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
+def _pid_input_fallback(logger: logging.Logger) -> AddonHandler:
+    logger.info('Fallback to manual PID input...')
+    pid = None
+    try:
+        pid = int(input('PID: '))
+    except ValueError:
+        logger.error('Invalid PID number.')
+        _wait_on_exit()
+    return get_reshade_addon_handler(pid)
+
 def _main():
     """Script entrypoint"""
     try:
@@ -83,9 +93,15 @@ def _main():
         if len(pipelines) == 0:
             logger.error('Cannot find any pipeline to process.')
             _wait_on_exit(1)
-        addon_handler = get_reshade_addon_handler()
+        try:
+            addon_handler = get_reshade_addon_handler()
+        except ReShadeNotFoundException:
+            logger.error('Cannot find any active process with ReShade loaded.')
+            if not is_started_as_admin():
+                logger.info('NOTE: Try to run this program as administrator.')
+            addon_handler = _pid_input_fallback(logger)
         memory_manager = MemoryManager(addon_handler.pid)
-        logger.info(f'Detected process: {addon_handler.get_info()}')
+        logger.info(f'Selected process: {addon_handler.get_info()}')
         logger.info(
             f'- Started addon injection for {addon_handler.addon_path}...')
         try:
@@ -139,11 +155,6 @@ def _main():
         logger.error('Cannot find addon file.')
         logger.info(
             'Make sure that *.addon file is built and exists in PyHook directory.')
-        _wait_on_exit(1)
-    except ReShadeNotFoundException:
-        logger.error('Cannot find any active process with ReShade loaded.')
-        if not is_started_as_admin():
-            logger.info('Try to run this program as administrator.')
         _wait_on_exit(1)
     except Exception as ex:
         logger.error('Unhandled exception occurres.', ex)

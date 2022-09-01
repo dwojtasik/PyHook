@@ -64,6 +64,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added fallback to manual PID supply.
 - Updated pipeline template.
 - Added new callbacks for settings changes (before and after change).
 - Added ReShade UI for pipeline settings in ImGui.
