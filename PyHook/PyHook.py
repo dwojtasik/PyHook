@@ -75,7 +75,7 @@ def _encode_frame(data, frame) -> None:
 
 
 def _main():
-    """Scipt entrypoint"""
+    """Script entrypoint"""
     try:
         displayed_ms_error = False
         logger = _get_logger()

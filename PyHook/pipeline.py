@@ -139,6 +139,8 @@ class Pipeline:
 
         Args:
             frame (numpy.array): The frame image as numpy array.
+                Array has to be 3-D with height, width, channels as dimensions.
+                Array has to contains uint8 values.
             width (int): The frame width in pixels.
             height (int): The frame height in pixels.
             frame_num (int): The frame number.

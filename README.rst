@@ -15,13 +15,13 @@ PyHook consists of two elements:
 Features
 ========
 
-- automatic ReShade detection and DLL validation
-- automatic addon DLL injection
-- shared memory as storage
-- dynamic pipelines ordering and settings in ReShade UI via addon
-- pipeline lifecycle support (load/process/unload)
-- pipeline settings callbacks (before and after change)
-- frame processing in Python via ``numpy`` array
+- Automatic ReShade detection and DLL validation
+- Automatic addon DLL injection
+- Shared memory as storage
+- Dynamic pipelines ordering and settings in ReShade UI via addon
+- Pipeline lifecycle support (load/process/unload)
+- Pipeline settings callbacks (before and after change)
+- Frame processing in Python via ``numpy`` array
 
 Requirements
 ============
@@ -37,7 +37,7 @@ Build
 -----
 - Same as runtime
 - `Dear ImGui <https://github.com/ocornut/imgui>`_
-- `Boost <https://www.boost.org/>`_ (used for Interprocessed shared memory)
+- `Boost <https://www.boost.org/>`_ (used for Boost.Interprocess shared memory)
 - `psutil <https://pypi.org/project/psutil/>`_
 - `pyinjector <https://pypi.org/project/pyinjector/>`_
 
