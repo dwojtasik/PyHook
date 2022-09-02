@@ -13,7 +13,6 @@ import logging
 import sys
 
 import numpy as np
-import psutil
 
 from dll_utils import *
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
@@ -75,6 +74,14 @@ def _encode_frame(data, frame) -> None:
 
 
 def _pid_input_fallback(logger: logging.Logger) -> AddonHandler:
+    """Fallback to manual PID supply.
+
+    Args:
+        logger (logging.Logger): Logger for error display.
+
+    Returns:
+        AddonHandler: The handler for PyHook addon management.
+    """
     logger.info('Fallback to manual PID input...')
     pid = None
     try:

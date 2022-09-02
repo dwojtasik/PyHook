@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 
-_UTILS_FILENAME = "utils"
 _PIPELINE_DIRS = [
     "./pipelines",
     "./PyHook/pipelines"
@@ -224,8 +223,6 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
 
     for path in pipeline_files:
         module_name = basename(path)[:-3]
-        if module_name == _UTILS_FILENAME:
-            continue
         try:
             spec = importlib.util.spec_from_file_location(module_name, path)
             module = importlib.util.module_from_spec(spec)
