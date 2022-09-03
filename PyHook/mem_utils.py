@@ -7,7 +7,7 @@ Utils for shared memory management
 """
 
 import mmap
-from ctypes import *
+from ctypes import Structure, c_bool, c_char, c_float, c_int, c_longlong, c_short, c_uint8, c_uint32, sizeof, windll
 from typing import Dict, List, Tuple
 
 from pipeline import Pipeline
@@ -41,12 +41,13 @@ class SharedData(Structure):
         FRAME_ARRAY has declared size of pixel component count in max supported resolution (4K).
         Additional data (above actual frame resolution) is unused and filled with zeros.
     """
+
     _fields_ = [
-        ('frame_count', c_longlong),
-        ('width', c_uint32),
-        ('height', c_uint32),
-        ('multisampled', c_bool),
-        ('frame', FRAME_ARRAY),
+        ("frame_count", c_longlong),
+        ("width", c_uint32),
+        ("height", c_uint32),
+        ("multisampled", c_bool),
+        ("frame", FRAME_ARRAY),
     ]
 
 
@@ -63,15 +64,16 @@ class PipelineVar(Structure):
     step (c_float): Change step between min and max values.
     tooltip (PIPELINE_SHORT_TEXT): Tooltip to be displayed.
     """
+
     _fields_ = [
-        ('modified', c_bool),
-        ('key', PIPELINE_KEY_STRING),
-        ('value', c_float),
-        ('type', c_short),
-        ('min', c_float),
-        ('max', c_float),
-        ('step', c_float),
-        ('tooltip', PIPELINE_SHORT_TEXT),
+        ("modified", c_bool),
+        ("key", PIPELINE_KEY_STRING),
+        ("value", c_float),
+        ("type", c_short),
+        ("min", c_float),
+        ("max", c_float),
+        ("step", c_float),
+        ("tooltip", PIPELINE_SHORT_TEXT),
     ]
 
 
@@ -87,12 +89,13 @@ class ActivePipeline(Structure):
     var_count (c_int): Count of settings in settings list.
     settings (PIPELINE_SETTINGS): Array of pipeline variables.
     """
+
     _fields_ = [
-        ('enabled', c_bool),
-        ('modified', c_bool),
-        ('file', PIPELINE_STRING),
-        ('var_count', c_int),
-        ('settings', PIPELINE_SETTINGS),
+        ("enabled", c_bool),
+        ("modified", c_bool),
+        ("file", PIPELINE_STRING),
+        ("var_count", c_int),
+        ("settings", PIPELINE_SETTINGS),
     ]
 
 
@@ -103,10 +106,11 @@ class PipelineData(ActivePipeline):
     version (PIPELINE_SHORT_STRING): Pipeline version.
     desc (PIPELINE_TEXT): Pipeline description.
     """
+
     _fields_ = [
-        ('name', PIPELINE_STRING),
-        ('version', PIPELINE_SHORT_STRING),
-        ('desc', PIPELINE_TEXT),
+        ("name", PIPELINE_STRING),
+        ("version", PIPELINE_SHORT_STRING),
+        ("desc", PIPELINE_TEXT),
     ]
 
 
@@ -119,9 +123,8 @@ class ActiveConfigData(Structure):
 
     modified (c_bool): Flag is configuration was modified in ReShade.
     """
-    _fields_ = [
-        ('modified', c_bool)
-    ]
+
+    _fields_ = [("modified", c_bool)]
 
 
 class SharedConfigData(ActiveConfigData):
@@ -131,10 +134,11 @@ class SharedConfigData(ActiveConfigData):
     order (PIPELINE_ORDER): Pipeline order.
     pipelines (PIPELINE_ARRAY): Pipeline data array.
     """
+
     _fields_ = [
-        ('count', c_int),
-        ('order', PIPELINE_ORDER),
-        ('pipelines', PIPELINE_ARRAY),
+        ("count", c_int),
+        ("order", PIPELINE_ORDER),
+        ("pipelines", PIPELINE_ARRAY),
     ]
 
 
@@ -159,14 +163,10 @@ class MemoryManager:
 
     def __init__(self, pid: int):
         spid = str(pid)
-        self._lock_event = _KERNEL32.CreateEventW(
-            0, 0, 0, self._EVENT_LOCK_NAME + spid)
-        self._unlock_event = _KERNEL32.CreateEventW(
-            0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
-        self._shmem = mmap.mmap(-1, sizeof(SharedData),
-                                self._SHMEM_NAME + spid)
-        self._shcfg = mmap.mmap(-1, sizeof(SharedConfigData),
-                                self._SHCFG_NAME + spid)
+        self._lock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_LOCK_NAME + spid)
+        self._unlock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
+        self._shmem = mmap.mmap(-1, sizeof(SharedData), self._SHMEM_NAME + spid)
+        self._shcfg = mmap.mmap(-1, sizeof(SharedConfigData), self._SHCFG_NAME + spid)
         self._active_pipelines = []
 
     def read_shared_data(self) -> SharedData:
@@ -196,45 +196,24 @@ class MemoryManager:
         if active_data.modified:
             pipeline_data = SharedConfigData.from_buffer(self._shcfg)
             pipeline_array = [
-                ActivePipeline.from_buffer(buf)
-                for buf in pipeline_data.pipelines[:pipeline_data.count]
+                ActivePipeline.from_buffer(buf) for buf in pipeline_data.pipelines[: pipeline_data.count]
             ]
             for pipeline in pipeline_array:
                 if pipeline.modified:
-                    p_key = pipeline.file.decode('utf8')
+                    p_key = pipeline.file.decode("utf8")
                     changes[p_key] = {}
                     for i in range(pipeline.var_count):
                         variable = pipeline.settings[i]
                         if variable.modified:
-                            changes[p_key][variable.key.decode(
-                                'utf8')] = variable.value
+                            changes[p_key][variable.key.decode("utf8")] = variable.value
                             variable.modified = False
                     pipeline.modified = False
-            active_pipelines = [
-                pipeline.file.decode('utf8')
-                for pipeline in pipeline_array
-                if pipeline.enabled
-            ]
-            pipeline_order = [
-                file.value.decode('utf8')
-                for file in pipeline_data.order[:pipeline_data.count]
-            ]
+            active_pipelines = [pipeline.file.decode("utf8") for pipeline in pipeline_array if pipeline.enabled]
+            pipeline_order = [file.value.decode("utf8") for file in pipeline_data.order[: pipeline_data.count]]
             old_pipelines = self._active_pipelines
-            self._active_pipelines = [
-                file
-                for file in pipeline_order
-                if file in active_pipelines
-            ]
-            to_unload = [
-                file
-                for file in old_pipelines
-                if file not in self._active_pipelines
-            ]
-            to_load = [
-                file
-                for file in self._active_pipelines
-                if file not in old_pipelines
-            ]
+            self._active_pipelines = [file for file in pipeline_order if file in active_pipelines]
+            to_unload = [file for file in old_pipelines if file not in self._active_pipelines]
+            to_load = [file for file in self._active_pipelines if file not in old_pipelines]
             active_data.modified = False
         return (self._active_pipelines, to_unload, to_load, changes)
 
@@ -256,33 +235,29 @@ class MemoryManager:
                 for key, data_list in list(pipelines[i].settings.items())[:PIPELINE_VAR_LIMIT]:
                     settings[var_idx] = PipelineVar(
                         modified=False,
-                        key=key[:PIPELINE_KEY_STRING._length_].encode('utf8'),
+                        key=key[: PIPELINE_KEY_STRING._length_].encode("utf8"),
                         value=float(data_list[0]),
                         type=pipelines[i].mappings[key],
                         min=float(0 if data_list[1] is None else data_list[1]),
                         max=float(0 if data_list[2] is None else data_list[2]),
-                        step=float(0 if data_list[3]
-                                   is None else data_list[3]),
-                        tooltip=("" if data_list[4] is None else data_list[4])[
-                            :PIPELINE_SHORT_TEXT._length_].encode('utf8')
+                        step=float(0 if data_list[3] is None else data_list[3]),
+                        tooltip=("" if data_list[4] is None else data_list[4])[: PIPELINE_SHORT_TEXT._length_].encode(
+                            "utf8"
+                        ),
                     )
                     var_idx += 1
 
-            encoded_file = pipelines[i].file[:PIPELINE_STRING._length_].encode(
-                'utf8')
+            encoded_file = pipelines[i].file[: PIPELINE_STRING._length_].encode("utf8")
             pipeline_order[i] = (PIPELINE_STRING)(*encoded_file)
             pipeline_array[i] = PipelineData(
                 enabled=False,
                 modified=False,
                 file=encoded_file,
-                var_count=min(PIPELINE_VAR_LIMIT, 0 if pipelines[i].settings is None
-                              else len(pipelines[i].settings)),
+                var_count=min(PIPELINE_VAR_LIMIT, 0 if pipelines[i].settings is None else len(pipelines[i].settings)),
                 settings=settings,
-                name=pipelines[i].name[:PIPELINE_STRING._length_].encode(
-                    'utf8'),
-                version=pipelines[i].version[:PIPELINE_SHORT_STRING._length_].encode(
-                    'utf8'),
-                desc=pipelines[i].desc[:PIPELINE_TEXT._length_].encode('utf8')
+                name=pipelines[i].name[: PIPELINE_STRING._length_].encode("utf8"),
+                version=pipelines[i].version[: PIPELINE_SHORT_STRING._length_].encode("utf8"),
+                desc=pipelines[i].desc[: PIPELINE_TEXT._length_].encode("utf8"),
             )
         pipeline_data.order = pipeline_order
         pipeline_data.pipelines = pipeline_array

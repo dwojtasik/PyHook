@@ -11,8 +11,8 @@ from platform import architecture
 
 from psutil import pid_exists
 
-_ARCH_32_BIT = '32bit'
-_ARCH_64_BIT = '64bit'
+_ARCH_32_BIT = "32bit"
+_ARCH_64_BIT = "64bit"
 _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
 _KERNEL32 = ctypes.windll.kernel32
@@ -54,22 +54,21 @@ def is_process_64_bit(pid) -> bool:
         ValueError: When given PID does not exists.
     """
     if not pid_exists(pid):
-        raise ValueError(f'Process with PID={pid} does not exists')
+        raise ValueError(f"Process with PID={pid} does not exists")
     if is_32_bit_os():
         return False
     try:
-        IsWow64Process = _KERNEL32.IsWow64Process
+        is_wow64_process = _KERNEL32.IsWow64Process
     except Exception:
         return False
-    hProcess = _KERNEL32.OpenProcess(
-        _PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
-    if hProcess:
+    handle = _KERNEL32.OpenProcess(_PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+    if handle:
         try:
             is_32_bit = ctypes.c_int32()
-            if IsWow64Process(hProcess, ctypes.byref(is_32_bit)):
+            if is_wow64_process(handle, ctypes.byref(is_32_bit)):
                 return not is_32_bit.value
         finally:
-            _KERNEL32.CloseHandle(hProcess)
+            _KERNEL32.CloseHandle(handle)
 
 
 def is_started_as_admin() -> bool:

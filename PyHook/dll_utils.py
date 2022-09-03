@@ -6,7 +6,7 @@ Utils for DLL management
 :license: MIT, see LICENSE for more details.
 """
 
-from ctypes import *
+from ctypes import CDLL, c_char_p, c_void_p, cdll, windll
 from os.path import abspath, basename, exists
 from typing import TypeVar
 
@@ -15,48 +15,42 @@ from pyinjector import inject
 
 from win_utils import is_process_64_bit, to_arch_string
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 _ADDON_PATHS_32BIT = [
-    './Addons/PyHook32.addon',
-    './Addon/Release/PyHook.addon',
-    './Addon/Debug/PyHook.addon',
-    './PyHook32.addon',
-    './PyHook.addon'
+    "./Addons/PyHook32.addon",
+    "./Addon/Release/PyHook.addon",
+    "./Addon/Debug/PyHook.addon",
+    "./PyHook32.addon",
+    "./PyHook.addon",
 ]
 _ADDON_PATHS_64BIT = [
-    './Addons/PyHook64.addon',
-    './Addon/x64/Release/PyHook.addon',
-    './Addon/x64/Debug/PyHook.addon',
-    './PyHook64.addon',
-    './PyHook.addon'
+    "./Addons/PyHook64.addon",
+    "./Addon/x64/Release/PyHook.addon",
+    "./Addon/x64/Debug/PyHook.addon",
+    "./PyHook64.addon",
+    "./PyHook.addon",
 ]
 
-_RESHADE_VERSION_EXTERN = 'ReShadeVersion'
-_RESHADE_MIN_VERSION = '5.0.0'
-_RESHADE_VALID_DLL_NAMES = [
-    'd3d9.dll', 'd3d10.dll', 'd3d11.dll', 'd3d12.dll', 'dxgi.dll', 'opengl32.dll'
-]
+_RESHADE_VERSION_EXTERN = "ReShadeVersion"
+_RESHADE_MIN_VERSION = "5.0.0"
+_RESHADE_VALID_DLL_NAMES = ["d3d9.dll", "d3d10.dll", "d3d11.dll", "d3d12.dll", "dxgi.dll", "opengl32.dll"]
 
 
 class AddonNotFoundException(Exception):
     """Raised when addon DLL file cannot be found."""
-    pass
 
 
 class ProcessNotFoundException(Exception):
     """Raised when process with given PID does not exists."""
-    pass
 
 
 class ReShadeNotFoundException(Exception):
     """Raised when required version of ReShade is not loaded in any active process."""
-    pass
 
 
 class NotAReShadeProcessException(Exception):
     """Raised when required version of ReShade is not loaded in given process."""
-    pass
 
 
 class AddonHandler:
@@ -82,10 +76,16 @@ class AddonHandler:
 
     def __init__(self, process: psutil.Process, verify: bool = True):
         self.verify = verify
-        self._matching_dlls = [] if not verify else list(filter(
-            lambda path: basename(path) in _RESHADE_VALID_DLL_NAMES,
-            [dll_info.path for dll_info in process.memory_maps()]
-        ))
+        self._matching_dlls = (
+            []
+            if not verify
+            else list(
+                filter(
+                    lambda path: basename(path) in _RESHADE_VALID_DLL_NAMES,
+                    [dll_info.path for dll_info in process.memory_maps()],
+                )
+            )
+        )
         if not verify or self._matching_dlls:
             self.process_name = process.name()
             self.pid = process.pid
@@ -101,9 +101,10 @@ class AddonHandler:
         Returns:
             str: The textual informations about handler.
         """
-        if not self.verify:
-            return f'{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}]'
-        return f'{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}] with ReShade v{self.reshade_version} @ {self.reshade_path}'
+        reshade_version_string = ""
+        if self.verify:
+            reshade_version_string = f" with ReShade v{self.reshade_version} @ {self.reshade_path}"
+        return f"{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}]{reshade_version_string}"
 
     def inject_addon(self) -> None:
         """Injects addon DLL into process."""
@@ -118,8 +119,8 @@ class AddonHandler:
         Raises:
             AddonNotFoundException: When addon DLL file cannot be found.
         """
-        PATHS = _ADDON_PATHS_64BIT if self.is_64_bit else _ADDON_PATHS_32BIT
-        for path in PATHS:
+        paths = _ADDON_PATHS_64BIT if self.is_64_bit else _ADDON_PATHS_32BIT
+        for path in paths:
             if exists(path):
                 return abspath(path)
         raise AddonNotFoundException()
@@ -138,15 +139,13 @@ class AddonHandler:
                 test_dll_handle = cdll[test_dll_path]
                 if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
                     self.reshade_version = _get_dll_extern_variable(
-                        test_dll_handle,
-                        _RESHADE_VERSION_EXTERN,
-                        c_char_p
-                    ).decode('utf-8')
+                        test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
+                    ).decode("utf-8")
                     if self.reshade_version >= _RESHADE_MIN_VERSION:
                         self.reshade_path = test_dll_path
                         return True
                     return False
-            except:
+            except Exception:
                 pass
             finally:
                 if test_dll_handle is not None:
@@ -186,9 +185,8 @@ def _get_dll_extern_variable(dll_handle: CDLL, variable_name: str, out_type: T) 
     """
     try:
         return out_type.in_dll(dll_handle, variable_name).value
-    except:
-        raise ValueError(
-            f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}')
+    except Exception as ex:
+        raise ValueError(f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}') from ex
 
 
 def get_reshade_addon_handler(pid: int = None) -> AddonHandler:

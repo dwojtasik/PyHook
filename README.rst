@@ -29,15 +29,15 @@ Requirements
 Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
-- `Python <https://www.python.org/>`_ >= 3.7 (for pipelines)
-- `numpy <https://pypi.org/project/numpy/>`_ (for pipelines)
-- Only for specific pipelines: Any libraries that are required by pipelines code
+- `Python <https://www.python.org/>`_ == 3.10.6 (for pipelines)
+- Only for specific pipelines: Any libraries that are required by pipeline code
 
 Build
 -----
 - Same as runtime
 - `Dear ImGui <https://github.com/ocornut/imgui>`_
 - `Boost <https://www.boost.org/>`_ (used for Boost.Interprocess shared memory)
+- `numpy <https://pypi.org/project/numpy/>`_
 - `psutil <https://pypi.org/project/psutil/>`_
 - `pyinjector <https://pypi.org/project/pyinjector/>`_
 

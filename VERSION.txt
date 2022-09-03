@@ -1,0 +1,28 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 1),
+    prodvers=(1, 0, 0, 1),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'Dominik Wojtasik'),
+        StringStruct(u'FileDescription', u'Python hook for ReShade processing'),
+        StringStruct(u'FileVersion', u'0.0.1'),
+        StringStruct(u'InternalName', u'PyHook.exe'),
+        StringStruct(u'LegalCopyright', u'Copyright (C) 2022 Dominik Wojtasik'),
+        StringStruct(u'OriginalFilename', u'PyHook.exe'),
+        StringStruct(u'ProductName', u'PyHook'),
+        StringStruct(u'ProductVersion', u'0.0.1')])
+      ]
+    ),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)

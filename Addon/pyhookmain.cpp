@@ -4,6 +4,7 @@
  */
 
 #define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
+#define ImTextureID unsigned long long
 
 #include <imgui.h>
 #include <reshade.hpp>
@@ -22,7 +23,7 @@ const char* SHCFG_NAME = "PyHookSHCFG_";
 const char* EVENT_LOCK_NAME = "PyHookEvLOCK_";
 const char* EVENT_UNLOCK_NAME = "PyHookEvUNLOCK_";
 
-extern "C" __declspec(dllexport) const char* NAME = "PyHook";
+extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.0.1
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed buffers to Python pipeline.";
 
 using namespace boost::interprocess;
@@ -168,7 +169,8 @@ static void on_destroy_swapchain(swapchain* swapchain)
 {
     if (initialized) {
         device* const device = swapchain->get_device();
-        device->destroy_resource(st_resource);
+        if (st_resource != 0)
+            device->destroy_resource(st_resource);
         uint64_t frame_count = shared_data->frame_count;
         memset(shared_data, 0, shm_region.get_size());
         shared_data->frame_count = frame_count;
@@ -209,7 +211,7 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     // Map texture to get pixel values
     subresource_data mapped;
-    bool result = device->map_texture_region(st_resource, 0, nullptr, map_access::read_only, &mapped);
+    device->map_texture_region(st_resource, 0, nullptr, map_access::read_only, &mapped);
     for (uint32_t y = 0; y < shared_data->height; ++y)
     {
         for (uint32_t x = 0; x < shared_data->width; ++x)
