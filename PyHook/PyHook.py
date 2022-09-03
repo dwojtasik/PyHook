@@ -8,6 +8,7 @@ Python hook for ReShade processing
 __version__ = "0.0.1"
 
 import logging
+import os
 import sys
 
 import numpy as np
@@ -101,6 +102,7 @@ def _pid_input_fallback(logger: logging.Logger) -> AddonHandler:
 def _main():
     """Script entrypoint"""
     try:
+        os.system("cls")  # To clear PyInstaller warnings
         displayed_ms_error = False
         logger = _get_logger()
         logger.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)

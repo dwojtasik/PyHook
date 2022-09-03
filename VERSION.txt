@@ -14,7 +14,7 @@ VSVersionInfo(
       StringTable(
         u'040904B0',
         [StringStruct(u'CompanyName', u'Dominik Wojtasik'),
-        StringStruct(u'FileDescription', u'Python hook for ReShade processing'),
+        StringStruct(u'FileDescription', u'PyHook'),
         StringStruct(u'FileVersion', u'0.0.1'),
         StringStruct(u'InternalName', u'PyHook.exe'),
         StringStruct(u'LegalCopyright', u'Copyright (C) 2022 Dominik Wojtasik'),
