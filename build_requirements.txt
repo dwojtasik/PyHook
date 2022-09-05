@@ -1,0 +1,2 @@
+pyinstaller==5.3
+stdlib-list==0.8.0

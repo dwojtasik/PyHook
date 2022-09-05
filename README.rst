@@ -22,6 +22,7 @@ Features
 - Pipeline lifecycle support (load/process/unload)
 - Pipeline settings callbacks (before and after change)
 - Frame processing in Python via ``numpy`` array
+- Local Python environment usage in pipeline code
 
 Requirements
 ============
@@ -29,17 +30,23 @@ Requirements
 Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
-- `Python <https://www.python.org/>`_ == 3.10.6 (for pipelines)
+- `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
 - Only for specific pipelines: Any libraries that are required by pipeline code
 
 Build
 -----
-- Same as runtime
-- `Dear ImGui <https://github.com/ocornut/imgui>`_
-- `Boost <https://www.boost.org/>`_ (used for Boost.Interprocess shared memory)
-- `numpy <https://pypi.org/project/numpy/>`_
-- `psutil <https://pypi.org/project/psutil/>`_
-- `pyinjector <https://pypi.org/project/pyinjector/>`_
+- Same as runtime, but for ReShade addon only included headers are needed
+- `Boost <https://www.boost.org/>`_ == 1.80.0 (used for Boost.Interprocess shared memory)
+- `Dear ImGui <https://github.com/ocornut/imgui>`_ == 1.86
+- `NumPy <https://pypi.org/project/numpy/>`_ == 1.23.2
+- `psutil <https://pypi.org/project/psutil/>`_ == 5.9.2
+- `Pyinjector <https://pypi.org/project/pyinjector/>`_ == 1.1.0
+
+EXE Build
+---------
+- Same as build
+- `PyInstaller <https://pypi.org/project/pyinstaller/>`_ == 5.3
+- `Python Standard Library List <https://pypi.org/project/stdlib-list/>`_ == 0.8.0
 
 Installation
 ============
@@ -57,6 +64,12 @@ Build
 
 To build PyHook simply run ``build.bat`` in `Anaconda <https://www.anaconda.com/>`_ Prompt.
 
+If any Python package is missing try to update your conda environment and add conda-forge channel:
+
+.. code-block:: powershell
+
+    $ conda config --add channels conda-forge
+
 To build PyHook addon download `Boost <https://www.boost.org/>`_ and place header files in Addon/include.
 Then open \*.sln project and build given release.
 
@@ -64,6 +77,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added dynamic modules load from local Python environment.
 - Added fallback to manual PID supply.
 - Updated pipeline template.
 - Added new callbacks for settings changes (before and after change).

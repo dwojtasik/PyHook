@@ -5,8 +5,6 @@ Python hook for ReShade processing
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
-__version__ = "0.0.1"
-
 import logging
 import os
 import sys
@@ -15,6 +13,7 @@ import numpy as np
 
 # pylint: disable=unused-import
 import utils  # To be available in PyInstaller frozen bundle
+from _version import __version__
 from dll_utils import (
     AddonHandler,
     AddonNotFoundException,
@@ -141,6 +140,7 @@ def _main():
                     displayed_ms_error = True
                 memory_manager.unlock()
                 continue
+            # Process pipelines changes
             active_pipelines, to_unload, to_load, changes = memory_manager.read_pipelines()
             for unload_pipeline in to_unload:
                 pipelines[unload_pipeline].unload()
@@ -150,7 +150,7 @@ def _main():
                 is_active = update_pipeline in active_pipelines
                 for key, value in settings.items():
                     pipelines[update_pipeline].change_settings(is_active, key, value)
-            # Skip if user didn't select any pipeline
+            # Skip frame processing if user didn't select any pipeline
             if len(active_pipelines) == 0:
                 memory_manager.unlock()
                 continue

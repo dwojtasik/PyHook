@@ -1,11 +1,13 @@
-import cv2
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchvision import transforms
 
-from utils import build_variable, read_value, resolve_path
+from utils import *
+
+with use_local_python():
+    import cv2
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    from torchvision import transforms
 
 name = "AI Fast style transfer"
 version = "0.0.1"

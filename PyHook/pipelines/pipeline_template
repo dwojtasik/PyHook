@@ -1,9 +1,18 @@
 # Optional PyHook utils import
+# Has to be used to import external (OS) modules
 # Should be used to build/read settings values and for resolving resources paths
 # Check docstrings for more informations
-from utils import build_variable, read_value, resolve_path
-# Optional numpy import
+from utils import *
+
+# Optional numpy import from PyHook frozen bundle
 import numpy as np
+
+# External (OS) modules have to be imported in 'with use_local_python() block'.
+# Example:
+# with use_local_python():
+#     import module
+#     import otherModule
+#     from module import xyz
 
 name = "Pipeline name up to 64 characters"
 # OPTIONAL
@@ -19,10 +28,10 @@ settings = {                     # Util method to build variable.
                                  # Needs values in order: initial, min, max, step (for slider).
                                  # Supports bool, int and float.
                                  # For bool set None value for min, max and step [see below 'Bool example'].
-    'Label up to 32 characters': build_variable(1, 0, 10, 1, "Variable tooltip up to 128 characters."),
-    'Bool example': build_variable(False, None, None, None, "Test bool variable."),
-    'Int example': build_variable(1, 0, 10, 1, "Test int variable."),
-    'Float example': build_variable(1.0, 0.0, 10.0, 1.0, "Test float variable.")
+    "Label up to 32 characters": build_variable(1, 0, 10, 1, "Variable tooltip up to 128 characters."),
+    "Bool example": build_variable(False, None, None, None, "Test bool variable."),
+    "Int example": build_variable(1, 0, 10, 1, "Test int variable."),
+    "Float example": build_variable(1.0, 0.0, 10.0, 1.0, "Test float variable."),
 }
 
 # OPTIONAL
@@ -33,6 +42,7 @@ def before_change_settings(key: str, value: float) -> None:
     # Should reinit all objects connected to given 'key'.
     pass
 
+
 # OPTIONAL
 def after_change_settings(key: str, value: float) -> None:
     # Called right after the settings change.
@@ -41,10 +51,12 @@ def after_change_settings(key: str, value: float) -> None:
     # Should reinit all objects connected to given 'key'.
     pass
 
+
 # OPTIONAL
 def on_load() -> None:
     # Should initialize all necessary objects for processing.
     pass
+
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     # Should process frame.
@@ -52,6 +64,7 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
     # Array has to be 3-D with height, width, channels as dimensions.
     # Array has to contains uint8 values.
     return frame
+
 
 # OPTIONAL
 def on_unload() -> None:
