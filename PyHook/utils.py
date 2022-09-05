@@ -11,16 +11,28 @@ import os
 import sys
 from subprocess import check_output
 from typing import Any, Dict, List, Union
+from os.path import abspath, dirname
 
 # Runtime info
 _LOCAL_PYTHON_EXE = None
 _RUNTIME_HANDLE = None
 
-_DIR = os.getcwd()
 _IS_64_BIT = sys.maxsize > 2**32
 _LOCAL_PYTHON_ENV = "LOCAL_PYTHON"
 _RUNTIME_DLL = "vcruntime140_1.dll"
 _MEIPASS = "_MEIPASS"
+
+
+def _is_frozen_bundle() -> bool:
+    """Checks if app is running in PyInstaller frozen bundle.
+
+    Returns:
+        bool: True if app is running in PyInstaller frozen bundle.
+    """
+    return getattr(sys, "frozen", False) and hasattr(sys, _MEIPASS)
+
+
+_DIR = os.getcwd() if _is_frozen_bundle() else dirname(abspath(__file__))
 
 
 class _LocalPython:
@@ -112,15 +124,6 @@ def _set_local_python() -> None:
             _LOCAL_PYTHON_EXE = path_from_env
         except FileNotFoundError as ex:
             raise ValueError("LOCAL_PYTHON is pointing to invalid Python3 executable.") from ex
-
-
-def _is_frozen_bundle() -> bool:
-    """Checks if app is running in PyInstaller frozen bundle.
-
-    Returns:
-        bool: True if app is running in PyInstaller frozen bundle.
-    """
-    return getattr(sys, "frozen", False) and hasattr(sys, _MEIPASS)
 
 
 def use_local_python() -> _LocalPython:

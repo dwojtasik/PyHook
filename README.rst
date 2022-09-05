@@ -57,6 +57,10 @@ You can download selected binary files from `Releases <https://github.com/dwojta
 2. Start game with `ReShade <https://reshade.me/>`_ installed.
 3. Start PyHook.exe.
 
+For custom pipelines (e.g. AI ones) install requirements and setup LOCAL_PYTHON env variable that points to Python3 binary in required version.
+
+Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
+
 If antyvirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 
 Build
@@ -77,6 +81,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added AI Cartoon-GAN pipeline example using https://github.com/FilipAndersson245/cartoon-gan
 - Added dynamic modules load from local Python environment.
 - Added fallback to manual PID supply.
 - Updated pipeline template.
@@ -85,7 +90,7 @@ DEV / NEXT
 - Added pipeline utils to faster pipeline creation.
 - Added dynamic pipeline variables parsing.
 - Added shared memory segment for pipeline settings.
-- Added AI pipeline example using https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2
+- Added AI style transfer pipeline example using https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2
 - Added pipeline lifecycle support (load/process/unload).
 - Added pipeline ordering and selection GUI in ReShade addon UI.
 - Added shared memory for configuration.

@@ -9,7 +9,7 @@ with use_local_python():
     import torch.nn.functional as F
     from torchvision import transforms
 
-name = "AI Fast style transfer"
+name = "AI Style transfer"
 version = "0.0.1"
 desc = "Torch pipeline for fast style transfer."
 
@@ -100,6 +100,11 @@ device = None
 transform = None
 net = None
 
+def after_change_settings(key: str, value: float) -> None:
+    if key == "Scale":
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
 def on_load() -> None:
     global device, transform, net
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -109,7 +114,7 @@ def on_load() -> None:
     ])
     with torch.no_grad():
         net = TransformerMobileNet()
-        model_path = resolve_path('ai_test/mosaic.pth')
+        model_path = resolve_path('ai_style_transfer\\mosaic.pth')
         state_dict = torch.load(model_path)
         net.load_state_dict(state_dict)
         net.to(device)

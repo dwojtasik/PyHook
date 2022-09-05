@@ -13,6 +13,9 @@ import numpy as np
 #     import module
 #     import otherModule
 #     from module import xyz
+# IMPORTANT
+# Create pip requirements file for additional modules to be installed
+# Preferred name: "pipeline_file.requirements.txt"
 
 name = "Pipeline name up to 64 characters"
 # OPTIONAL
