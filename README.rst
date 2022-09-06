@@ -31,6 +31,7 @@ Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
+- `CUDA <https://developer.nvidia.com/cuda-11.3.0-download-archive>`_ == 11.3 (optional for AI pipelines only)
 - Only for specific pipelines: Any libraries that are required by pipeline code
 
 Build
