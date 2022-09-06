@@ -9,9 +9,11 @@ with use_local_python():
     import torch.nn.functional as F
     from torchvision import transforms
 
-name = "AI Cartoon-GAN"
+name = "[AI] Cartoon-GAN"
 version = "0.0.1"
-desc = "Torch pipeline for AI cartoon style."
+desc = """Torch pipeline for AI cartoon stylization.
+Based on "Cartoon-GAN" from:
+https://github.com/FilipAndersson245/cartoon-gan"""
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing.")

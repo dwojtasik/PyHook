@@ -87,7 +87,7 @@ class _LocalPython:
         self._added_paths = None
 
     def __enter__(self) -> "_LocalPython":
-        """Called at the start of with block .
+        """Called at the start of with block.
 
         Returns:
             _LocalPython: Local Python handle.

@@ -5,7 +5,7 @@ import numpy as np
 with use_local_python():
     import cv2
 
-name = "Test-StaticImage"
+name = "[Test] Static Image"
 version = "0.0.1"
 desc = "Dummy pipeline for testing. Displays static image."
 

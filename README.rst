@@ -81,6 +81,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added AI colorization pipeline example using https://github.com/richzhang/colorization
 - Added AI Cartoon-GAN pipeline example using https://github.com/FilipAndersson245/cartoon-gan
 - Added dynamic modules load from local Python environment.
 - Added fallback to manual PID supply.

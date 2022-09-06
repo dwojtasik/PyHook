@@ -1,9 +1,9 @@
 from utils import build_variable, read_value
 import numpy as np
 
-name = "Test-RGB"
+name = "[Test] RGB"
 version = "0.0.1"
-desc = "Dummy pipeline for testing. Tests multiple UI settings."
+desc = "Dummy pipeline for testing. Tests RGB manipulation and multiple UI settings."
 
 settings = {
     "R": build_variable(0, -255, 255, 1, "Red channel modifier."),
