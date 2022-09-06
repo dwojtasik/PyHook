@@ -57,7 +57,13 @@ You can download selected binary files from `Releases <https://github.com/dwojta
 2. Start game with `ReShade <https://reshade.me/>`_ installed.
 3. Start PyHook.exe.
 
-For custom pipelines (e.g. AI ones) install requirements and setup LOCAL_PYTHON env variable that points to Python3 binary in required version.
+For custom pipelines (e.g. AI ones) install requirements and setup ENV variables that points to Python3 binary in required version.
+
+Available ENV variables:
+
+- LOCAL_PYTHON_32 (path to 32-bit Python)
+- LOCAL_PYTHON_64 (path to 64-bit Python)
+- LOCAL_PYTHON (fallback path if none of above is set)
 
 Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
 
@@ -81,6 +87,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added combo box selection in settings UI.
 - Added AI colorization pipeline example using https://github.com/richzhang/colorization
 - Added AI Cartoon-GAN pipeline example using https://github.com/FilipAndersson245/cartoon-gan
 - Added dynamic modules load from local Python environment.

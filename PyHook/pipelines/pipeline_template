@@ -31,10 +31,13 @@ settings = {                     # Util method to build variable.
                                  # Needs values in order: initial, min, max, step (for slider).
                                  # Supports bool, int and float.
                                  # For bool set None value for min, max and step [see below 'Bool example'].
+                                 # For combo box use %COMBO[labels_comma_separated]Tooltip format in tooltip.
+                                 # Combo box is treated as int selection - selected index will be returned, counted from 0.
     "Label up to 32 characters": build_variable(1, 0, 10, 1, "Variable tooltip up to 128 characters."),
     "Bool example": build_variable(False, None, None, None, "Test bool variable."),
     "Int example": build_variable(1, 0, 10, 1, "Test int variable."),
     "Float example": build_variable(1.0, 0.0, 10.0, 1.0, "Test float variable."),
+    "Combo example": build_variable(0, 1, 3, 1, "%COMBO[Label1,Label2,Label3]Tooltip for whole combo."),
 }
 
 # OPTIONAL

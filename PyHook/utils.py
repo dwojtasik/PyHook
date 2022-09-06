@@ -15,10 +15,13 @@ from os.path import abspath, dirname
 
 # Runtime info
 _LOCAL_PYTHON_EXE = None
+_LOCAL_PATHS = []
 _RUNTIME_HANDLE = None
 
 _IS_64_BIT = sys.maxsize > 2**32
 _LOCAL_PYTHON_ENV = "LOCAL_PYTHON"
+_LOCAL_PYTHON_ENV_32 = "LOCAL_PYTHON_32"
+_LOCAL_PYTHON_ENV_64 = "LOCAL_PYTHON_64"
 _RUNTIME_DLL = "vcruntime140_1.dll"
 _MEIPASS = "_MEIPASS"
 
@@ -46,13 +49,8 @@ class _LocalPython:
     """
 
     def __init__(self):
-        local_paths = (
-            check_output(f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"")
-            .decode("utf-8")
-            .split(";")
-        )
         self._sys_path = [p for p in sys.path]
-        self._added_paths = [self._add_path(p) for p in local_paths if self._is_valid_path(p)]
+        self._added_paths = [self._add_path(p) for p in _LOCAL_PATHS if self._is_valid_path(p)]
 
     def _is_valid_path(self, path: str) -> bool:
         """Checks if path is valid to be used in bundled sys.path.
@@ -103,14 +101,17 @@ class _LocalPython:
 
 
 def _set_local_python() -> None:
-    """Reads and stores local Python executable path.
+    """Reads and stores local Python executable path and local Python sys.path.
 
-    Firstly checks user defined env "LOCAL_PYTHON".
+    Firstly checks user defined envs "LOCAL_PYTHON_64", "LOCAL_PYTHON_32" and "LOCAL_PYTHON".
     If not set it will try to read executable path from python3 binary that is set in path.
+    When executable is found it will try to read local Python sys.path.
     """
     # pylint: disable=global-statement
-    global _LOCAL_PYTHON_EXE
-    path_from_env = os.getenv(_LOCAL_PYTHON_ENV, None)
+    global _LOCAL_PYTHON_EXE, _LOCAL_PATHS
+    path_from_env = os.getenv(
+        _LOCAL_PYTHON_ENV_64 if _IS_64_BIT else _LOCAL_PYTHON_ENV_32, os.getenv(_LOCAL_PYTHON_ENV, None)
+    )
     if path_from_env is None:
         try:
             _LOCAL_PYTHON_EXE = check_output("python3 -c \"import sys;print(sys.executable,end='')\"").decode("utf-8")
@@ -124,6 +125,11 @@ def _set_local_python() -> None:
             _LOCAL_PYTHON_EXE = path_from_env
         except FileNotFoundError as ex:
             raise ValueError("LOCAL_PYTHON is pointing to invalid Python3 executable.") from ex
+    _LOCAL_PATHS = (
+        check_output(f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"")
+        .decode("utf-8")
+        .split(";")
+    )
 
 
 def use_local_python() -> _LocalPython:

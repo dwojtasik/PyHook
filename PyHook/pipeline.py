@@ -9,6 +9,7 @@ PyHook pipeline definition
 import glob
 import importlib.util
 import logging
+import re
 import sys
 from os.path import abspath, basename, isdir
 from typing import Any, Callable, Dict, List
@@ -16,6 +17,7 @@ from typing import Any, Callable, Dict, List
 import numpy as np
 
 _PIPELINE_DIRS = ["./pipelines", "./PyHook/pipelines"]
+_COMBO_TAG_REGEX = re.compile(r"^%COMBO\[(.*?,)*.*?\].*$")
 
 
 class PipelinesDirNotFoundError(Exception):
@@ -84,20 +86,29 @@ class Pipeline:
         self.version = version
         self.desc = desc
         self.settings = settings
-        self.mappings = {} if settings is None else {k: self._to_internal_type(v[0]) for k, v in settings.items()}
+        self.mappings = (
+            {} if settings is None else {k: self._to_internal_type(v[0], v[4]) for k, v in settings.items()}
+        )
 
-    def _to_internal_type(self, value: Any) -> int:
+    def _to_internal_type(self, value: Any, tooltip: str) -> int:
         """Converts given value to its internal type.
 
         Args:
             value (Any): Value to convert.
+            tooltip (str): Tooltip to combo box detection.
 
         Returns:
             int: Code for internal type.
+                0 - bool
+                1 - int
+                2 - float
+                3 - int, displayed as combo box selection
         """
         if str(value) in ["True", "False"]:
             return 0
         if isinstance(value, int):
+            if _COMBO_TAG_REGEX.match(tooltip):
+                return 3
             return 1
         return 2
 
@@ -113,7 +124,7 @@ class Pipeline:
         """
         if self.mappings[key] == 0:
             return bool(value)
-        if self.mappings[key] == 1:
+        if self.mappings[key] == 1 or self.mappings[key] == 3:
             return int(value)
         return value
 

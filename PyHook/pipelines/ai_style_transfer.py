@@ -16,8 +16,15 @@ Based on "Fast neural style with MobileNetV2 bottleneck blocks" from:
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2"""
 
 settings = {
-    "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing.")
+    "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing."),
+    "Model": build_variable(1, 0, 14, 1, "%COMBO[Candy,Mosaic,Picasso]Style model.")
 }
+
+paths = [
+    resolve_path('ai_style_transfer\\candy.pth'),
+    resolve_path('ai_style_transfer\\mosaic.pth'),
+    resolve_path('ai_style_transfer\\picasso.pth'),
+]
 
 # Following code is using:
 # Fast neural style with MobileNetV2 bottleneck blocks
@@ -106,6 +113,18 @@ def after_change_settings(key: str, value: float) -> None:
     if key == "Scale":
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
+    if key == "Model":
+        global net
+        with torch.no_grad():
+            model_path = paths[int(value)]
+            state_dict = torch.load(model_path)
+            del net
+            net = TransformerMobileNet()
+            net.load_state_dict(state_dict)
+            net.to(device)
+            net.eval()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 def on_load() -> None:
     global device, transform, net
@@ -116,7 +135,7 @@ def on_load() -> None:
     ])
     with torch.no_grad():
         net = TransformerMobileNet()
-        model_path = resolve_path('ai_style_transfer\\mosaic.pth')
+        model_path = paths[read_value(settings, "Model")]
         state_dict = torch.load(model_path)
         net.load_state_dict(state_dict)
         net.to(device)
