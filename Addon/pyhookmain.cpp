@@ -316,7 +316,7 @@ bool SliderWithSteps(PipelineVar* pvar, bool is_float)
     return modified;
 }
 
-bool ComboWithVector(PipelineVar* pvar, ComboVar* sb_var) {
+bool ComboWithVector(PipelineVar* pvar, ComboVar* cvar) {
     bool modified = false;
     int int_val = int(pvar->value);
 
@@ -328,10 +328,10 @@ bool ComboWithVector(PipelineVar* pvar, ComboVar* sb_var) {
 
     ImGui::BeginGroup();
 
-    if (ImGui::BeginCombo("##combo", sb_var->items[int_val].c_str())) {
-        for (int i = 0; i < sb_var->items.size(); i++) {
+    if (ImGui::BeginCombo("##combo", cvar->items[int_val].c_str())) {
+        for (int i = 0; i < cvar->items.size(); i++) {
             const bool isSelected = (int_val == i);
-            if (ImGui::Selectable(sb_var->items[i].c_str(), isSelected)) {
+            if (ImGui::Selectable(cvar->items[i].c_str(), isSelected)) {
                 if (int_val != i) {
                     int_val = i;
                     modified = true;
@@ -356,7 +356,7 @@ bool ComboWithVector(PipelineVar* pvar, ComboVar* sb_var) {
     ImGui::SameLine(0, spacing);
     if (ImGui::ArrowButton(">", ImGuiDir_Right))
     {
-        if (int_val < sb_var->items.size() - 1) {
+        if (int_val < cvar->items.size() - 1) {
             int_val++;
             modified = true;
         }
@@ -370,8 +370,8 @@ bool ComboWithVector(PipelineVar* pvar, ComboVar* sb_var) {
         pvar->value = float(int_val);
     }
 
-    if (ImGui::IsItemHovered() && (strlen(sb_var->tooltip) > 0))
-        ImGui::SetTooltip(sb_var->tooltip);
+    if (ImGui::IsItemHovered() && (strlen(cvar->tooltip) > 0))
+        ImGui::SetTooltip(cvar->tooltip);
 
     return modified;
 }
@@ -520,10 +520,10 @@ static void draw_overlay(effect_runtime* runtime)
                                             tooltip_s << c;
                                     }
                                 }
-                                ComboVar sb_var;
-                                sb_var.items = opts;
-                                sprintf_s(sb_var.tooltip, "%s", tooltip_s.str().c_str());
-                                select_box_vars[varId] = sb_var;
+                                ComboVar cvar;
+                                cvar.items = opts;
+                                sprintf_s(cvar.tooltip, "%s", tooltip_s.str().c_str());
+                                select_box_vars[varId] = cvar;
                             }
                             if (ComboWithVector(pvar, &select_box_vars[varId])) {
                                 var_modifed = true;

@@ -109,9 +109,11 @@ def _set_local_python() -> None:
     """
     # pylint: disable=global-statement
     global _LOCAL_PYTHON_EXE, _LOCAL_PATHS
-    path_from_env = os.getenv(
-        _LOCAL_PYTHON_ENV_64 if _IS_64_BIT else _LOCAL_PYTHON_ENV_32, os.getenv(_LOCAL_PYTHON_ENV, None)
-    )
+    used_env = _LOCAL_PYTHON_ENV_64 if _IS_64_BIT else _LOCAL_PYTHON_ENV_32
+    path_from_env = os.getenv(used_env, None)
+    if path_from_env is None:
+        used_env = _LOCAL_PYTHON_ENV
+        path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
         try:
             _LOCAL_PYTHON_EXE = check_output("python3 -c \"import sys;print(sys.executable,end='')\"").decode("utf-8")
@@ -124,7 +126,7 @@ def _set_local_python() -> None:
             check_output(f'{path_from_env} -c "1"')
             _LOCAL_PYTHON_EXE = path_from_env
         except FileNotFoundError as ex:
-            raise ValueError("LOCAL_PYTHON is pointing to invalid Python3 executable.") from ex
+            raise ValueError(f"{used_env} is pointing to invalid Python3 executable.") from ex
     _LOCAL_PATHS = (
         check_output(f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"")
         .decode("utf-8")

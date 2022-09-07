@@ -17,7 +17,7 @@ https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2"""
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing."),
-    "Model": build_variable(1, 0, 14, 1, "%COMBO[Candy,Mosaic,Picasso]Style model.")
+    "Model": build_variable(1, 0, 2, 1, "%COMBO[Candy,Mosaic,Picasso]Style model.")
 }
 
 paths = [
@@ -116,10 +116,9 @@ def after_change_settings(key: str, value: float) -> None:
     if key == "Model":
         global net
         with torch.no_grad():
+            net = TransformerMobileNet()
             model_path = paths[int(value)]
             state_dict = torch.load(model_path)
-            del net
-            net = TransformerMobileNet()
             net.load_state_dict(state_dict)
             net.to(device)
             net.eval()
@@ -159,9 +158,6 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
 
 def on_unload() -> None:
     global device, transform, net
-    del device
-    del transform
-    del net
     device = None
     transform = None
     net = None

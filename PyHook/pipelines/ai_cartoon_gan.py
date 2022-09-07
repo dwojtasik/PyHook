@@ -161,9 +161,6 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
 
 def on_unload() -> None:
     global device, transform, net
-    del device
-    del transform
-    del net
     device = None
     transform = None
     net = None

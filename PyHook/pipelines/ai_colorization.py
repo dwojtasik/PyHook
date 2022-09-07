@@ -257,8 +257,6 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
 
 def on_unload() -> None:
     global device, net, has_cuda
-    del device
-    del net
     device = None
     net = None
     has_cuda = False

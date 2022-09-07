@@ -23,3 +23,6 @@ Addon/.vs/
 Addon/*.filters
 Addon/*.user
 Addon/*.aps
+
+# Models
+*.pth
