@@ -6,8 +6,10 @@ Utils for DLL management
 :license: MIT, see LICENSE for more details.
 """
 
+import glob
+import os
 from ctypes import CDLL, c_char_p, c_void_p, cdll, windll
-from os.path import abspath, basename, exists
+from os.path import abspath, basename, dirname, exists
 from typing import TypeVar
 
 import psutil
@@ -68,6 +70,7 @@ class AddonHandler:
     pid (int): The process ID.
     is_64_bit (bool): Flag if given process is 64 bit.
     exe (str): The process executable as an absolute path.
+    dir_path (str): The process directory as an absolute path.
     addon_path (str): The absolute path to addon DLL file.
 
     Raises:
@@ -92,6 +95,7 @@ class AddonHandler:
             self.pid = process.pid
             self.is_64_bit = is_process_64_bit(self.pid)
             self.exe = process.exe()
+            self.dir_path = dirname(self.exe)
             if not verify or self._has_loaded_reshade():
                 self.addon_path = self._find_addon_path()
                 return
@@ -131,29 +135,37 @@ class AddonHandler:
         """Validates if given process has loaded required ReShade version.
 
         ReShade version is verified via DLL extern variable.
+        All logs created during DLL loading will be removed.
 
         Returns:
             bool: True if process has valid ReShade version loaded.
         """
-        for test_dll_path in self._matching_dlls:
-            test_dll_handle = None
-            try:
-                test_dll_handle = cdll[test_dll_path]
-                if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
-                    self.reshade_version = _get_dll_extern_variable(
-                        test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
-                    ).decode("utf-8")
-                    if self.reshade_version >= _RESHADE_MIN_VERSION:
-                        self.reshade_path = test_dll_path
-                        return True
-                    return False
-            except Exception:
-                pass
-            finally:
-                if test_dll_handle is not None:
-                    _unload_dll(test_dll_handle, self.is_64_bit)
-                    del test_dll_handle
-        return False
+        logs_before = glob.glob(f"{self.dir_path}/*.log")
+        try:
+            for test_dll_path in self._matching_dlls:
+                test_dll_handle = None
+                try:
+                    test_dll_handle = cdll[test_dll_path]
+                    if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
+                        self.reshade_version = _get_dll_extern_variable(
+                            test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
+                        ).decode("utf-8")
+                        if self.reshade_version >= _RESHADE_MIN_VERSION:
+                            self.reshade_path = test_dll_path
+                            return True
+                        return False
+                except Exception:
+                    pass
+                finally:
+                    if test_dll_handle is not None:
+                        _unload_dll(test_dll_handle, self.is_64_bit)
+                        del test_dll_handle
+            return False
+        finally:
+            logs_after = glob.glob(f"{self.dir_path}/*.log")
+            new_logs = [log_f for log_f in logs_after if log_f not in logs_before]
+            for new_log in new_logs:
+                os.remove(new_log)
 
 
 def _unload_dll(dll_handle: CDLL, is_64_bit: bool) -> None:

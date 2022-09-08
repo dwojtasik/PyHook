@@ -22,7 +22,7 @@ Features
 - Pipeline lifecycle support (load/process/unload)
 - Pipeline settings callbacks (before and after change)
 - Frame processing in Python via ``numpy`` array
-- JSON settings with pipeliens settings.
+- JSON file with pipeliens settings
 - Local Python environment usage in pipeline code
 
 Requirements

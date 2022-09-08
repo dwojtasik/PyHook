@@ -8,7 +8,6 @@ Python hook for ReShade processing
 import logging
 import os
 import sys
-from os.path import dirname
 from threading import Timer
 
 import numpy as np
@@ -133,10 +132,11 @@ def _main():
             _wait_on_exit(1)
         logger.info("- Loading PyHook configuration if exists...")
         save_later = None
-        process_dir = dirname(addon_handler.exe)
-        runtime_data, data_exists = load_settings(pipelines, process_dir)
+        runtime_data, data_exists = load_settings(pipelines, addon_handler.dir_path)
         if not data_exists:
-            save_settings(pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, process_dir)
+            save_settings(
+                pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path
+            )
         logger.info("- Writing configuration to addon...")
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
         logger.info("- Started processing...")
@@ -167,7 +167,7 @@ def _main():
                 save_later = Timer(
                     _AUTOSAVE_SETTINGS_SECONDS,
                     save_settings,
-                    [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, process_dir],
+                    [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path],
                 )
                 save_later.start()
             # Skip frame processing if user didn't select any pipeline
