@@ -177,7 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imgui_overlay.cpp" />
-    <ClCompile Include="pyhookmain.cpp" />
+    <ClCompile Include="pyhook_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PyHookAddon.rc" />
