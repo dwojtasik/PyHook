@@ -22,7 +22,7 @@ Features
 - Pipeline lifecycle support (load/process/unload)
 - Pipeline settings callbacks (before and after change)
 - Frame processing in Python via ``numpy`` array
-- JSON file with pipeliens settings
+- JSON file with pipelines settings
 - Local Python environment usage in pipeline code
 
 Requirements
@@ -89,6 +89,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added logs removal from DLL loading.
 - Added JSON settings for pipelines.
 - Added combo box selection in settings UI.
 - Added AI colorization pipeline example using https://github.com/richzhang/colorization
