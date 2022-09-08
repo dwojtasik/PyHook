@@ -12,20 +12,29 @@ from typing import List, Tuple
 
 from pipeline import Pipeline, PipelineRuntimeData
 
-_MAX_WIDTH = 3840
-_MAX_HEIGHT = 2160
+# Handle for kernel32 DLL.
 _KERNEL32 = windll.kernel32
 
+# Const values for shared memory allocation.
+# Max resolution width.
+_MAX_WIDTH = 3840
+# Max resolution height.
+_MAX_HEIGHT = 2160
+# Frame array size (width * height * 3 color channel (RGB)).
 SIZE_ARRAY = _MAX_WIDTH * _MAX_HEIGHT * 3
+# Frame array type, where each RGB component is stored as uint8.
 FRAME_ARRAY = c_uint8 * SIZE_ARRAY
-
+# Max pipeline definitions.
 PIPELINE_LIMIT = 100
+# Max variable count per pipeline.
 PIPELINE_VAR_LIMIT = 10
-PIPELINE_SHORT_STRING = c_char * 12
-PIPELINE_KEY_STRING = c_char * 32
-PIPELINE_STRING = c_char * 64
-PIPELINE_SHORT_TEXT = c_char * 256
-PIPELINE_TEXT = c_char * 512
+
+# Pipeline C types for strings with multiple lengths.
+PIPELINE_SHORT_STRING = c_char * 12  # Used in version string.
+PIPELINE_KEY_STRING = c_char * 32  # Used in variable names.
+PIPELINE_STRING = c_char * 64  # Used in pipeline names.
+PIPELINE_SHORT_TEXT = c_char * 256  # Used in variable tooltip.
+PIPELINE_TEXT = c_char * 512  # Used in pipeline description.
 
 
 class SharedData(Structure):
@@ -77,6 +86,7 @@ class PipelineVar(Structure):
     ]
 
 
+# Pipeline variables C array.
 PIPELINE_SETTINGS = PIPELINE_VAR_LIMIT * PipelineVar
 
 
@@ -114,7 +124,9 @@ class PipelineData(ActivePipeline):
     ]
 
 
+# Pipelines C array.
 PIPELINE_ARRAY = PIPELINE_LIMIT * PipelineData
+# C string array of pipelines IDs (filenames) as order of processing.
 PIPELINE_ORDER = PIPELINE_LIMIT * PIPELINE_STRING
 
 

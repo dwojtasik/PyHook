@@ -13,7 +13,7 @@ from threading import Timer
 import numpy as np
 
 # pylint: disable=unused-import
-import utils  # To be available in PyInstaller frozen bundle
+import utils  # To be available in PyInstaller frozen bundle.
 from _version import __version__
 from dll_utils import (
     AddonHandler,
@@ -26,6 +26,7 @@ from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
 from pipeline import PipelinesDirNotFoundError, load_pipelines, load_settings, save_settings
 from win_utils import is_started_as_admin
 
+# Time in seconds after last settings change to wait until autosave.
 _AUTOSAVE_SETTINGS_SECONDS = 5
 
 
@@ -104,7 +105,7 @@ def _pid_input_fallback(logger: logging.Logger) -> AddonHandler:
 def _main():
     """Script entrypoint"""
     try:
-        os.system("cls")  # To clear PyInstaller warnings
+        os.system("cls")  # To clear PyInstaller warnings.
         displayed_ms_error = False
         logger = _get_logger()
         logger.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
@@ -143,14 +144,14 @@ def _main():
         while True:
             memory_manager.wait()
             data = memory_manager.read_shared_data()
-            # Multisampled buffer cannot be processed
+            # Multisampled buffer cannot be processed.
             if data.multisampled:
                 if not displayed_ms_error:
                     logger.error("-- Disable multisampling (MSAA) in game to process frames!")
                     displayed_ms_error = True
                 memory_manager.unlock()
                 continue
-            # Process pipelines changes
+            # Process pipelines changes.
             runtime_data, needs_save = memory_manager.read_pipelines()
             for unload_pipeline in runtime_data.to_unload:
                 pipelines[unload_pipeline].unload()
@@ -160,7 +161,7 @@ def _main():
                 is_active = update_pipeline in runtime_data.active_pipelines
                 for key, value in settings.items():
                     pipelines[update_pipeline].change_settings(is_active, key, value)
-            # Autosave settings
+            # Autosave settings.
             if needs_save:
                 if save_later is not None and not save_later.finished.is_set():
                     save_later.cancel()
@@ -170,11 +171,11 @@ def _main():
                     [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path],
                 )
                 save_later.start()
-            # Skip frame processing if user didn't select any pipeline
+            # Skip frame processing if user didn't select any pipeline.
             if len(runtime_data.active_pipelines) == 0:
                 memory_manager.unlock()
                 continue
-            # Process all selected pipelines in order
+            # Process all selected pipelines in order.
             frame = _decode_frame(data)
             for active_pipeline in runtime_data.active_pipelines:
                 frame = pipelines[active_pipeline].process_frame(frame, data.width, data.height, data.frame_count)

@@ -18,8 +18,11 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
+# Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
+# Search paths (in priority order) for pipelines directory.
 _PIPELINE_DIRS = ["./pipelines", "./PyHook/pipelines"]
+# Regex for combo variable detection.
 _COMBO_TAG_REGEX = re.compile(r"^%COMBO\[(.*?,)*.*?\].*$")
 
 

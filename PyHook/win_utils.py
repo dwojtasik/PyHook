@@ -11,10 +11,14 @@ from platform import architecture
 
 from psutil import pid_exists
 
+# String for 32-bit architecture.
 _ARCH_32_BIT = "32bit"
+# String for 64-bit architecture.
 _ARCH_64_BIT = "64bit"
+# Predefined process-specific access rights.
 _PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
+# Handle for kernel32 DLL.
 _KERNEL32 = ctypes.windll.kernel32
 
 

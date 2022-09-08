@@ -19,6 +19,7 @@ from win_utils import is_process_64_bit, to_arch_string
 
 T = TypeVar("T")
 
+# Search paths (in priority order) for 32-bit addon file.
 _ADDON_PATHS_32BIT = [
     "./Addons/PyHook32.addon",
     "./Addon/Release/PyHook.addon",
@@ -26,6 +27,8 @@ _ADDON_PATHS_32BIT = [
     "./PyHook32.addon",
     "./PyHook.addon",
 ]
+
+# Search paths (in priority order) for 64-bit addon file.
 _ADDON_PATHS_64BIT = [
     "./Addons/PyHook64.addon",
     "./Addon/x64/Release/PyHook.addon",
@@ -34,8 +37,11 @@ _ADDON_PATHS_64BIT = [
     "./PyHook.addon",
 ]
 
+# ReShade extern variable to read version.
 _RESHADE_VERSION_EXTERN = "ReShadeVersion"
+# ReShade minimum version supported.
 _RESHADE_MIN_VERSION = "5.0.0"
+# ReShade valid DLL names to load and check.
 _RESHADE_VALID_DLL_NAMES = ["d3d9.dll", "d3d10.dll", "d3d11.dll", "d3d12.dll", "dxgi.dll", "opengl32.dll"]
 
 

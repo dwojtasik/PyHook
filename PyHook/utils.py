@@ -14,15 +14,24 @@ from typing import Any, Dict, List, Union
 from os.path import abspath, dirname
 
 # Runtime info
+# Path to local Python executable.
 _LOCAL_PYTHON_EXE = None
+# Output of sys.path from local Python.
 _LOCAL_PATHS = []
+# Handle of vcruntime140_1.dll needed for 64-bit PyHook.
 _RUNTIME_HANDLE = None
 
+# Flag if bundled Python is 64-bit.
 _IS_64_BIT = sys.maxsize > 2**32
+# ENV variable name for local Python. Used as fallback if 32/64-bit version is not set.
 _LOCAL_PYTHON_ENV = "LOCAL_PYTHON"
+# ENV variable name for local 32-bit Python.
 _LOCAL_PYTHON_ENV_32 = "LOCAL_PYTHON_32"
+# ENV variable name for local 64-bit Python.
 _LOCAL_PYTHON_ENV_64 = "LOCAL_PYTHON_64"
+# Name of runtime DLL needed for 64-bit PyHook.
 _RUNTIME_DLL = "vcruntime140_1.dll"
+# Name of temporary directory that Pyinstaller will create with bundled Python.
 _MEIPASS = "_MEIPASS"
 
 
@@ -35,6 +44,7 @@ def _is_frozen_bundle() -> bool:
     return getattr(sys, "frozen", False) and hasattr(sys, _MEIPASS)
 
 
+# Path to directory to look for pipeline files.
 _DIR = os.getcwd() if _is_frozen_bundle() else dirname(abspath(__file__))
 
 
