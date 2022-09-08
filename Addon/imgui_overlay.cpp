@@ -13,18 +13,6 @@
 using namespace std;
 using namespace ImGui;
 
-template<typename... Args>
-static void reshade_log(Args... inputs)
-{
-    stringstream s;
-    (
-        [&]{
-            s << inputs;
-        } (), ...
-    );
-    reshade::log_message(3, s.str().c_str());
-}
-
 static map<string, PipelineData*> pipeline_map{};
 static map<string, ComboVar> select_box_vars{};
 static int selected_pipeline = INT_MAX;
@@ -143,14 +131,11 @@ bool ComboWithVector(PipelineVar* pvar, ComboVar* cvar) {
 
 void DrawSettingsOverlay(SharedConfigData* shared_cfg)
 {
-    reshade_log(0);
     bool modified = false;
     bool display_settings = false;
 
     AlignTextToFramePadding();
     BeginChild("##PyHookPipelines", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
-
-    reshade_log(1);
 
     if (pipeline_map.size() == 0) {
         for (int idx = 0; idx < shared_cfg->count; idx++) {
