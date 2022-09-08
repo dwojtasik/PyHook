@@ -8,6 +8,8 @@ Python hook for ReShade processing
 import logging
 import os
 import sys
+from os.path import dirname
+from threading import Timer
 
 import numpy as np
 
@@ -22,8 +24,10 @@ from dll_utils import (
     get_reshade_addon_handler,
 )
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
-from pipeline import PipelinesDirNotFoundError, load_pipelines
+from pipeline import PipelinesDirNotFoundError, load_pipelines, load_settings, save_settings
 from win_utils import is_started_as_admin
+
+_AUTOSAVE_SETTINGS_SECONDS = 5
 
 
 def _get_logger() -> logging.Logger:
@@ -127,8 +131,14 @@ def _main():
         except Exception as ex:
             logger.error("-- Cannot inject addon into given process.", exc_info=ex)
             _wait_on_exit(1)
+        logger.info("- Loading PyHook configuration if exists...")
+        save_later = None
+        process_dir = dirname(addon_handler.exe)
+        runtime_data, data_exists = load_settings(pipelines, process_dir)
+        if not data_exists:
+            save_settings(pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, process_dir)
         logger.info("- Writing configuration to addon...")
-        memory_manager.write_shared_pipelines(list(pipelines.values()))
+        memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
         logger.info("- Started processing...")
         while True:
             memory_manager.wait()
@@ -141,22 +151,32 @@ def _main():
                 memory_manager.unlock()
                 continue
             # Process pipelines changes
-            active_pipelines, to_unload, to_load, changes = memory_manager.read_pipelines()
-            for unload_pipeline in to_unload:
+            runtime_data, needs_save = memory_manager.read_pipelines()
+            for unload_pipeline in runtime_data.to_unload:
                 pipelines[unload_pipeline].unload()
-            for load_pipeline in to_load:
+            for load_pipeline in runtime_data.to_load:
                 pipelines[load_pipeline].load()
-            for update_pipeline, settings in changes.items():
-                is_active = update_pipeline in active_pipelines
+            for update_pipeline, settings in runtime_data.changes.items():
+                is_active = update_pipeline in runtime_data.active_pipelines
                 for key, value in settings.items():
                     pipelines[update_pipeline].change_settings(is_active, key, value)
+            # Autosave settings
+            if needs_save:
+                if save_later is not None and not save_later.finished.is_set():
+                    save_later.cancel()
+                save_later = Timer(
+                    _AUTOSAVE_SETTINGS_SECONDS,
+                    save_settings,
+                    [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, process_dir],
+                )
+                save_later.start()
             # Skip frame processing if user didn't select any pipeline
-            if len(active_pipelines) == 0:
+            if len(runtime_data.active_pipelines) == 0:
                 memory_manager.unlock()
                 continue
             # Process all selected pipelines in order
             frame = _decode_frame(data)
-            for active_pipeline in active_pipelines:
+            for active_pipeline in runtime_data.active_pipelines:
                 frame = pipelines[active_pipeline].process_frame(frame, data.width, data.height, data.frame_count)
             _encode_frame(data, frame)
             memory_manager.unlock()

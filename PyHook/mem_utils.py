@@ -8,9 +8,9 @@ Utils for shared memory management
 
 import mmap
 from ctypes import Structure, c_bool, c_char, c_float, c_int, c_longlong, c_short, c_uint8, c_uint32, sizeof, windll
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
-from pipeline import Pipeline
+from pipeline import Pipeline, PipelineRuntimeData
 
 _MAX_WIDTH = 3840
 _MAX_HEIGHT = 2160
@@ -153,6 +153,7 @@ class MemoryManager:
         to process data in ReShade addon part.
     _shmem (mmap.mmap): Shared memory using memory-mapped file object for frame processing.
     _shcfg (mmap.mmap): Shared memory using memory-mapped file object for configuration.
+    _pipeline_order (List[str]): Order of the pipelines.
     _active_pipelines (List[str]): List of active pipelines order.
     """
 
@@ -167,6 +168,7 @@ class MemoryManager:
         self._unlock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
         self._shmem = mmap.mmap(-1, sizeof(SharedData), self._SHMEM_NAME + spid)
         self._shcfg = mmap.mmap(-1, sizeof(SharedConfigData), self._SHCFG_NAME + spid)
+        self._pipeline_order = []
         self._active_pipelines = []
 
     def read_shared_data(self) -> SharedData:
@@ -177,23 +179,23 @@ class MemoryManager:
         """
         return SharedData.from_buffer(self._shmem)
 
-    def read_pipelines(self) -> Tuple[List[str], List[str], List[str], Dict[str, Dict[str, float]]]:
-        """Reads pipeline lists from shared configuration.
+    def read_pipelines(self) -> Tuple[PipelineRuntimeData, bool]:
+        """Reads pipeline runtime data from shared configuration.
 
-        Contains lists of pipelines: active, to unload and to load.
         If configuration was modified new active pipelines order will be decoded.
 
         Returns:
-            Tuple[List[str], List[str], List[str], Dict[str, Dict[str, float]]]: Returns following data as tuple:
-                ([Active pipelines],[Pipelines to unload],[Pipelines to load],{Settings to update}).
+            Tuple[PipelineRuntimeData, bool]: Pipelines runtime data and flag if needs save.
                 Settings for update are stored in dictionary, where key is pipeline file and value is
                 dictionary of modified key-value pairs.
         """
+        needs_save = False
         active_data = ActiveConfigData.from_buffer(self._shcfg)
         to_unload = []
         to_load = []
         changes = {}
         if active_data.modified:
+            needs_save = True
             pipeline_data = SharedConfigData.from_buffer(self._shcfg)
             pipeline_array = [
                 ActivePipeline.from_buffer(buf) for buf in pipeline_data.pipelines[: pipeline_data.count]
@@ -209,24 +211,33 @@ class MemoryManager:
                             variable.modified = False
                     pipeline.modified = False
             active_pipelines = [pipeline.file.decode("utf8") for pipeline in pipeline_array if pipeline.enabled]
-            pipeline_order = [file.value.decode("utf8") for file in pipeline_data.order[: pipeline_data.count]]
+            self._pipeline_order = [file.value.decode("utf8") for file in pipeline_data.order[: pipeline_data.count]]
             old_pipelines = self._active_pipelines
-            self._active_pipelines = [file for file in pipeline_order if file in active_pipelines]
+            self._active_pipelines = [file for file in self._pipeline_order if file in active_pipelines]
             to_unload = [file for file in old_pipelines if file not in self._active_pipelines]
             to_load = [file for file in self._active_pipelines if file not in old_pipelines]
             active_data.modified = False
-        return (self._active_pipelines, to_unload, to_load, changes)
+        return (
+            PipelineRuntimeData(self._pipeline_order, self._active_pipelines, to_unload, to_load, changes),
+            needs_save,
+        )
 
-    def write_shared_pipelines(self, pipelines: List[Pipeline]) -> None:
+    def write_shared_pipelines(self, pipelines: List[Pipeline], runtime_data: PipelineRuntimeData) -> None:
         """Writes pipelines data into shared configuration.
 
         Args:
             pipelines (List[Pipeline]): Pipeline list to write into shared configuration.
+            runtime_data (PipelineRuntimeData): Pipeline runtime data.
         """
+        self._pipeline_order = runtime_data.pipeline_order
+        self._active_pipelines = runtime_data.active_pipelines
         pipeline_data = SharedConfigData.from_buffer(self._shcfg)
         pipeline_data.modified = False
         pipeline_data.count = min(PIPELINE_LIMIT, len(pipelines))
         pipeline_order = (PIPELINE_ORDER)()
+        for i in range(min(PIPELINE_LIMIT, len(runtime_data.pipeline_order))):
+            encoded_file = runtime_data.pipeline_order[i][: PIPELINE_STRING._length_].encode("utf8")
+            pipeline_order[i] = (PIPELINE_STRING)(*encoded_file)
         pipeline_array = (PIPELINE_ARRAY)()
         for i in range(min(PIPELINE_LIMIT, len(pipelines))):
             settings = (PIPELINE_SETTINGS)()
@@ -248,9 +259,8 @@ class MemoryManager:
                     var_idx += 1
 
             encoded_file = pipelines[i].file[: PIPELINE_STRING._length_].encode("utf8")
-            pipeline_order[i] = (PIPELINE_STRING)(*encoded_file)
             pipeline_array[i] = PipelineData(
-                enabled=False,
+                enabled=pipelines[i].file in runtime_data.active_pipelines,
                 modified=False,
                 file=encoded_file,
                 var_count=min(PIPELINE_VAR_LIMIT, 0 if pipelines[i].settings is None else len(pipelines[i].settings)),

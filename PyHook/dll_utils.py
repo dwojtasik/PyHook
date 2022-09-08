@@ -67,6 +67,7 @@ class AddonHandler:
     process_name (str): The process name.
     pid (int): The process ID.
     is_64_bit (bool): Flag if given process is 64 bit.
+    exe (str): The process executable as an absolute path.
     addon_path (str): The absolute path to addon DLL file.
 
     Raises:
@@ -90,6 +91,7 @@ class AddonHandler:
             self.process_name = process.name()
             self.pid = process.pid
             self.is_64_bit = is_process_64_bit(self.pid)
+            self.exe = process.exe()
             if not verify or self._has_loaded_reshade():
                 self.addon_path = self._find_addon_path()
                 return

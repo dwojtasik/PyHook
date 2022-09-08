@@ -8,14 +8,17 @@ PyHook pipeline definition
 
 import glob
 import importlib.util
+import json
 import logging
 import re
 import sys
-from os.path import abspath, basename, isdir
-from typing import Any, Callable, Dict, List
+from dataclasses import dataclass
+from os.path import abspath, basename, exists, isdir
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
+_SETTINGS_FILE = "pyhook.json"
 _PIPELINE_DIRS = ["./pipelines", "./PyHook/pipelines"]
 _COMBO_TAG_REGEX = re.compile(r"^%COMBO\[(.*?,)*.*?\].*$")
 
@@ -179,6 +182,26 @@ class Pipeline:
             self.callbacks.on_unload()
 
 
+@dataclass
+class PipelineRuntimeData:
+    """Holds pipeline runtime informations.
+
+    pipeline_order (List[str]): Order of the pipeline to process.
+    active_pipelines (List[str]): List of active pipelines.
+    to_unload (List[str]): List of pipelines to unload.
+    to_load (List[str]): List of pipelines to load.
+    changes (Dict[str, Dict[str, float]]): Pipelines settings changes.
+        Settings for update are stored in dictionary, where key is pipeline file and value is
+        dictionary of modified key-value pairs.
+    """
+
+    pipeline_order: List[str]
+    active_pipelines: List[str]
+    to_unload: List[str]
+    to_load: List[str]
+    changes: Dict[str, Dict[str, float]]
+
+
 def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     """Builds pipeline object.
 
@@ -255,3 +278,53 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
                 logger.error('-- Cannot load pipeline file "%s".', path)
                 logger.error("--- Error: %s", ex)
     return pipelines
+
+
+def save_settings(pipelines: Dict[str, Pipeline], order: List[str], active: List[str], dir_path: str) -> None:
+    """Saves pipelines settings to file.
+
+    Args:
+        pipelines (Dict[str, Pipeline]): Loaded pipelines map.
+        order (List[str]): Order of the pipeline to process.
+        active (List[str]): List of active pipelines.
+        dir_path (str): The directory path to save settings JSON file.
+    """
+    settings = {}
+    settings["order"] = order
+    settings["active"] = active
+    for p_file, pipeline in pipelines.items():
+        if pipeline.settings is not None:
+            settings[p_file] = {}
+            for key, var_list in pipeline.settings.items():
+                settings[p_file][key] = var_list[0]
+    with open(f"{dir_path}\\{_SETTINGS_FILE}", "w", encoding="utf-8") as settings_file:
+        json.dump(settings, settings_file, indent=4)
+
+
+def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[PipelineRuntimeData, bool]:
+    """Loads pipelines settings from file.
+
+    Args:
+        pipelines (Dict[str, Pipeline]): Loaded pipelines map.
+        dir_path (str): The directory path to load settings JSON file.
+
+    Returns:
+        Tuple[PipelineRuntimeData, bool]: The pipeline runtime data and flag is data was read from file.
+    """
+    settings_path = f"{dir_path}\\{_SETTINGS_FILE}"
+    if exists(settings_path):
+        with open(settings_path, encoding="utf-8") as settings_file:
+            settings = json.load(settings_file)
+            for p_file, p_settings in settings.items():
+                if p_file in ["order", "active"]:
+                    continue
+                if p_file in pipelines and pipelines[p_file].settings is not None:
+                    for key, value in p_settings.items():
+                        if key in pipelines[p_file].settings:
+                            pipelines[p_file].settings[key][0] = value
+            order = [p for p in settings["order"] if p in pipelines] + [
+                p for p in pipelines.keys() if p not in settings["order"]
+            ]
+            active = [p for p in settings["active"] if p in pipelines]
+            return PipelineRuntimeData(order, active, [], active, {}), True
+    return PipelineRuntimeData(list(pipelines.keys()), [], [], [], {}), False
