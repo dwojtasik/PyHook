@@ -13,9 +13,19 @@
 using namespace std;
 using namespace ImGui;
 
+/// <summary>
+/// Map of pipeline unique id (filename) to it's pointer in shared memory.
+/// </summary>
 static map<string, PipelineData*> pipeline_map{};
+
+/// <summary>
+/// Map of unique combo variable id (pipeline_filename:variable_name) to it's pointer in shared memory.
+/// </summary>
 static map<string, ComboVar> select_box_vars{};
+
+// Index of selected pipeline in settings UI.
 static int selected_pipeline = INT_MAX;
+// Index of the hovered pipeline in settings UI.
 static int hovered_pipeline = INT_MAX;
 
 bool SliderWithSteps(PipelineVar* pvar, bool is_float)

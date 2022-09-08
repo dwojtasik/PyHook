@@ -11,32 +11,52 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <sstream>
 
-#define SHMEM_NAME "PyHookSHMEM_"
-#define SHCFG_NAME "PyHookSHCFG_"
-#define EVENT_LOCK_NAME "PyHookEvLOCK_"
-#define EVENT_UNLOCK_NAME "PyHookEvUNLOCK_"
-
+ // Export special variables for ReShade addon.
 extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.0.1
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed buffers to Python pipeline.";
+
+// Shared memory for frame data name prefix.
+#define SHMEM_NAME "PyHookSHMEM_"
+// Shared memory for configuration name prefix.
+#define SHCFG_NAME "PyHookSHCFG_"
+// Lock event name prefix.
+#define EVENT_LOCK_NAME "PyHookEvLOCK_"
+// Unlock event name prefix.
+#define EVENT_UNLOCK_NAME "PyHookEvUNLOCK_"
 
 using namespace std;
 using namespace boost::interprocess;
 using namespace reshade::api;
 
+// Flag if staging resource was initialized.
 static bool initialized = false;
+// Staging resource to store frame.
 static resource st_resource;
 
+// Lock event to handle signals.
 static HANDLE lock_event;
+// Unlock event to handle signals.
 static HANDLE unlock_event;
 
+// Shared memory for frame.
 static windows_shared_memory shm;
+// Shared memory (frame) region.
 static mapped_region shm_region;
+// Pointer to shared frame data
 static SharedData* shared_data;
 
+// Shared memory for configuration.
 static windows_shared_memory shc;
+// Shared memory (configuration) region.
 static mapped_region shc_region;
+// Pointer to shared configuration data.
 static SharedConfigData* shared_cfg;
 
+/// <summary>
+/// Logs message to ReShade log.
+/// </summary>
+/// <typeparam name="...Args">Varargs template.</typeparam>
+/// <param name="...inputs">Objects to log.</param>
 template<typename... Args>
 static void reshade_log(Args... inputs)
 {
@@ -49,6 +69,11 @@ static void reshade_log(Args... inputs)
     reshade::log_message(3, s.str().c_str());
 }
 
+/// <summary>
+/// Initializes events required for synchronization.
+/// Creates lock and unlock events.
+/// </summary>
+/// <param name="pid">Owner process ID.</param>
 static void init_events(DWORD pid)
 {
     wchar_t event_lock_name_with_pid[64];
@@ -62,6 +87,11 @@ static void init_events(DWORD pid)
     reshade_log(EVENT_UNLOCK_NAME, pid, " initialized @", unlock_event);
 }
 
+/// <summary>
+/// Initializes shared memory regions.
+/// Creates shared memory for frame and configuration.
+/// </summary>
+/// <param name="pid">Owner process ID.</param>
 static void init_shmem(DWORD pid)
 {
     char shmem_name_with_pid[64];
@@ -81,6 +111,11 @@ static void init_shmem(DWORD pid)
     reshade_log(shcfg_name_with_pid, " initialized @", shared_cfg);
 }
 
+/// <summary>
+/// Initializes staging resource for frame processing.
+/// </summary>
+/// <param name="device">ReShade device interface pointer.</param>
+/// <param name="back_buffer">ReShade back buffer resource.</param>
 static void init_st_resource(device* const device, resource back_buffer)
 {
     // Create staging resource
@@ -100,6 +135,10 @@ static void init_st_resource(device* const device, resource back_buffer)
     initialized = true;
 }
 
+/// <summary>
+/// ReShade addon callback.
+/// See reshade::addon_event::create_swapchain
+/// </summary>
 static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
 {
     // Automatically disable multisampling whenever possible
@@ -107,6 +146,10 @@ static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
     return true;
 }
 
+/// <summary>
+/// ReShade addon callback.
+/// See reshade::addon_event::destroy_swapchain
+/// </summary>
 static void on_destroy_swapchain(swapchain* swapchain)
 {
     if (initialized) {
@@ -120,11 +163,19 @@ static void on_destroy_swapchain(swapchain* swapchain)
     }
 }
 
+/// <summary>
+/// ReShade addon callback.
+/// See reshade::addon_event::init_swapchain
+/// </summary>
 static void on_init_swapchain(swapchain* swapchain)
 {
     init_st_resource(swapchain->get_device(), swapchain->get_current_back_buffer());
 }
 
+/// <summary>
+/// ReShade addon callback.
+/// See reshade::addon_event::present
+/// </summary>
 static void on_present(command_queue* queue, swapchain* swapchain, const rect*, const rect*, uint32_t, const rect*)
 {
     device* const device = swapchain->get_device();
@@ -198,10 +249,17 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     queue->flush_immediate_command_list();
 }
 
+/// <summary>
+/// ReShade addon ImGui overlay callback.
+/// See reshade::register_overlay
+/// </summary>
 static void draw_overlay(effect_runtime*) {
     DrawSettingsOverlay(shared_cfg);
 }
 
+/// <summary>
+/// Registers ReShade addon callbacks.
+/// </summary>
 static void register_events()
 {
     reshade::register_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
@@ -210,6 +268,9 @@ static void register_events()
     reshade::register_event<reshade::addon_event::present>(on_present);
 }
 
+/// <summary>
+/// Unregisters ReShade addon callbacks.
+/// </summary>
 static void unregister_events()
 {
     reshade::unregister_event<reshade::addon_event::present>(on_present);
@@ -218,6 +279,13 @@ static void unregister_events()
     reshade::unregister_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
 }
 
+/// <summary>
+/// DLL entrypoint.
+/// </summary>
+/// <param name="hModule">Handle to DLL module.</param>
+/// <param name="fdwReason">Reason for calling function.</param>
+/// <param name="">Reserved.</param>
+/// <returns></returns>
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 {
     const DWORD pid = GetCurrentProcessId();

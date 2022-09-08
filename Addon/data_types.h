@@ -9,14 +9,14 @@
 
 #include <reshade.hpp>
 
-// Const values for shared memory allocation
-//// Max resolution width allowed
+// Const values for shared memory allocation.
+//// Max resolution width.
 #define MAX_WIDTH 3840
-//// Max resolution height allowed
+//// Max resolution height.
 #define MAX_HEIGHT 2160
-//// Max pipeline definitions allowed
+//// Max pipeline definitions.
 #define MAX_PIPELINES 100
-//// Max variable count per pipeline
+//// Max variable count per pipeline.
 #define MAX_PIPELINE_VARS 10
 
 struct SharedData
