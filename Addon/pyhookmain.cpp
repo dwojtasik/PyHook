@@ -1,27 +1,20 @@
 /*
  * Copyright (C) 2022 Dominik Wojtasik
  * SPDX-License-Identifier: MIT
+ *
+ * PyHook addon
  */
 
-#define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
-#define ImTextureID unsigned long long
+#include "imgui_overlay.h"
 
-#include <imgui.h>
-#include <reshade.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
-#include <map>
 #include <sstream>
 
-const int MAX_WIDTH = 3840;
-const int MAX_HEIGHT = 2160;
-const int MAX_PIPELINES = 100;
-const int MAX_PIPELINE_VARS = 10;
-
-const char* SHMEM_NAME = "PyHookSHMEM_";
-const char* SHCFG_NAME = "PyHookSHCFG_";
-const char* EVENT_LOCK_NAME = "PyHookEvLOCK_";
-const char* EVENT_UNLOCK_NAME = "PyHookEvUNLOCK_";
+#define SHMEM_NAME "PyHookSHMEM_"
+#define SHCFG_NAME "PyHookSHCFG_"
+#define EVENT_LOCK_NAME "PyHookEvLOCK_"
+#define EVENT_UNLOCK_NAME "PyHookEvUNLOCK_"
 
 extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.0.1
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed buffers to Python pipeline.";
@@ -29,61 +22,6 @@ extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed bu
 using namespace std;
 using namespace boost::interprocess;
 using namespace reshade::api;
-
-struct SharedData
-{
-    uint64_t frame_count;
-    uint32_t width;
-    uint32_t height;
-    bool multisampled;
-    uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];
-};
-
-struct ComboVar
-{
-    vector<string> items;
-    char tooltip[256];
-};
-
-struct PipelineVar
-{
-    bool modified;
-    char key[32];
-    float value;
-    short type;
-    float min;
-    float max;
-    float step;
-    char tooltip[256];
-};
-
-struct ActivePipelineData
-{
-    bool enabled;
-    bool modified;
-    char file[64];
-    int var_count;
-    PipelineVar settings[MAX_PIPELINE_VARS];
-};
-
-struct PipelineData : ActivePipelineData
-{
-    char name[64];
-    char version[12];
-    char desc[512];
-};
-
-struct ActiveConfigData
-{
-    bool modified;
-};
-
-struct SharedConfigData : ActiveConfigData
-{
-    int count;
-    char order[MAX_PIPELINES][64];
-    PipelineData pipelines[MAX_PIPELINES];
-};
 
 static bool initialized = false;
 static resource st_resource;
@@ -98,11 +36,6 @@ static SharedData* shared_data;
 static windows_shared_memory shc;
 static mapped_region shc_region;
 static SharedConfigData* shared_cfg;
-
-static map<string, PipelineData*> pipeline_map{};
-static map<string, ComboVar> select_box_vars{};
-static int selected_pipeline = INT_MAX;
-static int hovered_pipeline = INT_MAX;
 
 template<typename... Args>
 static void reshade_log(Args... inputs)
@@ -265,301 +198,8 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     queue->flush_immediate_command_list();
 }
 
-bool SliderWithSteps(PipelineVar* pvar, bool is_float)
-{
-    char format_float[] = "%.0f";
-    if (is_float)
-        for (float x = 1.0f; x * pvar->step < 1.0f && format_float[2] < '9'; x *= 10.0f)
-            ++format_float[2];
-
-    char value_display[24] = {};
-    sprintf_s(value_display, is_float ? format_float : "%0.0f", pvar->value);
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    float w = ImGui::CalcItemWidth();
-    float spacing = style.ItemInnerSpacing.x;
-    float button_sz = ImGui::GetFrameHeight();
-    ImGui::PushItemWidth(w - spacing * 2.0f - button_sz * 2.0f);
-
-    ImGui::BeginGroup();
-
-    const int step_count = int((pvar->max - pvar->min) / pvar->step);
-    int int_val = int((pvar->value - pvar->min) / pvar->step);
-    bool modified = ImGui::SliderInt("##slider", &int_val, 0, step_count, value_display);
-
-    ImGui::PopItemWidth();
-    ImGui::SameLine(0, spacing);
-    if (ImGui::ArrowButton("<", ImGuiDir_Left))
-    {
-        if (int_val > 0) {
-            int_val--;
-            modified = true;
-        }
-    }
-    ImGui::SameLine(0, spacing);
-    if (ImGui::ArrowButton(">", ImGuiDir_Right))
-    {
-        if (int_val < step_count) {
-            int_val++;
-            modified = true;
-        }
-    }
-    ImGui::SameLine(0, style.ItemInnerSpacing.x);
-    ImGui::Text(pvar->key);
-
-    ImGui::EndGroup();
-
-    if (is_float)
-        pvar->value = pvar->min + float(int_val) * pvar->step;
-    else
-        pvar->value = int(pvar->min + float(int_val) * pvar->step);
-    return modified;
-}
-
-bool ComboWithVector(PipelineVar* pvar, ComboVar* cvar) {
-    bool modified = false;
-    int int_val = int(pvar->value);
-
-    ImGuiStyle& style = ImGui::GetStyle();
-    float w = ImGui::CalcItemWidth();
-    float spacing = style.ItemInnerSpacing.x;
-    float button_sz = ImGui::GetFrameHeight();
-    ImGui::PushItemWidth(w - spacing * 2.0f - button_sz * 2.0f);
-
-    ImGui::BeginGroup();
-
-    if (ImGui::BeginCombo("##combo", cvar->items[int_val].c_str())) {
-        for (int i = 0; i < cvar->items.size(); i++) {
-            const bool isSelected = (int_val == i);
-            if (ImGui::Selectable(cvar->items[i].c_str(), isSelected)) {
-                if (int_val != i) {
-                    int_val = i;
-                    modified = true;
-                }
-            }
-            if (isSelected) {
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
-
-    ImGui::PopItemWidth();
-    ImGui::SameLine(0, spacing);
-    if (ImGui::ArrowButton("<", ImGuiDir_Left))
-    {
-        if (int_val > 0) {
-            int_val--;
-            modified = true;
-        }
-    }
-    ImGui::SameLine(0, spacing);
-    if (ImGui::ArrowButton(">", ImGuiDir_Right))
-    {
-        if (int_val < cvar->items.size() - 1) {
-            int_val++;
-            modified = true;
-        }
-    }
-    ImGui::SameLine(0, style.ItemInnerSpacing.x);
-    ImGui::Text(pvar->key);
-
-    ImGui::EndGroup();
-
-    if (modified) {
-        pvar->value = float(int_val);
-    }
-
-    if (ImGui::IsItemHovered() && (strlen(cvar->tooltip) > 0))
-        ImGui::SetTooltip(cvar->tooltip);
-
-    return modified;
-}
-
-static void draw_overlay(effect_runtime* runtime)
-{
-    bool modified = false;
-    bool display_settings = false;
-
-    ImGui::AlignTextToFramePadding();
-    ImGui::BeginChild("##PyHookPipelines", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
-
-    if (pipeline_map.size() == 0) {
-        for (int idx = 0; idx < shared_cfg->count; idx++) {
-            PipelineData* pdata = &shared_cfg->pipelines[idx];
-            pipeline_map[pdata->file] = pdata;
-        }
-    }
-
-    for (int idx = 0; idx < shared_cfg->count; idx++) {
-        PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
-        bool pipeline_enabled = pdata->enabled;
-
-        ImGui::PushID(pdata->file);
-        ImGui::AlignTextToFramePadding();
-        ImGui::BeginGroup();
-
-        const bool draw_border = selected_pipeline == idx;
-        if (draw_border)
-            ImGui::Separator();
-
-        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[pdata->enabled ? ImGuiCol_Text : ImGuiCol_TextDisabled]);
-        stringstream label;
-        label << pdata->name;
-        if (strlen(pdata->version) > 0)
-            label << " " << pdata->version;
-        label << " [" << pdata->file << "]";
-        if (ImGui::Checkbox(label.str().c_str(), &pipeline_enabled)) {
-            ImVec2 move = ImGui::GetMouseDragDelta();
-            if (move.x == 0 && move.y == 0) {
-                pdata->enabled = pipeline_enabled;
-                modified = true;
-            }
-        }
-
-        ImGui::PopStyleColor();
-
-        if (ImGui::IsItemActive())
-            selected_pipeline = idx;
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_RectOnly))
-            hovered_pipeline = idx;
-        if (ImGui::IsItemHovered() && !ImGui::IsMouseDragging(ImGuiMouseButton_Left) && (strlen(pdata->version) > 0))
-            ImGui::SetTooltip(pdata->desc);
-
-        if (draw_border)
-            ImGui::Separator();
-
-        ImGui::EndGroup();
-        ImGui::Spacing();
-        ImGui::PopID();
-
-        if (pdata->enabled && !display_settings && pdata->var_count > 0)
-            display_settings = true;
-    }
-    ImGui::EndChild();
-
-    if (selected_pipeline < shared_cfg->count && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-    {
-        if (hovered_pipeline < shared_cfg->count && hovered_pipeline != selected_pipeline)
-        {
-            if (hovered_pipeline < selected_pipeline)
-                for (int i = selected_pipeline; hovered_pipeline < i; --i)
-                    swap(shared_cfg->order[i - 1], shared_cfg->order[i]);
-            else
-                for (int i = selected_pipeline; i < hovered_pipeline; ++i)
-                    swap(shared_cfg->order[i], shared_cfg->order[i + 1]);
-            selected_pipeline = hovered_pipeline;
-            modified = true;
-        }
-    }
-    else
-        selected_pipeline = INT_MAX;
-
-    if (display_settings) {
-        ImGui::AlignTextToFramePadding();
-        ImGui::BeginChild("##PyHookSettings", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
-
-        for (int idx = 0; idx < shared_cfg->count; idx++) {
-            PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
-            bool p_modified = false;
-            if (pdata->enabled && pdata->var_count > 0) {
-                ImGui::AlignTextToFramePadding();
-                stringstream label;
-                label << pdata->name;
-                if (strlen(pdata->version) > 0)
-                    label << " " << pdata->version;
-                label << " [" << pdata->file << "]";
-                if (ImGui::CollapsingHeader(label.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
-                    for (int var_idx = 0; var_idx < pdata->var_count; var_idx++) {
-                        PipelineVar* pvar = &pdata->settings[var_idx];
-                        bool var_modifed = false;
-
-                        ImGui::PushID(pdata->file, pvar->key);
-                        ImGui::AlignTextToFramePadding();
-
-                        if (pvar->type == 0) {
-                            bool checked = pvar->value == 1.0f;
-                            if (ImGui::Checkbox(pvar->key, &checked)) {
-                                pvar->value = checked ? 1.0f : 0.0f;
-                                var_modifed = true;
-                            }
-                        }
-                        else if (pvar->type == 1) {
-                            if (SliderWithSteps(pvar, false)) {
-                                var_modifed = true;
-                            }
-                        }
-                        else if (pvar->type == 3) {
-                            stringstream varIdString;
-                            varIdString << pdata->file << ":" << pvar->key;
-                            string varId = varIdString.str();
-                            if (!select_box_vars.count(varId)) {
-                                bool are_opts = true;
-                                char c;
-                                vector<string> opts;
-                                stringstream opt;
-                                stringstream tooltip_s;
-                                // Skip %COMBO[
-                                for (int i = 7; i < 256; i++) {
-                                    c = pvar->tooltip[i];
-                                    if (are_opts) {
-                                        if (c == ',' || c == ']') {
-                                            opts.push_back(opt.str());
-                                            opt.str("");
-                                            opt.clear();
-                                            if (c == ']')
-                                                are_opts = false;
-                                        }
-                                        else
-                                            opt << c;
-                                    }
-                                    else {
-                                        if (c == '\0')
-                                            break;
-                                        else
-                                            tooltip_s << c;
-                                    }
-                                }
-                                ComboVar cvar;
-                                cvar.items = opts;
-                                sprintf_s(cvar.tooltip, "%s", tooltip_s.str().c_str());
-                                select_box_vars[varId] = cvar;
-                            }
-                            if (ComboWithVector(pvar, &select_box_vars[varId])) {
-                                var_modifed = true;
-                            }
-                        }
-                        else {
-                            if (SliderWithSteps(pvar, true)) {
-                                var_modifed = true;
-                            }
-                        }
-
-                        if (pvar->type != 3 && ImGui::IsItemHovered() && (strlen(pvar->tooltip) > 0))
-                            ImGui::SetTooltip(pvar->tooltip);
-
-                        ImGui::Spacing();
-                        ImGui::PopID();
-
-                        if (var_modifed) {
-                            pvar->modified = var_modifed;
-                            p_modified = true;
-                        }
-                    }
-                }
-                ImGui::Separator();
-            }
-            if (p_modified) {
-                pdata->modified = true;
-                modified = true;
-            }
-        }
-
-        ImGui::EndChild();
-    }
-
-    if (modified)
-        shared_cfg->modified = modified;
+static void draw_overlay(effect_runtime*) {
+    DrawSettingsOverlay(shared_cfg);
 }
 
 static void register_events()
