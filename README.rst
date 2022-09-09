@@ -31,9 +31,9 @@ Graphics API support
 +----------------+--------+-----------+------------+------------+------------+--------+
 | PyHook version | OpenGL | DirectX 9 | DirectX 10 | DirectX 11 | DirectX 12 | Vulkan |
 +================+========+===========+============+============+============+========+
-| 32-bit         | ❌      | ✔         | ✔          | ✔          | ❌          | ❌      |
+| 32-bit         | ✔      | ✔         | ✔          | ✔          | ❌          | ❌      |
 +----------------+--------+-----------+------------+------------+------------+--------+
-| 64-bit         | ❌      | ✔         | ✔          | ✔          | ❌          | ❌      |
+| 64-bit         | ✔      | ✔         | ✔          | ✔          | ❌          | ❌      |
 +----------------+--------+-----------+------------+------------+------------+--------+
 
 Do note that multisampling is not supported by PyHook at all with any API.
@@ -103,6 +103,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added OpenGL support.
 - Added BGRA format support.
 - Added logs removal from DLL loading.
 - Added JSON settings for pipelines.

@@ -34,6 +34,8 @@ static bool initialized = false;
 static resource st_resource;
 // Back buffer texture format RGB component indexes.
 static short format_idx[3] = {0, 1, 2};
+// Flag if device is using DirectX API.
+static bool is_dx = true;
 
 // Lock event to handle signals.
 static HANDLE lock_event;
@@ -156,6 +158,8 @@ static void init_st_resource(device* const device, resource back_buffer)
         &st_resource
     );
 
+    is_dx = device->get_api() != reshade::api::device_api::opengl && device->get_api() != reshade::api::device_api::vulkan;
+
     initialized = true;
 }
 
@@ -228,7 +232,7 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     // Map texture to get pixel values
     subresource_data mapped;
-    device->map_texture_region(st_resource, 0, nullptr, map_access::read_only, &mapped);
+    device->map_texture_region(st_resource, 0, nullptr, is_dx ? map_access::read_only : map_access::read_write, &mapped);
     for (uint32_t y = 0; y < shared_data->height; ++y)
     {
         for (uint32_t x = 0; x < shared_data->width; ++x)
