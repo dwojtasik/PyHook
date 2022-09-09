@@ -32,6 +32,8 @@ using namespace reshade::api;
 static bool initialized = false;
 // Staging resource to store frame.
 static resource st_resource;
+// Back buffer texture format RGB component indexes.
+static short format_idx[3] = {0, 1, 2};
 
 // Lock event to handle signals.
 static HANDLE lock_event;
@@ -112,6 +114,27 @@ static void init_shmem(DWORD pid)
 }
 
 /// <summary>
+/// Decodes indexes of RGB component indexes for given texture format.
+/// </summary>
+/// <param name="format">The texture format.</param>
+static void decode_format_rgb_indexes(format format) {
+    switch (format)
+    {
+    case format::b8g8r8x8_unorm_srgb:
+    case format::b8g8r8a8_unorm:
+        format_idx[0] = 2;
+        format_idx[1] = 1;
+        format_idx[2] = 0;
+        break;
+    default:
+        format_idx[0] = 0;
+        format_idx[1] = 1;
+        format_idx[2] = 2;
+        break;
+    }
+}
+
+/// <summary>
 /// Initializes staging resource for frame processing.
 /// </summary>
 /// <param name="device">ReShade device interface pointer.</param>
@@ -121,6 +144,7 @@ static void init_st_resource(device* const device, resource back_buffer)
     // Create staging resource
     const resource_desc desc = device->get_resource_desc(back_buffer);
     const format format = format_to_default_typed(desc.texture.format, 0);
+    decode_format_rgb_indexes(format);
     shared_data->multisampled = desc.texture.samples > 1;
     shared_data->width = desc.texture.width;
     shared_data->height = desc.texture.height;
@@ -212,9 +236,9 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
             // Copy map pixels to frame pixels
             const size_t mpx_index = y * mapped.row_pitch + x * 4;
             const size_t fpx_index = (y * shared_data->width + x) * 3;
-            shared_data->frame[fpx_index + 0] = static_cast<const uint8_t*>(mapped.data)[mpx_index + 0];
-            shared_data->frame[fpx_index + 1] = static_cast<const uint8_t*>(mapped.data)[mpx_index + 1];
-            shared_data->frame[fpx_index + 2] = static_cast<const uint8_t*>(mapped.data)[mpx_index + 2];
+            shared_data->frame[fpx_index + 0] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[0]];
+            shared_data->frame[fpx_index + 1] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[1]];
+            shared_data->frame[fpx_index + 2] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[2]];
         }
     }
 
@@ -232,9 +256,9 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
             // Copy frame pixels to map pixels
             const size_t mpx_index = y * mapped.row_pitch + x * 4;
             const size_t fpx_index = (y * shared_data->width + x) * 3;
-            static_cast<uint8_t*>(mapped.data)[mpx_index + 0] = shared_data->frame[fpx_index + 0];
-            static_cast<uint8_t*>(mapped.data)[mpx_index + 1] = shared_data->frame[fpx_index + 1];
-            static_cast<uint8_t*>(mapped.data)[mpx_index + 2] = shared_data->frame[fpx_index + 2];
+            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[0]] = shared_data->frame[fpx_index + 0];
+            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[1]] = shared_data->frame[fpx_index + 1];
+            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[2]] = shared_data->frame[fpx_index + 2];
         }
     }
     device->unmap_texture_region(st_resource, 0);

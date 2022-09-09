@@ -25,6 +25,19 @@ Features
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
 
+Graphics API support
+====================
+
++----------------+--------+-----------+------------+------------+------------+--------+
+| PyHook version | OpenGL | DirectX 9 | DirectX 10 | DirectX 11 | DirectX 12 | Vulkan |
++================+========+===========+============+============+============+========+
+| 32-bit         | ❌      | ✔         | ✔          | ✔          | ❌          | ❌      |
++----------------+--------+-----------+------------+------------+------------+--------+
+| 64-bit         | ❌      | ✔         | ✔          | ✔          | ❌          | ❌      |
++----------------+--------+-----------+------------+------------+------------+--------+
+
+Do note that multisampling is not supported by PyHook at all with any API.
+
 Requirements
 ============
 
@@ -33,7 +46,8 @@ Runtime
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
 - `CUDA <https://developer.nvidia.com/cuda-11.3.0-download-archive>`_ == 11.3 (optional for AI pipelines only)
-- Only for specific pipelines: Any libraries that are required by pipeline code
+- | Only for specific pipelines: Any libraries that are required by pipeline code.
+  | Do note that AI pipelines requires PyTorch which doesn't work on 32-bit system.
 
 Build
 -----
@@ -89,6 +103,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added BGRA format support.
 - Added logs removal from DLL loading.
 - Added JSON settings for pipelines.
 - Added combo box selection in settings UI.
