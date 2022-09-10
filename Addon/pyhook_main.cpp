@@ -360,9 +360,6 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
         device->unmap_texture_region(st_resource, 0);
 
     // Copy to back buffer
-    if (device->get_api() == device_api::d3d12) {
-        return;
-    }
     cmd_list->barrier(st_resource, resource_usage::copy_dest, resource_usage::copy_source);
     cmd_list->barrier(back_buffer, resource_usage::copy_source, resource_usage::copy_dest);
     cmd_list->copy_resource(st_resource, back_buffer);
