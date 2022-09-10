@@ -32,10 +32,14 @@ using namespace reshade::api;
 static bool initialized = false;
 // Staging resource to store frame.
 static resource st_resource;
-// Back buffer texture format RGB component indexes.
-static short format_idx[3] = {0, 1, 2};
-// Flag if device is using DirectX API.
-static bool is_dx = true;
+// Back buffer format.
+static format st_format;
+// Flag if DirectX API is used.
+static bool is_directx = true;
+// Flag if device is capable of blitting between resources.
+static bool copy_buffer = false;
+// Number of bytes per texture row.
+static int32_t row_pitch;
 
 // Lock event to handle signals.
 static HANDLE lock_event;
@@ -116,51 +120,145 @@ static void init_shmem(DWORD pid)
 }
 
 /// <summary>
-/// Decodes indexes of RGB component indexes for given texture format.
-/// </summary>
-/// <param name="format">The texture format.</param>
-static void decode_format_rgb_indexes(format format) {
-    switch (format)
-    {
-    case format::b8g8r8x8_unorm_srgb:
-    case format::b8g8r8a8_unorm:
-        format_idx[0] = 2;
-        format_idx[1] = 1;
-        format_idx[2] = 0;
-        break;
-    default:
-        format_idx[0] = 0;
-        format_idx[1] = 1;
-        format_idx[2] = 2;
-        break;
-    }
-}
-
-/// <summary>
 /// Initializes staging resource for frame processing.
 /// </summary>
 /// <param name="device">ReShade device interface pointer.</param>
 /// <param name="back_buffer">ReShade back buffer resource.</param>
 static void init_st_resource(device* const device, resource back_buffer)
 {
-    // Create staging resource
     const resource_desc desc = device->get_resource_desc(back_buffer);
-    const format format = format_to_default_typed(desc.texture.format, 0);
-    decode_format_rgb_indexes(format);
     shared_data->multisampled = desc.texture.samples > 1;
     shared_data->width = desc.texture.width;
     shared_data->height = desc.texture.height;
 
-    device->create_resource(
-        resource_desc(shared_data->width, shared_data->height, 1, 1, format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest),
-        nullptr,
-        resource_usage::cpu_access,
-        &st_resource
-    );
+    st_format = format_to_default_typed(desc.texture.format, 0);
+    row_pitch = format_row_pitch(st_format, desc.texture.width);
+    if (device->get_api() == device_api::d3d12)
+        row_pitch = (row_pitch + 255) & ~255;
+    const uint32_t slice_pitch = format_slice_pitch(st_format, row_pitch, desc.texture.height);
 
-    is_dx = device->get_api() != reshade::api::device_api::opengl && device->get_api() != reshade::api::device_api::vulkan;
+    is_directx = device->get_api() != device_api::opengl && device->get_api() != device_api::vulkan;
+    copy_buffer = device->check_capability(device_caps::copy_buffer_to_texture);
+
+    if (copy_buffer && is_directx)
+    {
+        device->create_resource(resource_desc(slice_pitch, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
+        device->set_resource_name(st_resource, "PyHook staging buffer");
+    }
+    else
+    {
+        device->create_resource(resource_desc(desc.texture.width, desc.texture.height, 1, 1, st_format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
+        device->set_resource_name(st_resource, "PyHook staging texture");
+    }
 
     initialized = true;
+}
+
+/// <summary>
+/// Reads RGB component values from mapped texture.
+/// </summary>
+/// <param name="mapped">Mapped texture.</param>
+static void read_rgb(subresource_data mapped)
+{
+    auto mapped_data = static_cast<const uint8_t*>(mapped.data);
+    for (uint32_t y = 0; y < shared_data->height; ++y)
+    {
+        short r_idx = 0, g_idx = 1, b_idx = 2; //_idx = 3 means that component is set to 0.
+        short bytes = 4; // For RGBA channels.
+        switch (st_format) {
+        case format::r8_unorm:
+            bytes = 1;
+            g_idx = 3;
+            b_idx = 3;
+            break;
+        case format::r8g8_unorm:
+            bytes = 2;
+            b_idx = 3;
+            break;
+        case format::b8g8r8a8_unorm:
+        case format::b8g8r8x8_unorm:
+            r_idx = 2;
+            b_idx = 0;
+            break;
+        case format::b10g10r10a2_unorm:
+            r_idx = 2;
+            b_idx = 0;
+        case format::r10g10b10a2_unorm:
+            for (uint32_t x = 0; x < shared_data->width; ++x)
+            {
+                const uint32_t mpx_index = y * row_pitch + x * bytes;
+                const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+                const uint32_t color = *reinterpret_cast<const uint32_t*>(mapped_data + mpx_index);
+                shared_data->frame[fpx_index + r_idx] = ((color & 0x000003FF) / 4) & 0xFF;
+                shared_data->frame[fpx_index + g_idx] = (((color & 0x000FFC00) >> 10) / 4) & 0xFF;
+                shared_data->frame[fpx_index + b_idx] = (((color & 0x3FF00000) >> 20) / 4) & 0xFF;
+            }
+            continue;
+        }
+        for (uint32_t x = 0; x < shared_data->width; ++x)
+        {
+            const uint32_t mpx_index = y * row_pitch + x * bytes;
+            const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+            shared_data->frame[fpx_index + 0] = mapped_data[mpx_index + r_idx];
+            shared_data->frame[fpx_index + 1] = b_idx == 3 ? 0 : mapped_data[mpx_index + g_idx];
+            shared_data->frame[fpx_index + 2] = g_idx == 3 ? 0 : mapped_data[mpx_index + b_idx];
+        }
+    }
+}
+
+/// <summary>
+/// Write RGB component values to mapped texture.
+/// </summary>
+/// <param name="mapped">Mapped texture.</param>
+static void write_rgb(subresource_data mapped)
+{
+    auto mapped_data = static_cast<uint8_t*>(mapped.data);
+    for (uint32_t y = 0; y < shared_data->height; ++y)
+    {
+        short r_idx = 0, g_idx = 1, b_idx = 2; //_idx = 3 means that component is set to 0.
+        short bytes = 4; // For RGBA channels.
+        switch (st_format) {
+        case format::r8_unorm:
+            bytes = 1;
+            g_idx = 3;
+            b_idx = 3;
+            break;
+        case format::r8g8_unorm:
+            bytes = 2;
+            b_idx = 3;
+            break;
+        case format::b8g8r8a8_unorm:
+        case format::b8g8r8x8_unorm:
+            r_idx = 2;
+            b_idx = 0;
+            break;
+        case format::b10g10r10a2_unorm:
+            r_idx = 2;
+            b_idx = 0;
+        case format::r10g10b10a2_unorm:
+            for (uint32_t x = 0; x < shared_data->width; ++x)
+            {
+                const uint32_t mpx_index = y * row_pitch + x * bytes;
+                const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+                uint32_t color = 3 << 30; // Max alpha channel value.
+                color += shared_data->frame[fpx_index + r_idx] * 4;
+                color += (shared_data->frame[fpx_index + g_idx] * 4) << 10;
+                color += (shared_data->frame[fpx_index + b_idx] * 4) << 20;
+                mapped_data[mpx_index] = color;
+            }
+            continue;
+        }
+        for (uint32_t x = 0; x < shared_data->width; ++x)
+        {
+            const uint32_t mpx_index = y * row_pitch + x * bytes;
+            const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+            mapped_data[mpx_index + r_idx] = shared_data->frame[fpx_index + 0];
+            if (g_idx != 3)
+                mapped_data[mpx_index + g_idx] = shared_data->frame[fpx_index + 1];
+            if (b_idx != 3)
+                mapped_data[mpx_index + b_idx] = shared_data->frame[fpx_index + 2];
+        }
+    }
 }
 
 /// <summary>
@@ -223,28 +321,30 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     // Copy from back buffer
     command_list* const cmd_list = queue->get_immediate_command_list();
-    cmd_list->barrier(back_buffer, resource_usage::present, resource_usage::copy_source);
-    cmd_list->barrier(st_resource, resource_usage::cpu_access, resource_usage::copy_dest);
-    cmd_list->copy_resource(back_buffer, st_resource);
-    cmd_list->barrier(st_resource, resource_usage::copy_dest, resource_usage::cpu_access);
-    cmd_list->barrier(back_buffer, resource_usage::copy_source, resource_usage::present);
-    queue->flush_immediate_command_list();
+    if (copy_buffer && is_directx)
+    {
+        cmd_list->barrier(back_buffer, resource_usage::present, resource_usage::copy_source);
+        cmd_list->copy_texture_to_buffer(back_buffer, 0, nullptr, st_resource, 0, shared_data->width, shared_data->height);
+    }
+    else
+    {
+        cmd_list->barrier(back_buffer, resource_usage::present, resource_usage::copy_source);
+        cmd_list->copy_texture_region(back_buffer, 0, nullptr, st_resource, 0, nullptr);
+    }
+
+    queue->wait_idle();
 
     // Map texture to get pixel values
-    subresource_data mapped;
-    device->map_texture_region(st_resource, 0, nullptr, is_dx ? map_access::read_only : map_access::read_write, &mapped);
-    for (uint32_t y = 0; y < shared_data->height; ++y)
+    subresource_data mapped = {};
+    if (copy_buffer && is_directx)
     {
-        for (uint32_t x = 0; x < shared_data->width; ++x)
-        {
-            // Copy map pixels to frame pixels
-            const size_t mpx_index = y * mapped.row_pitch + x * 4;
-            const size_t fpx_index = (y * shared_data->width + x) * 3;
-            shared_data->frame[fpx_index + 0] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[0]];
-            shared_data->frame[fpx_index + 1] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[1]];
-            shared_data->frame[fpx_index + 2] = static_cast<const uint8_t*>(mapped.data)[mpx_index + format_idx[2]];
-        }
+        device->map_buffer_region(st_resource, 0, UINT64_MAX, map_access::read_only, &mapped.data);
+        mapped.row_pitch = row_pitch;
     }
+    else
+        device->map_texture_region(st_resource, 0, nullptr, is_directx ? map_access::read_only : map_access::read_write, &mapped);
+
+    read_rgb(mapped);
 
     // Enable Python processiong
     SetEvent(lock_event);
@@ -252,29 +352,23 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     WaitForSingleObject(unlock_event, INFINITE);
     // Back to ReShade
 
-    // Update texture to set pixel values
-    for (uint32_t y = 0; y < shared_data->height; ++y)
-    {
-        for (uint32_t x = 0; x < shared_data->width; ++x)
-        {
-            // Copy frame pixels to map pixels
-            const size_t mpx_index = y * mapped.row_pitch + x * 4;
-            const size_t fpx_index = (y * shared_data->width + x) * 3;
-            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[0]] = shared_data->frame[fpx_index + 0];
-            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[1]] = shared_data->frame[fpx_index + 1];
-            static_cast<uint8_t*>(mapped.data)[mpx_index + format_idx[2]] = shared_data->frame[fpx_index + 2];
-        }
-    }
-    device->unmap_texture_region(st_resource, 0);
+    write_rgb(mapped);
+
+    if (copy_buffer && is_directx)
+        device->unmap_buffer_region(st_resource);
+    else
+        device->unmap_texture_region(st_resource, 0);
 
     // Copy to back buffer
-    command_list* const new_cmd_list = queue->get_immediate_command_list();
-    new_cmd_list->barrier(st_resource, resource_usage::cpu_access, resource_usage::copy_source);
-    new_cmd_list->barrier(back_buffer, resource_usage::render_target, resource_usage::copy_dest);
-    new_cmd_list->copy_resource(st_resource, back_buffer);
-    new_cmd_list->barrier(st_resource, resource_usage::copy_source, resource_usage::cpu_access);
-    new_cmd_list->barrier(back_buffer, resource_usage::copy_dest, resource_usage::render_target);
-    queue->flush_immediate_command_list();
+    if (device->get_api() == device_api::d3d12) {
+        return;
+    }
+    cmd_list->barrier(st_resource, resource_usage::copy_dest, resource_usage::copy_source);
+    cmd_list->barrier(back_buffer, resource_usage::copy_source, resource_usage::copy_dest);
+    cmd_list->copy_resource(st_resource, back_buffer);
+    cmd_list->barrier(st_resource, resource_usage::copy_source, resource_usage::copy_dest);
+    cmd_list->barrier(back_buffer, resource_usage::copy_dest, resource_usage::present);
+    queue->wait_idle();
 }
 
 /// <summary>

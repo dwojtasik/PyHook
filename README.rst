@@ -104,7 +104,7 @@ History
 DEV / NEXT
 ----------
 - Added OpenGL support.
-- Added BGRA format support.
+- Added multiple texture formats support.
 - Added logs removal from DLL loading.
 - Added JSON settings for pipelines.
 - Added combo box selection in settings UI.
