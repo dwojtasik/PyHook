@@ -7,13 +7,22 @@ Utils for shared memory management
 """
 
 import mmap
-from ctypes import Structure, c_bool, c_char, c_float, c_int, c_longlong, c_short, c_uint8, c_uint32, sizeof, windll
+
+# pylint: disable=wildcard-import,unused-wildcard-import
+from ctypes import *
+from os import getpid
 from typing import List, Tuple
+
+from psutil import pid_exists
 
 from pipeline import Pipeline, PipelineRuntimeData
 
 # Handle for kernel32 DLL.
 _KERNEL32 = windll.kernel32
+
+# Timeout in millis for event singnaling.
+# If timeout occurs PyHook will check if connected process does still exists.
+_WAIT_TIME_MS = 2000
 
 # Const values for shared memory allocation.
 # Max resolution width.
@@ -35,6 +44,10 @@ PIPELINE_KEY_STRING = c_char * 32  # Used in variable names.
 PIPELINE_STRING = c_char * 64  # Used in pipeline names.
 PIPELINE_SHORT_TEXT = c_char * 256  # Used in variable tooltip.
 PIPELINE_TEXT = c_char * 512  # Used in pipeline description.
+
+
+class WaitProcessNotFoundException(Exception):
+    """Raised when process with given PID does not exists anymore and cannot set signaled state."""
 
 
 class SharedData(Structure):
@@ -142,12 +155,14 @@ class ActiveConfigData(Structure):
 class SharedConfigData(ActiveConfigData):
     """Pipeline configuration structure.
 
+    pyhook_pid (c_int): Process ID of PyHook application.
     count (c_int): Count of pipelines.
     order (PIPELINE_ORDER): Pipeline order.
     pipelines (PIPELINE_ARRAY): Pipeline data array.
     """
 
     _fields_ = [
+        ("pyhook_pid", c_int),
         ("count", c_int),
         ("order", PIPELINE_ORDER),
         ("pipelines", PIPELINE_ARRAY),
@@ -158,7 +173,6 @@ class MemoryManager:
     """Manages shared memory between Python and C++ DLL.
 
     pid (int): Process ID that has PyHook addon DLL loaded.
-
     _lock_event (HANDLE): Lock event handle. When in signaled state it allows
         to process data in PyHook Python part.
     _unlock_event (HANDLE): Unlock event handle. When in signaled state it allows
@@ -175,6 +189,7 @@ class MemoryManager:
     _SHCFG_NAME = "PyHookSHCFG_"
 
     def __init__(self, pid: int):
+        self.pid = pid
         spid = str(pid)
         self._lock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_LOCK_NAME + spid)
         self._unlock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
@@ -245,6 +260,7 @@ class MemoryManager:
         self._active_pipelines = runtime_data.active_pipelines
         pipeline_data = SharedConfigData.from_buffer(self._shcfg)
         pipeline_data.modified = False
+        pipeline_data.pyhook_pid = getpid()
         pipeline_data.count = min(PIPELINE_LIMIT, len(pipelines))
         pipeline_order = (PIPELINE_ORDER)()
         for i in range(min(PIPELINE_LIMIT, len(runtime_data.pipeline_order))):
@@ -287,8 +303,17 @@ class MemoryManager:
     def wait(self) -> None:
         """Waits for lock event handle in signaled state.
         After finish it allows Python to process frame from ReShade.
+        If signaling process will exit in the meantime exception will be thrown.
+
+        Raises:
+            WaitProcessNotFoundException: When process with given PID does not exists anymore.
         """
-        _KERNEL32.WaitForSingleObject(self._lock_event, 0xFFFFFFFF)
+        while True:
+            wait_result = _KERNEL32.WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
+            if wait_result == 0x00000000:
+                return
+            if not pid_exists(self.pid):
+                raise WaitProcessNotFoundException()
 
     def unlock(self) -> None:
         """Sends signal to unlock event handle.

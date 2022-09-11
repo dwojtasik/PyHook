@@ -156,6 +156,11 @@ struct ActiveConfigData
 struct SharedConfigData : ActiveConfigData
 {
     /// <summary>
+    /// Process ID of PyHook application.
+    /// </summary>
+    int pyhook_pid;
+
+    /// <summary>
     /// The actual count of loaded pipelines.
     /// </summary>
     int count;

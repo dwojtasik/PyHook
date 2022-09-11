@@ -7,6 +7,7 @@
 
 #include "imgui_overlay.h"
 
+#include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <sstream>
@@ -28,37 +29,44 @@ using namespace std;
 using namespace boost::interprocess;
 using namespace reshade::api;
 
+// Flag if PyHook app is active.
+bool pyhook_active = true;
+// Cached PyHook app handle.
+HANDLE pyhook_handle = 0;
+// Timeout in millis to check if event is in signaled state.
+const DWORD timeout_ms = 2000;
+
 // Flag if staging resource was initialized.
-static bool initialized = false;
+bool initialized = false;
 // Staging resource to store frame.
-static resource st_resource;
+resource st_resource;
 // Back buffer format.
-static format st_format;
+format st_format;
 // Flag if DirectX API is used.
-static bool is_directx = true;
+bool is_directx = true;
 // Flag if device is capable of blitting between resources.
-static bool copy_buffer = false;
+bool copy_buffer = false;
 // Number of bytes per texture row.
-static int32_t row_pitch;
+int32_t row_pitch;
 
 // Lock event to handle signals.
-static HANDLE lock_event;
+HANDLE lock_event;
 // Unlock event to handle signals.
-static HANDLE unlock_event;
+HANDLE unlock_event;
 
 // Shared memory for frame.
-static windows_shared_memory shm;
+windows_shared_memory shm;
 // Shared memory (frame) region.
-static mapped_region shm_region;
+mapped_region shm_region;
 // Pointer to shared frame data
-static SharedData* shared_data;
+SharedData* shared_data;
 
 // Shared memory for configuration.
-static windows_shared_memory shc;
+windows_shared_memory shc;
 // Shared memory (configuration) region.
-static mapped_region shc_region;
+mapped_region shc_region;
 // Pointer to shared configuration data.
-static SharedConfigData* shared_cfg;
+SharedConfigData* shared_cfg;
 
 /// <summary>
 /// Logs message to ReShade log.
@@ -66,7 +74,7 @@ static SharedConfigData* shared_cfg;
 /// <typeparam name="...Args">Varargs template.</typeparam>
 /// <param name="...inputs">Objects to log.</param>
 template<typename... Args>
-static void reshade_log(Args... inputs)
+void reshade_log(Args... inputs)
 {
     stringstream s;
     (
@@ -82,7 +90,7 @@ static void reshade_log(Args... inputs)
 /// Creates lock and unlock events.
 /// </summary>
 /// <param name="pid">Owner process ID.</param>
-static void init_events(DWORD pid)
+void init_events(DWORD pid)
 {
     wchar_t event_lock_name_with_pid[64];
     swprintf_s(event_lock_name_with_pid, L"%hs%lu", EVENT_LOCK_NAME, pid);
@@ -100,7 +108,7 @@ static void init_events(DWORD pid)
 /// Creates shared memory for frame and configuration.
 /// </summary>
 /// <param name="pid">Owner process ID.</param>
-static void init_shmem(DWORD pid)
+void init_shmem(DWORD pid)
 {
     char shmem_name_with_pid[64];
     sprintf_s(shmem_name_with_pid, "%hs%lu", SHMEM_NAME, pid);
@@ -119,12 +127,39 @@ static void init_shmem(DWORD pid)
     reshade_log(shcfg_name_with_pid, " initialized @", shared_cfg);
 }
 
+
+/// <summary>
+/// Waits for data from Python processing.
+/// If PyHook app does not exits anymore will clean up and detach addon DLL.
+/// </summary>
+/// <param name="device">The device pointer to clean up resources.</param>
+/// <returns>True if processing should be stopped.</returns>
+bool wait_for_data(device* device)
+{
+    while (true) {
+        DWORD wait_result = WaitForSingleObject(unlock_event, timeout_ms);
+        if (wait_result == WAIT_OBJECT_0) {
+            break;
+        }
+        DWORD status;
+        GetExitCodeProcess(pyhook_handle, &status);
+        if (status != STILL_ACTIVE) {
+            reshade_log("Connected PyHook app does not exists anymore. Detaching...");
+            if (st_resource != 0)
+                device->destroy_resource(st_resource);
+            pyhook_active = false;
+            return true;
+        }
+    }
+    return false;
+}
+
 /// <summary>
 /// Initializes staging resource for frame processing.
 /// </summary>
 /// <param name="device">ReShade device interface pointer.</param>
 /// <param name="back_buffer">ReShade back buffer resource.</param>
-static void init_st_resource(device* const device, resource back_buffer)
+void init_st_resource(device* const device, resource back_buffer)
 {
     const resource_desc desc = device->get_resource_desc(back_buffer);
     shared_data->multisampled = desc.texture.samples > 1;
@@ -158,7 +193,7 @@ static void init_st_resource(device* const device, resource back_buffer)
 /// Reads RGB component values from mapped texture.
 /// </summary>
 /// <param name="mapped">Mapped texture.</param>
-static void read_rgb(subresource_data mapped)
+void read_rgb(subresource_data mapped)
 {
     auto mapped_data = static_cast<const uint8_t*>(mapped.data);
     for (uint32_t y = 0; y < shared_data->height; ++y)
@@ -210,7 +245,7 @@ static void read_rgb(subresource_data mapped)
 /// Write RGB component values to mapped texture.
 /// </summary>
 /// <param name="mapped">Mapped texture.</param>
-static void write_rgb(subresource_data mapped)
+void write_rgb(subresource_data mapped)
 {
     auto mapped_data = static_cast<uint8_t*>(mapped.data);
     for (uint32_t y = 0; y < shared_data->height; ++y)
@@ -267,6 +302,8 @@ static void write_rgb(subresource_data mapped)
 /// </summary>
 static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
 {
+    if (!pyhook_active)
+        return false;
     // Automatically disable multisampling whenever possible
     back_buffer_desc.texture.samples = 1;
     return true;
@@ -278,6 +315,8 @@ static bool on_create_swapchain(resource_desc& back_buffer_desc, void* hwnd)
 /// </summary>
 static void on_destroy_swapchain(swapchain* swapchain)
 {
+    if (!pyhook_active)
+        return;
     if (initialized) {
         device* const device = swapchain->get_device();
         if (st_resource != 0)
@@ -295,6 +334,8 @@ static void on_destroy_swapchain(swapchain* swapchain)
 /// </summary>
 static void on_init_swapchain(swapchain* swapchain)
 {
+    if (!pyhook_active)
+        return;
     init_st_resource(swapchain->get_device(), swapchain->get_current_back_buffer());
 }
 
@@ -304,6 +345,9 @@ static void on_init_swapchain(swapchain* swapchain)
 /// </summary>
 static void on_present(command_queue* queue, swapchain* swapchain, const rect*, const rect*, uint32_t, const rect*)
 {
+    if (!pyhook_active)
+        return;
+
     device* const device = swapchain->get_device();
     resource back_buffer = swapchain->get_current_back_buffer();
 
@@ -312,10 +356,16 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     if (!initialized)
         init_st_resource(device, back_buffer);
 
+    if (pyhook_handle == 0) {
+        if (shared_cfg->pyhook_pid == 0)
+            return;
+        pyhook_handle = OpenProcess(SYNCHRONIZE, FALSE, shared_cfg->pyhook_pid);
+    }
+
     // Multisampled buffer cannot be processed
     if (shared_data->multisampled) {
         SetEvent(lock_event);
-        WaitForSingleObject(unlock_event, INFINITE);
+        //WaitForSingleObject(unlock_event, INFINITE);
         return;
     }
 
@@ -349,7 +399,8 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     // Enable Python processiong
     SetEvent(lock_event);
     // Process in Python pipeline
-    WaitForSingleObject(unlock_event, INFINITE);
+    if (wait_for_data(device))
+        return;
     // Back to ReShade
 
     write_rgb(mapped);
@@ -373,13 +424,15 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 /// See reshade::register_overlay
 /// </summary>
 static void draw_overlay(effect_runtime*) {
+    if (!pyhook_active)
+        return;
     DrawSettingsOverlay(shared_cfg);
 }
 
 /// <summary>
 /// Registers ReShade addon callbacks.
 /// </summary>
-static void register_events()
+void register_events()
 {
     reshade::register_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
     reshade::register_event<reshade::addon_event::create_swapchain>(on_create_swapchain);
@@ -390,12 +443,27 @@ static void register_events()
 /// <summary>
 /// Unregisters ReShade addon callbacks.
 /// </summary>
-static void unregister_events()
+void unregister_events()
 {
     reshade::unregister_event<reshade::addon_event::present>(on_present);
     reshade::unregister_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
     reshade::unregister_event<reshade::addon_event::create_swapchain>(on_create_swapchain);
     reshade::unregister_event<reshade::addon_event::destroy_swapchain>(on_destroy_swapchain);
+}
+
+/// <summary>
+/// Unloads addon DLL.
+/// </summary>
+/// <param name="hModule">DLL handle.</param>
+void unload_self(HMODULE hModule)
+{
+    while (pyhook_active)
+        Sleep(500);
+    shared_memory_object::remove(shm.get_name());
+    shared_memory_object::remove(shc.get_name());
+    // Clear lock signal before unload.
+    WaitForSingleObject(lock_event, 0);
+    FreeLibraryAndExitThread(hModule, NULL);
 }
 
 /// <summary>
@@ -418,6 +486,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
         init_shmem(pid);
         register_events();
         reshade::register_overlay(nullptr, draw_overlay);
+        DisableThreadLibraryCalls(hModule);
+        CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)unload_self, hModule, NULL, NULL);
         break;
     case DLL_PROCESS_DETACH:
         unregister_events();

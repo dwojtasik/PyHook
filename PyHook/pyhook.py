@@ -22,7 +22,7 @@ from dll_utils import (
     ReShadeNotFoundException,
     get_reshade_addon_handler,
 )
-from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager
+from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitProcessNotFoundException
 from pipeline import PipelinesDirNotFoundError, load_pipelines, load_settings, save_settings
 from win_utils import is_started_as_admin
 
@@ -191,6 +191,9 @@ def _main():
         _wait_on_exit(1)
     except ProcessNotFoundException:
         logger.error("--- Process with given PID does not exists.")
+        _wait_on_exit(1)
+    except WaitProcessNotFoundException:
+        logger.error("-- Connected process does not exists anymore. Exiting...")
         _wait_on_exit(1)
     except Exception as ex:
         logger.error("Unhandled exception occurres.", exc_info=ex)

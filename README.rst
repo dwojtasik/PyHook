@@ -103,6 +103,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Improved synchronization between PyHook and addon.
 - Added OpenGL support.
 - Added multiple texture formats support.
 - Added logs removal from DLL loading.
