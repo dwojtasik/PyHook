@@ -159,7 +159,8 @@ bool wait_for_data(device* device)
 /// </summary>
 /// <param name="device">ReShade device interface pointer.</param>
 /// <param name="back_buffer">ReShade back buffer resource.</param>
-void init_st_resource(device* const device, resource back_buffer)
+/// <returns>True if staging resource was created.</returns>
+bool init_st_resource(device* const device, resource back_buffer)
 {
     const resource_desc desc = device->get_resource_desc(back_buffer);
     shared_data->multisampled = desc.texture.samples > 1;
@@ -175,18 +176,20 @@ void init_st_resource(device* const device, resource back_buffer)
     is_directx = device->get_api() != device_api::opengl && device->get_api() != device_api::vulkan;
     copy_buffer = device->check_capability(device_caps::copy_buffer_to_texture);
 
+    bool result;
     if (copy_buffer && is_directx)
     {
-        device->create_resource(resource_desc(slice_pitch, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
+        result = device->create_resource(resource_desc(slice_pitch, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
         device->set_resource_name(st_resource, "PyHook staging buffer");
     }
     else
     {
-        device->create_resource(resource_desc(desc.texture.width, desc.texture.height, 1, 1, st_format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
+        result = device->create_resource(resource_desc(desc.texture.width, desc.texture.height, 1, 1, st_format, 1, memory_heap::gpu_to_cpu, resource_usage::copy_dest), nullptr, resource_usage::copy_dest, &st_resource);
         device->set_resource_name(st_resource, "PyHook staging texture");
     }
 
     initialized = true;
+    return result;
 }
 
 /// <summary>
@@ -336,7 +339,13 @@ static void on_init_swapchain(swapchain* swapchain)
 {
     if (!pyhook_active)
         return;
-    init_st_resource(swapchain->get_device(), swapchain->get_current_back_buffer());
+
+    if (!init_st_resource(swapchain->get_device(), swapchain->get_current_back_buffer()))
+    {
+        reshade_log("Staging resource cannot be created. Detaching...");
+        pyhook_active = false;
+        return;
+    }
 }
 
 /// <summary>
@@ -351,10 +360,26 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     device* const device = swapchain->get_device();
     resource back_buffer = swapchain->get_current_back_buffer();
 
+    if (device->get_api() == device_api::d3d12 || device->get_api() == device_api::vulkan)
+    {
+        reshade_log(device->get_api() == device_api::d3d12 ? "DirectX 12" : "Vulkan", " is not supported. Detaching...");
+        if (st_resource != 0)
+            device->destroy_resource(st_resource);
+        pyhook_active = false;
+        return;
+    }
+
     shared_data->frame_count++;
 
     if (!initialized)
-        init_st_resource(device, back_buffer);
+    {
+        if (!init_st_resource(device, back_buffer))
+        {
+            reshade_log("Staging resource cannot be created. Detaching...");
+            pyhook_active = false;
+            return;
+        }
+    }
 
     if (pyhook_handle == 0) {
         if (shared_cfg->pyhook_pid == 0)
@@ -386,13 +411,22 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 
     // Map texture to get pixel values
     subresource_data mapped = {};
+    bool map_result;
     if (copy_buffer && is_directx)
     {
-        device->map_buffer_region(st_resource, 0, UINT64_MAX, map_access::read_only, &mapped.data);
+        map_result = device->map_buffer_region(st_resource, 0, UINT64_MAX, map_access::read_only, &mapped.data);
         mapped.row_pitch = row_pitch;
     }
     else
-        device->map_texture_region(st_resource, 0, nullptr, is_directx ? map_access::read_only : map_access::read_write, &mapped);
+        map_result = device->map_texture_region(st_resource, 0, nullptr, is_directx ? map_access::read_only : map_access::read_write, &mapped);
+
+    if (!map_result) {
+        reshade_log("Staging texture cannot be mapped. Detaching...");
+        if (st_resource != 0)
+            device->destroy_resource(st_resource);
+        pyhook_active = false;
+        return;
+    }
 
     read_rgb(mapped);
 

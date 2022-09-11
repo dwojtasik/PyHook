@@ -103,6 +103,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Improved error handling in ReShade addon.
 - Added error notification on settings save.
 - Improved synchronization between PyHook and addon.
 - Added OpenGL support.

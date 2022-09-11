@@ -22,7 +22,7 @@ from dll_utils import (
     ReShadeNotFoundException,
     get_reshade_addon_handler,
 )
-from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitProcessNotFoundException
+from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitAddonNotFoundException, WaitProcessNotFoundException
 from pipeline import PipelinesDirNotFoundError, load_pipelines, load_settings, save_settings
 from win_utils import is_started_as_admin
 
@@ -142,7 +142,7 @@ def _main():
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
         logger.info("- Started processing...")
         while True:
-            memory_manager.wait()
+            memory_manager.wait(addon_handler)
             data = memory_manager.read_shared_data()
             # Multisampled buffer cannot be processed.
             if data.multisampled:
@@ -194,6 +194,10 @@ def _main():
         _wait_on_exit(1)
     except WaitProcessNotFoundException:
         logger.error("-- Connected process does not exists anymore. Exiting...")
+        _wait_on_exit(1)
+    except WaitAddonNotFoundException:
+        logger.error("-- Connected process does not have addon loaded anymore. Exiting...")
+        logger.error("-- Check ReShade logs for more informations.")
         _wait_on_exit(1)
     except Exception as ex:
         logger.error("Unhandled exception occurres.", exc_info=ex)

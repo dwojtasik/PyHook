@@ -122,6 +122,15 @@ class AddonHandler:
         """Injects addon DLL into process."""
         inject(self.pid, self.addon_path)
 
+    def has_addon_loaded(self) -> bool:
+        """Checks if addon is still loaded into process.
+
+        Returns:
+            bool: True if addon is still loaded into process with given pid.
+        """
+        process = psutil.Process(self.pid)
+        return self.addon_path in [dll_info.path for dll_info in process.memory_maps()]
+
     def _find_addon_path(self) -> str:
         """Returns addon DLL absolute path.
 

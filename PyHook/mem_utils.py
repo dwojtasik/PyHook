@@ -16,6 +16,7 @@ from typing import List, Tuple
 from psutil import pid_exists
 
 from pipeline import Pipeline, PipelineRuntimeData
+from dll_utils import AddonHandler
 
 # Handle for kernel32 DLL.
 _KERNEL32 = windll.kernel32
@@ -48,6 +49,10 @@ PIPELINE_TEXT = c_char * 512  # Used in pipeline description.
 
 class WaitProcessNotFoundException(Exception):
     """Raised when process with given PID does not exists anymore and cannot set signaled state."""
+
+
+class WaitAddonNotFoundException(Exception):
+    """Raised when process with given PID does not have addon loadad anymore and cannot set signaled state."""
 
 
 class SharedData(Structure):
@@ -300,13 +305,17 @@ class MemoryManager:
         pipeline_data.order = pipeline_order
         pipeline_data.pipelines = pipeline_array
 
-    def wait(self) -> None:
+    def wait(self, addon_handler: AddonHandler) -> None:
         """Waits for lock event handle in signaled state.
         After finish it allows Python to process frame from ReShade.
         If signaling process will exit in the meantime exception will be thrown.
 
+        Args:
+            addon_handler (AddonHandler): Handler for PyHook addon management.
+
         Raises:
             WaitProcessNotFoundException: When process with given PID does not exists anymore.
+            WaitAddonNotFoundException: When process with given PID does not have addon loaded anymore.
         """
         while True:
             wait_result = _KERNEL32.WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
@@ -314,6 +323,8 @@ class MemoryManager:
                 return
             if not pid_exists(self.pid):
                 raise WaitProcessNotFoundException()
+            if not addon_handler.has_addon_loaded():
+                raise WaitAddonNotFoundException()
 
     def unlock(self) -> None:
         """Sends signal to unlock event handle.
