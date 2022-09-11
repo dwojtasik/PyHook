@@ -14,7 +14,7 @@
 
  // Export special variables for ReShade addon.
 extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.0.1
-extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed buffers to Python pipeline.";
+extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed back buffer to Python pipeline.";
 
 // Shared memory for frame data name prefix.
 #define SHMEM_NAME "PyHookSHMEM_"
@@ -365,7 +365,7 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     // Multisampled buffer cannot be processed
     if (shared_data->multisampled) {
         SetEvent(lock_event);
-        //WaitForSingleObject(unlock_event, INFINITE);
+        wait_for_data(device);
         return;
     }
 

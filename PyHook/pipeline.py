@@ -283,7 +283,9 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
     return pipelines
 
 
-def save_settings(pipelines: Dict[str, Pipeline], order: List[str], active: List[str], dir_path: str) -> None:
+def save_settings(
+    pipelines: Dict[str, Pipeline], order: List[str], active: List[str], dir_path: str, logger: logging.Logger = None
+) -> None:
     """Saves pipelines settings to file.
 
     Args:
@@ -291,6 +293,7 @@ def save_settings(pipelines: Dict[str, Pipeline], order: List[str], active: List
         order (List[str]): Order of the pipeline to process.
         active (List[str]): List of active pipelines.
         dir_path (str): The directory path to save settings JSON file.
+        logger (logging.Logger, optional): Logger for error display. Defaults to None.
     """
     settings = {}
     settings["order"] = order
@@ -300,8 +303,15 @@ def save_settings(pipelines: Dict[str, Pipeline], order: List[str], active: List
             settings[p_file] = {}
             for key, var_list in pipeline.settings.items():
                 settings[p_file][key] = var_list[0]
-    with open(f"{dir_path}\\{_SETTINGS_FILE}", "w", encoding="utf-8") as settings_file:
-        json.dump(settings, settings_file, indent=4)
+    try:
+        with open(f"{dir_path}\\{_SETTINGS_FILE}", "w", encoding="utf-8") as settings_file:
+            json.dump(settings, settings_file, indent=4)
+    except PermissionError:
+        if logger is not None:
+            logger.info("-- Error: Cannot save %s. Permission denied. Try to run PyHook as admin.", _SETTINGS_FILE)
+    except Exception as ex:
+        if logger is not None:
+            logger.error("-- Error: Cannot save %s. Unhandled exception occurres.", _SETTINGS_FILE, exc_info=ex)
 
 
 def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[PipelineRuntimeData, bool]:

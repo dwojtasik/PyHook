@@ -136,7 +136,7 @@ def _main():
         runtime_data, data_exists = load_settings(pipelines, addon_handler.dir_path)
         if not data_exists:
             save_settings(
-                pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path
+                pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path, logger
             )
         logger.info("- Writing configuration to addon...")
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)

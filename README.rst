@@ -103,6 +103,7 @@ History
 =======
 DEV / NEXT
 ----------
+- Added error notification on settings save.
 - Improved synchronization between PyHook and addon.
 - Added OpenGL support.
 - Added multiple texture formats support.
