@@ -37,8 +37,17 @@ class FrameSizeModificationError(Exception):
 class PipelineCallbacks:
     """Contains pipeline callbacks.
 
+    Pipeline has to implement on_frame_process or on_frame_process_stage callbacks
+    based on multistage value.
+
+    If multistage == 1: on_frame_process callback is required.
+    If multistage > 1: on_frame_process_stage callback is required.
+
     on_frame_process (Callable[[numpy.array, int, int, int], numpy.array]): Callback for frame
         processing function. Array shape must remain unchanged after processing.
+    on_frame_process_stage (Callable[[numpy.array, int, int, int, int], numpy.array]): Callback for frame
+        processing function. Array shape can be changed during processing. Must implement multiple stages.
+        The last stage must restore array shape.
     on_load (Callable[[], None], optional): Callback for pipeline loading. Should create all
         necessary objects that will be later used in on_frame_process callback. Defaults to None.
     on_unload (Callable[[], None], optional): Callback for pipeline unloading. Should clear and
@@ -51,7 +60,8 @@ class PipelineCallbacks:
 
     def __init__(
         self,
-        on_frame_process: Callable[[np.array, int, int, int], np.array],
+        on_frame_process: Callable[[np.array, int, int, int], np.array] = None,
+        on_frame_process_stage: Callable[[np.array, int, int, int, int], np.array] = None,
         on_load: Callable[[], None] = None,
         on_unload: Callable[[], None] = None,
         before_change_settings: Callable[[str, float], None] = None,
@@ -59,6 +69,7 @@ class PipelineCallbacks:
     ):
         self.on_load = on_load
         self.on_frame_process = on_frame_process
+        self.on_frame_process_stage = on_frame_process_stage
         self.on_unload = on_unload
         self.before_change_settings = before_change_settings
         self.after_change_settings = after_change_settings
@@ -70,6 +81,7 @@ class Pipeline:
     path (str): Path to pipeline file.
     name (str): Pipeline name.
     callbacks (PipelineCallbacks): The pipeline callbacks.
+    multistage (int): Number of pipeline passes per frame processing.
     version (str, optional): Pipeline version. Defaults to None.
     desc (str, optional): Pipeline description. Defaults to None.
     settings (Dict[str, List[Any]], optional): Pipeline settings variables. Defaults to None.
@@ -80,6 +92,7 @@ class Pipeline:
         self,
         path: str,
         name: str,
+        multistage: int,
         callbacks: PipelineCallbacks,
         version: str = None,
         desc: str = None,
@@ -88,6 +101,7 @@ class Pipeline:
         self.path = path
         self.file = basename(path)
         self.name = name
+        self.multistage = multistage
         self.callbacks = callbacks
         self.version = version
         self.desc = desc
@@ -153,7 +167,7 @@ class Pipeline:
         if self.callbacks.on_load is not None:
             self.callbacks.on_load()
 
-    def process_frame(self, frame: np.array, width: int, height: int, frame_num: int) -> np.array:
+    def process_frame(self, frame: np.array, width: int, height: int, frame_num: int, stage: int = None) -> np.array:
         """Frame processing function.
 
         Calls on_frame_process(np.array, int, int, int) -> np.array callback from external file.
@@ -165,18 +179,22 @@ class Pipeline:
             width (int): The frame width in pixels.
             height (int): The frame height in pixels.
             frame_num (int): The frame number.
+            stage (int, optional): The pipeline stage (pass) number.
 
         Returns:
             numpy.array: The processed frame image as numpy array.
 
         Raises:
-            FrameSizeModificationError: When frame shape changes during processing.
+            FrameSizeModificationError: When frame shape changes during processing for not multistage pipeline.
         """
-        input_shape = frame.shape
-        frame = self.callbacks.on_frame_process(frame, width, height, frame_num)
-        output_shape = frame.shape
-        if input_shape != output_shape:
-            raise FrameSizeModificationError()
+        if stage is None:
+            input_shape = frame.shape
+            frame = self.callbacks.on_frame_process(frame, width, height, frame_num)
+            output_shape = frame.shape
+            if input_shape != output_shape:
+                raise FrameSizeModificationError()
+        else:
+            frame = self.callbacks.on_frame_process_stage(frame, width, height, frame_num, stage)
         return frame
 
     def unload(self) -> None:
@@ -219,12 +237,21 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     Raises:
         ValueError: When given module file was invalid pipeline.
     """
-    if not hasattr(module, "on_frame_process"):
+    multistage = 1 if not hasattr(module, "multistage") else module.multistage
+    if multistage > 1 and not hasattr(module, "on_frame_process_stage"):
         raise ValueError(
-            "Invalid pipeline file. Missing on_frame_process(numpy.array,int,int,int)->numpy.array callback."
+            "Invalid pipeline file. Missing required callback for multistage pipeline: \
+                on_frame_process_stage(numpy.array,int,int,int,int)->numpy.array."
+        )
+    if multistage == 1 and not hasattr(module, "on_frame_process"):
+        raise ValueError(
+            "Invalid pipeline file. Missing required callback: on_frame_process(numpy.array,int,int,int)->numpy.array."
         )
     callbacks = PipelineCallbacks(
-        on_frame_process=module.on_frame_process,
+        on_frame_process=None if not hasattr(module, "on_frame_process") else module.on_frame_process,
+        on_frame_process_stage=None
+        if not hasattr(module, "on_frame_process_stage")
+        else module.on_frame_process_stage,
         on_load=None if not hasattr(module, "on_load") else module.on_load,
         on_unload=None if not hasattr(module, "on_unload") else module.on_unload,
         before_change_settings=None
@@ -235,6 +262,7 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     return Pipeline(
         path=path,
         name=name if not hasattr(module, "name") else module.name,
+        multistage=multistage,
         callbacks=callbacks,
         version="" if not hasattr(module, "version") else module.version,
         desc="" if not hasattr(module, "desc") else module.desc,
@@ -335,9 +363,14 @@ def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[Pipeli
                     for key, value in p_settings.items():
                         if key in pipelines[p_file].settings:
                             pipelines[p_file].settings[key][0] = value
-            order = [p for p in settings["order"] if p in pipelines] + [
-                p for p in pipelines.keys() if p not in settings["order"]
-            ]
+            total_order = []
+            for _, pipeline in pipelines.items():
+                total_order.extend([pipeline.file] * pipeline.multistage)
+            order = []
+            for p_file in settings["order"]:
+                if p_file in total_order:
+                    order.append(total_order.pop(total_order.index(p_file)))
+            order.extend(total_order)
             active = [p for p in settings["active"] if p in pipelines]
             return PipelineRuntimeData(order, active, [], active, {}), True
     return PipelineRuntimeData(list(pipelines.keys()), [], [], [], {}), False

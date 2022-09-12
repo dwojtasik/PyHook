@@ -154,11 +154,13 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
         }
     }
 
-    for (int idx = 0; idx < shared_cfg->count; idx++) {
+    for (int idx = 0; idx < shared_cfg->order_count; idx++) {
         PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
         bool pipeline_enabled = pdata->enabled;
 
-        PushID(pdata->file);
+        stringstream id;
+        id << pdata->file << ":" << idx;
+        PushID(id.str().c_str());
         AlignTextToFramePadding();
         BeginGroup();
 
@@ -186,7 +188,7 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
             selected_pipeline = idx;
         if (IsItemHovered(ImGuiHoveredFlags_RectOnly))
             hovered_pipeline = idx;
-        if (IsItemHovered() && !IsMouseDragging(ImGuiMouseButton_Left) && (strlen(pdata->version) > 0))
+        if (IsItemHovered() && !IsMouseDragging(ImGuiMouseButton_Left) && (strlen(pdata->desc) > 0))
             SetTooltip(pdata->desc);
 
         if (draw_border)
@@ -201,9 +203,9 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
     }
     EndChild();
 
-    if (selected_pipeline < shared_cfg->count && IsMouseDragging(ImGuiMouseButton_Left))
+    if (selected_pipeline < shared_cfg->order_count && IsMouseDragging(ImGuiMouseButton_Left))
     {
-        if (hovered_pipeline < shared_cfg->count && hovered_pipeline != selected_pipeline)
+        if (hovered_pipeline < shared_cfg->order_count && hovered_pipeline != selected_pipeline)
         {
             if (hovered_pipeline < selected_pipeline)
                 for (int i = selected_pipeline; hovered_pipeline < i; --i)

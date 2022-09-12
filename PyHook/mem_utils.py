@@ -145,7 +145,7 @@ class PipelineData(ActivePipeline):
 # Pipelines C array.
 PIPELINE_ARRAY = PIPELINE_LIMIT * PipelineData
 # C string array of pipelines IDs (filenames) as order of processing.
-PIPELINE_ORDER = PIPELINE_LIMIT * PIPELINE_STRING
+PIPELINE_ORDER = 3 * PIPELINE_LIMIT * PIPELINE_STRING
 
 
 class ActiveConfigData(Structure):
@@ -162,6 +162,7 @@ class SharedConfigData(ActiveConfigData):
 
     pyhook_pid (c_int): Process ID of PyHook application.
     count (c_int): Count of pipelines.
+    order_count (c_int): Count of pipeline passes in order.
     order (PIPELINE_ORDER): Pipeline order.
     pipelines (PIPELINE_ARRAY): Pipeline data array.
     """
@@ -169,6 +170,7 @@ class SharedConfigData(ActiveConfigData):
     _fields_ = [
         ("pyhook_pid", c_int),
         ("count", c_int),
+        ("order_count", c_int),
         ("order", PIPELINE_ORDER),
         ("pipelines", PIPELINE_ARRAY),
     ]
@@ -243,9 +245,14 @@ class MemoryManager:
                             variable.modified = False
                     pipeline.modified = False
             active_pipelines = [pipeline.file.decode("utf8") for pipeline in pipeline_array if pipeline.enabled]
-            self._pipeline_order = [file.value.decode("utf8") for file in pipeline_data.order[: pipeline_data.count]]
+            self._pipeline_order = [
+                file.value.decode("utf8") for file in pipeline_data.order[: pipeline_data.order_count]
+            ]
             old_pipelines = self._active_pipelines
-            self._active_pipelines = [file for file in self._pipeline_order if file in active_pipelines]
+            self._active_pipelines = []
+            for file in self._pipeline_order:
+                if file in active_pipelines and file not in self._active_pipelines:
+                    self._active_pipelines.append(file)
             to_unload = [file for file in old_pipelines if file not in self._active_pipelines]
             to_load = [file for file in self._active_pipelines if file not in old_pipelines]
             active_data.modified = False
@@ -262,11 +269,12 @@ class MemoryManager:
             runtime_data (PipelineRuntimeData): Pipeline runtime data.
         """
         self._pipeline_order = runtime_data.pipeline_order
-        self._active_pipelines = runtime_data.active_pipelines
+        self._active_pipelines = []
         pipeline_data = SharedConfigData.from_buffer(self._shcfg)
         pipeline_data.modified = False
         pipeline_data.pyhook_pid = getpid()
         pipeline_data.count = min(PIPELINE_LIMIT, len(pipelines))
+        pipeline_data.order_count = min(3 * PIPELINE_LIMIT, len(runtime_data.pipeline_order))
         pipeline_order = (PIPELINE_ORDER)()
         for i in range(min(PIPELINE_LIMIT, len(runtime_data.pipeline_order))):
             encoded_file = runtime_data.pipeline_order[i][: PIPELINE_STRING._length_].encode("utf8")

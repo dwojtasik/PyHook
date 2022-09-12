@@ -147,8 +147,7 @@ struct PipelineData : ActivePipelineData
 struct ActiveConfigData
 {
     /// <summary>
-    /// Flag if configuration was changed and should be
-    /// processed by Python runtime.
+    /// Flag if configuration was changed and should be processed by Python runtime.
     /// </summary>
     bool modified;
 };
@@ -166,9 +165,14 @@ struct SharedConfigData : ActiveConfigData
     int count;
 
     /// <summary>
-    /// Order of the pipeliens to be processed.
+    /// The actual count of pipeline passes in order.
     /// </summary>
-    char order[MAX_PIPELINES][64];
+    int order_count;
+
+    /// <summary>
+    /// Order of the pipelines to be processed.
+    /// </summary>
+    char order[3*MAX_PIPELINES][64];
 
     /// <summary>
     /// Loaded pipelines.

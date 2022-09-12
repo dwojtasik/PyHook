@@ -41,6 +41,13 @@ settings = {                     # Util method to build variable.
 }
 
 # OPTIONAL
+# Number of passes per frame processing
+# Multistage pipelines can change frame shape but on the last pass it has to be restored to orignal shape.
+# If multistage is set to > 1 pipeline has to implement on_frame_process_stage instead of on_frame_process.
+multistage = 1
+
+
+# OPTIONAL
 def before_change_settings(key: str, value: float) -> None:
     # Called right before the settings change.
     # Check which variable will be changed with 'key'.
@@ -64,11 +71,27 @@ def on_load() -> None:
     pass
 
 
+# Only for multistage == 1 or not set
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     # Should process frame.
     # Frame array shape has to remain unchanged after processing.
     # Array has to be 3-D with height, width, channels as dimensions.
     # Array has to contains uint8 values.
+    return frame
+
+
+# Only for multistage > 1
+def on_frame_process_stage(frame: np.array, width: int, height: int, frame_num: int, stage: int) -> np.array:
+    # Should process frame.
+    # Array has to be 3-D with height, width, channels as dimensions.
+    # Array has to contains uint8 values.
+    # Frame array shape has to remain unchanged after last stage.
+    if stage == 1:  # Stages are count from 1
+        # During stage frame shape can be affected!
+        return frame
+    if stage == 2:
+        return frame
+    # During final stage frame shape must be restored!
     return frame
 
 

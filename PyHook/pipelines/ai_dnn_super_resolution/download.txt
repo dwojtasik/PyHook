@@ -1,0 +1,10 @@
+Model from:
+https://github.com/fannymonori/TF-ESPCN/raw/master/export/ESPCN_x2.pb
+https://github.com/fannymonori/TF-ESPCN/raw/master/export/ESPCN_x3.pb
+https://github.com/fannymonori/TF-ESPCN/raw/master/export/ESPCN_x4.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN_x2.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN_x3.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN_x4.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN-small_x2.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN-small_x3.pb
+https://github.com/Saafke/FSRCNN_Tensorflow/raw/master/models/FSRCNN-small_x4.pb

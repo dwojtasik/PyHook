@@ -23,7 +23,13 @@ from dll_utils import (
     get_reshade_addon_handler,
 )
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitAddonNotFoundException, WaitProcessNotFoundException
-from pipeline import PipelinesDirNotFoundError, load_pipelines, load_settings, save_settings
+from pipeline import (
+    FrameSizeModificationError,
+    PipelinesDirNotFoundError,
+    load_pipelines,
+    load_settings,
+    save_settings,
+)
 from win_utils import is_started_as_admin
 
 # Time in seconds after last settings change to wait until autosave.
@@ -177,9 +183,30 @@ def _main():
                 continue
             # Process all selected pipelines in order.
             frame = _decode_frame(data)
-            for active_pipeline in runtime_data.active_pipelines:
-                frame = pipelines[active_pipeline].process_frame(frame, data.width, data.height, data.frame_count)
-            _encode_frame(data, frame)
+            try:
+                passes = {}
+                f_width = data.width
+                f_height = data.height
+                f_channels = frame.shape[2]
+                f_count = data.frame_count
+                runtime_order = [p for p in runtime_data.pipeline_order if p in runtime_data.active_pipelines]
+                for active_pipeline in runtime_order:
+                    pipeline = pipelines[active_pipeline]
+                    stage = None
+                    if pipeline.multistage > 1:
+                        if active_pipeline not in passes:
+                            passes[active_pipeline] = 0
+                        passes[active_pipeline] += 1
+                        stage = passes[active_pipeline]
+                    frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
+                    if stage is not None:
+                        f_width = frame.shape[1]
+                        f_height = frame.shape[0]
+                if f_width != data.width or f_height != data.height or f_channels != frame.shape[2]:
+                    raise FrameSizeModificationError()
+                _encode_frame(data, frame)
+            except FrameSizeModificationError:
+                logger.info("-- ERROR: Frame modification detected! Frame skipped...")
             memory_manager.unlock()
     except PipelinesDirNotFoundError:
         logger.error("-- Cannot find pipelines directory.")
