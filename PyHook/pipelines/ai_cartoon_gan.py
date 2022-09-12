@@ -155,7 +155,7 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
         t = torch.from_numpy(np.array([transform(frame).numpy()])).to(device)
         img = inv_normalize(net(t)[0])[0].cpu().mul(255).byte()
         img = np.transpose(img.cpu().numpy(), (1, 2, 0))
-        if scale != 1:
+        if img.shape[1] != width or img.shape[0] != height:
             img = cv2.resize(img, (width, height))
         return img
 

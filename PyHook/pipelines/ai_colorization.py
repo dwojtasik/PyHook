@@ -251,7 +251,7 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
         if has_cuda:
             tens_l_rs = tens_l_rs.cuda()
         img = postprocess_tens(tens_l, net(tens_l_rs).cpu())
-        if scale != 1:
+        if img.shape[1] != width or img.shape[0] != height:
             img = cv2.resize(img, (width, height))
         return (img * 255).astype(np.uint8)
 

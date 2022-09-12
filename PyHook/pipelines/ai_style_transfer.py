@@ -152,7 +152,7 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
         img = res.permute(1, 2, 0).clamp(0, 255)
         img = img.cpu().numpy()
         img = img.astype("uint8")
-        if scale != 1:
+        if img.shape[1] != width or img.shape[0] != height:
             img = cv2.resize(img, (width, height))
         return img
 

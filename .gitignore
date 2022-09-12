@@ -26,3 +26,5 @@ Addon/*.aps
 
 # Models
 *.pth
+*.pb
+*.h5

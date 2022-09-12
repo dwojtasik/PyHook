@@ -142,13 +142,14 @@ bool wait_for_data(device* device)
             break;
         }
         DWORD status;
-        GetExitCodeProcess(pyhook_handle, &status);
-        if (status != STILL_ACTIVE) {
-            reshade_log("Connected PyHook app does not exists anymore. Detaching...");
-            if (st_resource != 0)
-                device->destroy_resource(st_resource);
-            pyhook_active = false;
-            return true;
+        if (GetExitCodeProcess(pyhook_handle, &status)) {
+            if (status != STILL_ACTIVE) {
+                reshade_log("Connected PyHook app does not exists anymore. Detaching...");
+                if (st_resource != 0)
+                    device->destroy_resource(st_resource);
+                pyhook_active = false;
+                return true;
+            }
         }
     }
     return false;
@@ -384,7 +385,7 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
     if (pyhook_handle == 0) {
         if (shared_cfg->pyhook_pid == 0)
             return;
-        pyhook_handle = OpenProcess(SYNCHRONIZE, FALSE, shared_cfg->pyhook_pid);
+        pyhook_handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, shared_cfg->pyhook_pid);
     }
 
     // Multisampled buffer cannot be processed
