@@ -7,7 +7,9 @@ with use_local_python():
 
 name = "[AI] DNN Super Resolution"
 version = "0.0.1"
-desc = """OpenCV pipeline for DNN super resolution."""
+desc = """OpenCV pipeline for DNN super resolution.
+On first stage frame resolution is shorten by given multiplier.
+On second stage selected super resolution is applied."""
 multistage = 2
 
 settings = {

@@ -271,7 +271,7 @@ class MemoryManager:
         self._pipeline_order = runtime_data.pipeline_order
         self._active_pipelines = []
         pipeline_data = SharedConfigData.from_buffer(self._shcfg)
-        pipeline_data.modified = False
+        pipeline_data.modified = len(runtime_data.active_pipelines) > 0
         pipeline_data.pyhook_pid = getpid()
         pipeline_data.count = min(PIPELINE_LIMIT, len(pipelines))
         pipeline_data.order_count = min(3 * PIPELINE_LIMIT, len(runtime_data.pipeline_order))
