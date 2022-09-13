@@ -17,7 +17,7 @@ settings = {
 - ESPCN - Efficient Sub-pixel Convolutional Neural Network
 - FSRCNN - Fast Super-Resolution Convolutional Neural Network
 - FSRCNN-small - FSRCNN with fewer parameters"""),
-    "Scale": build_variable(4, 2, 4, 1, "Scale multiplier.")
+    "Scale": build_variable(2, 2, 4, 1, "Scale multiplier.")
 }
 
 models = [
@@ -38,7 +38,10 @@ def setup_model() -> None:
     # Enable CUDA + cuDNN if possible
     if cv2.cuda.getCudaEnabledDeviceCount() > 0:
         sr.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-        sr.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+        try:
+            sr.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA_FP16)
+        except:
+            sr.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 def after_change_settings(key: str, value: float) -> None:
     if key == "Scale" or key == "Model":
@@ -64,4 +67,6 @@ def on_frame_process_stage(frame: np.array, width: int, height: int, frame_num: 
 def on_unload() -> None:
     global sr
     sr = None
+    if cv2.cuda.getCudaEnabledDeviceCount() > 0:
+        cv2.cuda.resetDevice()
     print(f'Pipeline="{name}" was unloaded.')
