@@ -150,7 +150,7 @@ OpenCV with CUDA support
 After installation make sure that following environment variables are set:
 
 - ``CUDA_PATH`` (e.g. "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.3")
-- | ``PATH`` with paths to CUDA + cuDNN and CMake:
+- | ``PATH`` with paths to CUDA + cuDNN and CMake, e.g.:
   | "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.3\\bin"
   | "C:\\Program Files\\CMake\\bin"
 
@@ -163,7 +163,7 @@ After build new environment variables have to be set:
 - ``PATH``, add path to OpenCV built binaries (e.g. "C:\\OpenCV\\OpenCV-4.6.0\\x64\\vc16\\bin")
 
 | To verify that OpenCV was built with CUDA support, restart Anaconda Prompt, enable OpenCV virtual env and use following code in it's Python:
-| NOTE: Env from build_opencv_cuda.bat has name ``opencv_build``.
+| NOTE: Env from ``build_opencv_cuda.bat`` has name ``opencv_build``.
 
 .. code-block:: python
 
@@ -196,7 +196,7 @@ supports both CPU and GPU OpenCV versions and will be used as benchmark.
 Benchmark setup:
 
 - Game @ 1280x720 resolution, 60 FPS
-- DNN Super Resolution pipeline with ``FSRCNN`` model
+- DNN Super Resolution pipeline with `FSRCNN <https://github.com/Saafke/FSRCNN_Tensorflow>`_ model
 - Intel Core i9 9900KS
 - RTX 2080 Super 8GB
 - 32GB DDR4 RAM
