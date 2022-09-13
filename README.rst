@@ -124,7 +124,7 @@ For 32-bit different Python version have to be used (no new version at the time 
 .. code-block:: powershell
 
     $ set CONDA_FORCE_32BIT=1                         // Only for 64-bit system
-    $ conda create -n pyhook32env python=3.10.6 -y
+    $ conda create -n pyhook32env python=3.10.4 -y
     $ conda activate pyhook32env
     $ conda install pip -y
     $ pip install -r any_pipeline.requirements.txt
