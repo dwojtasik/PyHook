@@ -145,7 +145,7 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
     bool display_settings = false;
 
     AlignTextToFramePadding();
-    BeginChild("##PyHookPipelines", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
+    BeginChild("##PyHookPipelines", ImVec2(0, 250), true, ImGuiWindowFlags_NoMove);
 
     if (pipeline_map.size() == 0) {
         for (int idx = 0; idx < shared_cfg->count; idx++) {
@@ -195,8 +195,8 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
             Separator();
 
         EndGroup();
-        Spacing();
-        PopID();
+        ImGui::Spacing();
+        ImGui::PopID();
 
         if (pdata->enabled && !display_settings && pdata->var_count > 0)
             display_settings = true;
@@ -222,9 +222,14 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
 
     if (display_settings) {
         AlignTextToFramePadding();
-        BeginChild("##PyHookSettings", ImVec2(0, 200), true, ImGuiWindowFlags_NoMove);
+        BeginChild("##PyHookSettings", ImVec2(0, 250), true, ImGuiWindowFlags_NoMove);
 
-        for (int idx = 0; idx < shared_cfg->count; idx++) {
+        vector<string> displayed{};
+
+        for (int idx = 0; idx < shared_cfg->order_count; idx++) {
+            if (count(displayed.begin(), displayed.end(), shared_cfg->order[idx]))
+                continue;
+            displayed.push_back(shared_cfg->order[idx]);
             PipelineData* pdata = pipeline_map[shared_cfg->order[idx]];
             bool p_modified = false;
             if (pdata->enabled && pdata->var_count > 0) {
@@ -303,8 +308,8 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
                         if (pvar->type != 3 && IsItemHovered() && (strlen(pvar->tooltip) > 0))
                             SetTooltip(pvar->tooltip);
 
-                        Spacing();
-                        PopID();
+                        ImGui::Spacing();
+                        ImGui::PopID();
 
                         if (var_modifed) {
                             pvar->modified = var_modifed;

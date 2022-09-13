@@ -23,7 +23,7 @@ _SETTINGS_FILE = "pyhook.json"
 # Search paths (in priority order) for pipelines directory.
 _PIPELINE_DIRS = ["./pipelines", "./PyHook/pipelines"]
 # Regex for combo variable detection.
-_COMBO_TAG_REGEX = re.compile(r"^%COMBO\[(.*?,)*.*?\].*$")
+_COMBO_TAG_REGEX = re.compile(r"^%COMBO\[(.*?,)*.*?\].*$", re.MULTILINE)
 
 
 class PipelinesDirNotFoundError(Exception):

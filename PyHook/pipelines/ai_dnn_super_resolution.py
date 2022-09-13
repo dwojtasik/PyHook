@@ -13,10 +13,10 @@ On second stage selected super resolution is applied."""
 multistage = 2
 
 settings = {
-    "Model": build_variable(1, 0, 2, 1, "%COMBO[ESPCN,FSRCNN,FSRCNN-small]Super-Resolution DNN model.\
-ESPCN - Efficient Sub-pixel Convolutional Neural Network\
-FSRCNN - Fast Super-Resolution Convolutional Neural Network\
-FSRCNN-small - FSRCNN with fewer parameters"),
+    "Model": build_variable(1, 0, 2, 1, """%COMBO[ESPCN,FSRCNN,FSRCNN-small]Super-Resolution DNN model:
+- ESPCN - Efficient Sub-pixel Convolutional Neural Network
+- FSRCNN - Fast Super-Resolution Convolutional Neural Network
+- FSRCNN-small - FSRCNN with fewer parameters"""),
     "Scale": build_variable(4, 2, 4, 1, "Scale multiplier.")
 }
 
@@ -35,6 +35,10 @@ def setup_model() -> None:
     scale = read_value(settings, "Scale")
     sr.readModel(f'{models[model][0]}{scale}.pb')
     sr.setModel(models[model][1], scale)
+    # Enable CUDA + cuDNN if possible
+    if cv2.cuda.getCudaEnabledDeviceCount() > 0:
+        sr.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        sr.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 def after_change_settings(key: str, value: float) -> None:
     if key == "Scale" or key == "Model":
@@ -42,7 +46,8 @@ def after_change_settings(key: str, value: float) -> None:
 
 def on_load() -> None:
     setup_model()
-    print(f'Pipeline="{name}" was loaded.')
+    supported_device = "GPU" if cv2.cuda.getCudaEnabledDeviceCount() > 0 else "CPU"
+    print(f'Pipeline="{name}" was loaded with {supported_device} support.')
 
 def on_frame_process_stage(frame: np.array, width: int, height: int, frame_num: int, stage: int) -> np.array:
     scale = read_value(settings, "Scale")

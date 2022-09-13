@@ -46,6 +46,7 @@ Runtime
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
 - `CUDA <https://developer.nvidia.com/cuda-11.3.0-download-archive>`_ == 11.3 (optional for AI pipelines only)
+- `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (optional for AI pipelines only)
 - | Only for specific pipelines: Any libraries that are required by pipeline code.
   | Do note that AI pipelines that requires PyTorch or TensorFlow will not work on 32-bit system because libraries does not support it.
 
@@ -103,7 +104,7 @@ History
 =======
 DEV / NEXT
 ----------
-- Added AI super resolution example using cv2 dnn superres.
+- Added AI super resolution example using OpenCV DNN super resolution.
 - Added multistage (multiple passes per frame) pipelines support.
 - Improved error handling in ReShade addon.
 - Added error notification on settings save.
