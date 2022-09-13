@@ -46,7 +46,7 @@ Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
-- `CUDA <https://developer.nvidia.com/cuda-11.3.0-download-archive>`_ == 11.3 (optional for AI pipelines only)
+- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3 (optional for AI pipelines only)
 - `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (optional for AI pipelines only)
 - | Only for specific pipelines: Any libraries that are required by pipeline code.
   | Do note that AI pipelines that requires PyTorch or TensorFlow will not work on 32-bit system because libraries does not support it.
@@ -79,9 +79,9 @@ For custom pipelines (e.g. AI ones) install requirements and setup ENV variables
 
 Available ENV variables:
 
-- LOCAL_PYTHON_32 (path to 32-bit Python)
-- LOCAL_PYTHON_64 (path to 64-bit Python)
-- LOCAL_PYTHON (fallback path if none of above is set)
+- ``LOCAL_PYTHON_32`` (path to 32-bit Python)
+- ``LOCAL_PYTHON_64`` (path to 64-bit Python)
+- ``LOCAL_PYTHON`` (fallback path if none of above is set)
 
 Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
 
@@ -109,7 +109,7 @@ Creation
 
 PyHook allows to freely use virtual environment from `Anaconda <https://www.anaconda.com/>`_.
 
-To create virtual env (64-bit) u can use following command in Anaconda Prompt:
+To create virtual env (64-bit) u can use following commands in Anaconda Prompt:
 
 .. code-block:: powershell
 
@@ -131,17 +131,17 @@ For 32-bit different Python version have to be used (no new version at the time 
     $ conda deactivate
     $ set CONDA_FORCE_32BIT=                          // Only for 64-bit system
 
-When virtaul environment is ready to be used, copy it's Python executable path and set system environment variables
+When virtual environment is ready to be used, copy it's Python executable path and set system environment variables
 described in `Installation <#installation>`_.
 
 OpenCV with CUDA support
 ------------------------
 
-OpenCV Python module is not shipped with CUDA support by default so you have to build it from the source.
-To do this install all requirements listed below:
+| OpenCV Python module is not shipped with CUDA support by default so you have to build it from the source.
+| To do this install all requirements listed below:
 
 - `Anaconda <https://www.anaconda.com/>`_ for virual environment
-- `CUDA <https://developer.nvidia.com/cuda-11.3.0-download-archive>`_ == 11.3 (or last supported by your GPU)
+- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3 (or last supported by your GPU and pipeline modules)
 - `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (or last supported by your CUDA version)
 - `Visual Studio <https://visualstudio.microsoft.com/pl/vs/community/>`_ >= 16 with C++ support
 - `git <https://git-scm.com/>`_ for version control
@@ -149,8 +149,8 @@ To do this install all requirements listed below:
 
 After installation make sure that following environment variables are set:
 
-- CUDA_PATH (e.g. "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.3")
-- | PATH with paths to CUDA + cuDNN and CMake:
+- ``CUDA_PATH`` (e.g. "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.3")
+- | ``PATH`` with paths to CUDA + cuDNN and CMake:
   | "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.3\\bin"
   | "C:\\Program Files\\CMake\\bin"
 
@@ -159,15 +159,11 @@ When requirements are set, run Anaconda Prompt and follow code from file:
 
 After build new environment variables have to be set:
 
-- OpenCV_DIR (e.g. "C:\\OpenCV\\OpenCV-4.6.0")
-- PATH, add path to OpenCV built binaries (e.g. "C:\\OpenCV\\OpenCV-4.6.0\\x64\\vc16\\bin")
+- ``OpenCV_DIR`` (e.g. "C:\\OpenCV\\OpenCV-4.6.0")
+- ``PATH``, add path to OpenCV built binaries (e.g. "C:\\OpenCV\\OpenCV-4.6.0\\x64\\vc16\\bin")
 
-| To verify that OpenCV was built with CUDA support, restart Anaconda Prompt, enable OpenCV virtual env and use following code:
+| To verify that OpenCV was built with CUDA support, restart Anaconda Prompt, enable OpenCV virtual env and use following code in it's Python:
 | NOTE: Env from build_opencv_cuda.bat has name ``opencv_build``.
-
-.. code-block:: powershell
-
-    $ python
 
 .. code-block:: python
 
@@ -182,7 +178,7 @@ After build new environment variables have to be set:
 .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg
    :alt: Go to /docs/images/cv2_cuda.jpg
 
-| The last step is to connect OpenCV to PyHook. To do this setup LOCAL_PYTHON_64 to executable file from OpenCV virual environment.
+| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virual environment.
 | Executable path can be read from python itself:
 
 .. code-block:: python
@@ -207,27 +203,27 @@ Benchmark setup:
 
 Results:
 
-+-------------+--------+-----------+---------------+-------------+--------+
-| DNN support | FPS    | GPU Usage | GPU Memory MB | CPU Usage % | RAM MB |
-+=============+========+===========+===============+=============+========+
-| CPU 2x      | 8      | 2%        | 0             | 75          | 368    |
-+-------------+--------+-----------+---------------+-------------+--------+
-| CPU 3x      | 16     | 4%        | 0             | 67          | 257    |
-+-------------+--------+-----------+---------------+-------------+--------+
-| CPU 4x      | 24     | 5%        | 0             | 60          | 216    |
-+-------------+--------+-----------+---------------+-------------+--------+
-| GPU CUDA 2x | 35     | 27%       | 697           | 12          | 1440   |
-+-------------+--------+-----------+---------------+-------------+--------+
-| GPU CUDA 3x | 37     | 21%       | 617           | 12          | 1354   |
-+-------------+--------+-----------+---------------+-------------+--------+
-| GPU CUDA 4x | 41     | 17%       | 601           | 12          | 1289   |
-+-------------+--------+-----------+---------------+-------------+--------+
++-------------+--------+-----------+------------+-------------+--------+
+| DNN version | FPS    | GPU Usage | GPU Mem MB | CPU Usage % | RAM MB |
++=============+========+===========+============+=============+========+
+| CPU 2x      | 8      | 2%        | 0          | 75          | 368    |
++-------------+--------+-----------+------------+-------------+--------+
+| CPU 3x      | 16     | 4%        | 0          | 67          | 257    |
++-------------+--------+-----------+------------+-------------+--------+
+| CPU 4x      | 24     | 5%        | 0          | 60          | 216    |
++-------------+--------+-----------+------------+-------------+--------+
+| GPU CUDA 2x | 35     | 27%       | 697        | 12          | 1440   |
++-------------+--------+-----------+------------+-------------+--------+
+| GPU CUDA 3x | 37     | 21%       | 617        | 12          | 1354   |
++-------------+--------+-----------+------------+-------------+--------+
+| GPU CUDA 4x | 41     | 17%       | 601        | 12          | 1289   |
++-------------+--------+-----------+------------+-------------+--------+
 
-NOTE: Values in ``GPU Memory MB`` and ``RAM MB`` contains memory loaded by pipeline only (game not included).
+NOTE: Values in ``GPU Mem MB`` and ``RAM MB`` contains memory loaded by pipeline only (game not included).
 
 Conclusion:
 
-GPU support allows to achieve 4x better performance for best quality (2x) super resolution and almost 2x for worst (4x).
+GPU support allows to achieve over ``4x better performance`` for best quality (2x) DNN super resolution and almost 2x for worst (4x).
 
 History
 =======
