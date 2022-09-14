@@ -7,8 +7,10 @@ modification of ReShade back buffer.
 
 PyHook consists of two elements:
 
-- Python code that finds program with ReShade loaded, inject addon into it and allows to process frames in code.
-- C++ addon DLL written using ReShade API that exposes back buffer via shared memory.
+- | Python code that finds process with ReShade loaded, injects addon into it
+  | and allows to process frames in code via dynamic pipelines.
+- | C++ addon DLL written using ReShade API that exposes back buffer via shared memory
+  | and allows to configure dynamic pipelines in settings UI.
 
 .. contents:: **Table of Contents**
 
@@ -161,6 +163,7 @@ After build new environment variables have to be set:
 
 - ``OpenCV_DIR`` (e.g. "C:\\OpenCV\\OpenCV-4.6.0")
 - ``PATH``, add path to OpenCV built binaries (e.g. "C:\\OpenCV\\OpenCV-4.6.0\\x64\\vc16\\bin")
+- ``OPENCV_LOG_LEVEL`` "ERROR", to suppress warning messages
 
 | To verify that OpenCV was built with CUDA support, restart Anaconda Prompt, enable OpenCV virtual env and use following code in it's Python:
 | NOTE: Env from ``build_opencv_cuda.bat`` has name ``opencv_build``.
