@@ -1,3 +1,4 @@
+import gc
 import numpy as np
 
 from utils import *
@@ -162,5 +163,6 @@ def on_unload() -> None:
     transform = None
     net = None
     if torch.cuda.is_available():
+        gc.collect()
         torch.cuda.empty_cache()
     print(f'Pipeline="{name}" was unloaded.')

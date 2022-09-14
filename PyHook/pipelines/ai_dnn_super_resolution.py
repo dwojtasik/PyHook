@@ -67,6 +67,4 @@ def on_frame_process_stage(frame: np.array, width: int, height: int, frame_num: 
 def on_unload() -> None:
     global sr
     sr = None
-    if cv2.cuda.getCudaEnabledDeviceCount() > 0:
-        cv2.cuda.resetDevice()
     print(f'Pipeline="{name}" was unloaded.')
