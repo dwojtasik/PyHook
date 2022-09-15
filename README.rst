@@ -119,6 +119,28 @@ Pipeline results
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_mosaic.jpg
 
+UI
+==
+
+PyHook uses ReShade ImGui UI to display list of available pipelines and their respective settings.
+
+To display pipelien list, open ReShade UI and go to Addon tab:
+
+.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_pipeline_list.jpg
+   :alt: Go to /docs/images/ui_pipeline_list.jpg
+
+Settings for enabled pipelines are displayed below mentioned list:
+
+.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_settings.jpg
+   :alt: Go to /docs/images/ui_settings.jpg
+
+Supported UI widgets (read more in `pipeline template <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/pipeline_template>`_):
+
+- checkbox
+- slider (integer)
+- slider (float)
+- combo box (single value)
+
 Requirements
 ============
 
