@@ -63,8 +63,8 @@
             }
 
             var params = getSearchParameters();
-            document.getElementById("labl").innerHTML = params["labl"];
-            document.getElementById("labr").innerHTML = params["labr"];
+            document.getElementById("labl").innerHTML = decodeURI(params["labl"]);
+            document.getElementById("labr").innerHTML = decodeURI(params["labr"]);
             document.getElementById("imgl").src = params["imgl"];
             document.getElementById("imgr").src = params["imgr"];
         }

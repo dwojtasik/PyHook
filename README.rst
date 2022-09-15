@@ -63,45 +63,60 @@ Pipeline results
        | Scale: 2
        | Model: FSRCNN
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_superres.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_superres.jpg&labl=Base&labr=DNN%20Super%20Resolution
           :alt: docs/images/gta5_superres.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_superres.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_superres.jpg&labl=Base&labr=DNN%20Super%20Resolution
           :alt: docs/images/crysis3_superres.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_superres.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_superres.jpg&labl=Base&labr=DNN%20Super%20Resolution
           :alt: docs/images/trek_to_yomi_superres.jpg
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon.jpg&labl=Base&labr=Cartoon-GAN
           :alt: docs/images/gta5_cartoon.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon.jpg&labl=Base&labr=Cartoon-GAN
           :alt: docs/images/crysis3_cartoon.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon.jpg&labl=Base&labr=Cartoon-GAN
           :alt: docs/images/trek_to_yomi_cartoon.jpg
    * - | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
        | Scale: 1.0
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_colorization.jpg&labl=Base&labr=Colorization
           :alt: docs/images/gta5_colorization.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_colorization.jpg&labl=Base&labr=Colorization
           :alt: docs/images/crysis3_colorization.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_colorization.jpg&labl=Base&labr=Colorization
           :alt: docs/images/trek_to_yomi_colorization.jpg
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | and
        | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
        | Scale: 1.0
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon+colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon+colorization.jpg&labl=Base&labr=Cartoon-GAN%20and%20Colorization
           :alt: docs/images/gta5_cartoon+colorization.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon+colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon+colorization.jpg&labl=Base&labr=Cartoon-GAN%20and%20Colorization
           :alt: docs/images/crysis3_cartoon+colorization.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon+colorization.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon+colorization.jpg&labl=Base&labr=Cartoon-GAN%20and%20Colorization
           :alt: docs/images/trek_to_yomi_cartoon+colorization.jpg
    * - | `Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_style_transfer.py>`_
        | Scale: 1.0
        | Model: Mosaic
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_style_mosaic.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/gta5_style_mosaic.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_style_mosaic.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/crysis3_style_mosaic.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_mosaic.jpg
 
 Requirements
