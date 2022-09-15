@@ -41,6 +41,69 @@ Graphics API support
 
 Do note that multisampling is not supported by PyHook at all with any API.
 
+Pipeline results
+================
+
+.. list-table::
+   :widths: 10 30 30 30
+   :header-rows: 1
+
+   * - Pipeline
+     - GTA V
+     - Crysis 3
+     - Trek to Yomi
+   * - None
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg
+          :alt: PyHook/pipelines/test_static_img/gta5.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg
+          :alt: PyHook/pipelines/test_static_img/crysis3.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg
+          :alt: PyHook/pipelines/test_static_img/trek_to_yomi.jpg
+   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
+       | Scale: 2
+       | Model: FSRCNN
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_superres.jpg
+          :alt: docs/images/gta5_superres.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_superres.jpg
+          :alt: docs/images/crysis3_superres.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_superres.jpg
+          :alt: docs/images/trek_to_yomi_superres.jpg
+   * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
+       | Scale: 1.0
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon.jpg
+          :alt: docs/images/gta5_cartoon.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon.jpg
+          :alt: docs/images/crysis3_cartoon.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon.jpg
+          :alt: docs/images/trek_to_yomi_cartoon.jpg
+   * - | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
+       | Scale: 1.0
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_colorization.jpg
+          :alt: docs/images/gta5_colorization.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_colorization.jpg
+          :alt: docs/images/crysis3_colorization.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_colorization.jpg
+          :alt: docs/images/trek_to_yomi_colorization.jpg
+   * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
+       | and
+       | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
+       | Scale: 1.0
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_cartoon+colorization.jpg
+          :alt: docs/images/gta5_cartoon+colorization.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_cartoon+colorization.jpg
+          :alt: docs/images/crysis3_cartoon+colorization.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_cartoon+colorization.jpg
+          :alt: docs/images/trek_to_yomi_cartoon+colorization.jpg
+   * - | `Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_style_transfer.py>`_
+       | Scale: 1.0
+       | Model: Mosaic
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_style_mosaic.jpg
+          :alt: docs/images/gta5_style_mosaic.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_style_mosaic.jpg
+          :alt: docs/images/crysis3_style_mosaic.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg
+          :alt: docs/images/trek_to_yomi_style_mosaic.jpg
+
 Requirements
 ============
 
