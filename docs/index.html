@@ -3,6 +3,7 @@
 
 <head>
     <title>PyHook Comparison</title>
+    <meta name="mobile-web-app-capable" content="yes"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -70,6 +71,13 @@
                     params[tmparr[0]] = tmparr[1];
                 }
                 return params;
+            }
+
+            //720px img, 50px labels, 20px margins
+            if (screen.width < 1300 || screen.height < 790) {
+                var scale = Math.min(screen.width / 1300, screen.height / 790);
+                document.getElementById("frame").style.top = "385px";
+                document.getElementById("canvas").style.scale = scale;
             }
 
             var params = getSearchParameters();
@@ -153,9 +161,9 @@
     </script>
 </head>
 
-<body style="background: black;">
+<body id="canvas" style="background: black;">
 
-    <div class="img-comp-container">
+    <div id="frame" class="img-comp-container">
         <h2 id="labl" class="label" style="float: left;"></h2>
         <h2 id="labr" class="label" style="float: right;"></h2>
         <div class="img-comp-img">
