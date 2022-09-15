@@ -119,8 +119,8 @@ Pipeline results
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_mosaic.jpg
 
-UI
-==
+User Interface
+==============
 
 PyHook uses ReShade ImGui UI to display list of available pipelines and their respective settings.
 
