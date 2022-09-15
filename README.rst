@@ -136,10 +136,10 @@ Settings for enabled pipelines are displayed below mentioned list:
 
 Supported UI widgets (read more in `pipeline template <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/pipeline_template>`_):
 
-- checkbox
-- slider (integer)
-- slider (float)
-- combo box (single value)
+- Checkbox
+- Slider (integer value)
+- Slider (float value)
+- Combo box (single value select)
 
 Requirements
 ============
