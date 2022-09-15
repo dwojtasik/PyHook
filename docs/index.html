@@ -44,6 +44,16 @@
             opacity: 0.7;
             border-radius: 50%;
         }
+
+        .divider {
+            position: absolute;
+            z-index: 9;
+            cursor: ew-resize;
+            width: 2px;
+            height: calc(50% - 20px);
+            background-color: white;
+            opacity: 0.7;
+        }
     </style>
     <script>
         function setupData() {
@@ -83,11 +93,29 @@
                 slider = document.createElement("DIV");
                 slider.setAttribute("class", "img-comp-slider");
                 img.parentElement.insertBefore(slider, img);
+
+                dividerTop = document.createElement("DIV");
+                dividerTop.setAttribute("class", "divider");
+                img.parentElement.insertBefore(dividerTop, img);
+
+                dividerBot = document.createElement("DIV");
+                dividerBot.setAttribute("class", "divider");
+                img.parentElement.insertBefore(dividerBot, img);
+
                 slider.style.top = (h / 2) - (slider.offsetHeight / 2) + "px";
                 slider.style.left = (w / 2) - (slider.offsetWidth / 2) + "px";
+                dividerTop.style.top = 0;
+                dividerTop.style.left = (w / 2) - (dividerTop.offsetWidth / 2) + "px";
+                dividerBot.style.bottom = 0;
+                dividerBot.style.left = (w / 2) - (dividerBot.offsetWidth / 2) + "px";
+
                 slider.addEventListener("mousedown", slideReady);
+                dividerTop.addEventListener("mousedown", slideReady);
+                dividerBot.addEventListener("mousedown", slideReady);
                 window.addEventListener("mouseup", slideFinish);
                 slider.addEventListener("touchstart", slideReady);
+                dividerTop.addEventListener("touchstart", slideReady);
+                dividerBot.addEventListener("touchstart", slideReady);
                 window.addEventListener("touchend", slideFinish);
                 function slideReady(e) {
                     e.preventDefault();
@@ -117,6 +145,8 @@
                 function slide(x) {
                     img.style.width = x + "px";
                     slider.style.left = img.offsetWidth - (slider.offsetWidth / 2) + "px";
+                    dividerTop.style.left = img.offsetWidth - (dividerTop.offsetWidth / 2) + "px";
+                    dividerBot.style.left = img.offsetWidth - (dividerBot.offsetWidth / 2) + "px";
                 }
             }
         }
