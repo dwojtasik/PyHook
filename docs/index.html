@@ -57,6 +57,18 @@
         }
     </style>
     <script>
+        //720px img, 50px labels, 20px margins
+        function updateScale() {
+            if (screen.width < 1300 || screen.height < 790) {
+                var scale = Math.min(screen.width / 1300, screen.height / 790);
+                document.getElementById("frame").style.top = "385px";
+                document.getElementById("canvas").style.scale = scale;
+            } else {
+                document.getElementById("frame").style.top = "50%";
+                document.getElementById("canvas").style.scale = "";
+            }
+        }
+
         function setupData() {
             function getSearchParameters() {
                 var prmstr = window.location.search.substr(1);
@@ -73,12 +85,7 @@
                 return params;
             }
 
-            //720px img, 50px labels, 20px margins
-            if (screen.width < 1300 || screen.height < 790) {
-                var scale = Math.min(screen.width / 1300, screen.height / 790);
-                document.getElementById("frame").style.top = "385px";
-                document.getElementById("canvas").style.scale = scale;
-            }
+            updateScale();
 
             var params = getSearchParameters();
             document.getElementById("labl").innerHTML = decodeURI(params["labl"]);
@@ -119,6 +126,9 @@
                 dividerBot.style.bottom = 0;
                 dividerBot.style.left = (w / 2) - (dividerBot.offsetWidth / 2) + "px";
 
+                window.addEventListener('resize', function(event) {
+                    updateScale();
+                }, true);
                 slider.addEventListener("mousedown", slideReady);
                 dividerTop.addEventListener("mousedown", slideReady);
                 dividerBot.addEventListener("mousedown", slideReady);
@@ -127,6 +137,7 @@
                 dividerTop.addEventListener("touchstart", slideReady);
                 dividerBot.addEventListener("touchstart", slideReady);
                 window.addEventListener("touchend", slideFinish);
+
                 function slideReady(e) {
                     e.preventDefault();
                     clicked = 1;
