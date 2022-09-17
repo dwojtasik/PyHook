@@ -41,8 +41,9 @@ Graphics API support
 
 | \*ReShade version up to 5.4.2 has ImGui affected by pipelines for these API, due to bug:
 | https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
+|
 
-Do note that multisampling is not supported by PyHook at all with any API.
+**Do note that multisampling is not supported by PyHook at all with any API.**
 
 Pipeline results
 ================
@@ -121,6 +122,92 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_mosaic.jpg
+
+Benchmark
+---------
+
+Benchmark setup:
+
+- `UNIGINE Superposition 64-bit DX11 <https://benchmark.unigine.com/superposition>`_
+- 1280x720, windowed, lowest preset
+- Intel Core i9 9900KS
+- RTX 2080 Super 8GB
+- 32GB DDR4 RAM
+
+Benchmark command:
+
+.. code-block:: powershell
+
+    $ .\superposition.exe -preset 0 -video_app direct3d11 -shaders_quality 0 -textures_quality 0 ^
+    -dof 0 -motion_blur 0 -video_vsync 0 -video_mode -1 ^
+    -console_command "world_load superposition/superposition && render_manager_create_textures 1" ^
+    -project_name Superposition -video_fullscreen 0 -video_width 1280 -video_height 720 ^
+    -extern_plugin GPUMonitor -mode 0 -sound 0 -tooltips 1
+
+Results:
+
+.. list-table::
+   :widths: 38 14 14 14 20
+   :header-rows: 1
+
+   * - PyHook settings
+     - FPS min
+     - FPS avg
+     - FPS max
+     - Score
+   * - PyHook disabled
+     - 128
+     - 227
+     - 331
+     - 30357
+   * - PyHook enabled
+     - 76
+     - 101
+     - 120
+     - 13449
+   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
+       | Scale: 2
+       | Model: FSRCNN
+     - 30
+     - 33
+     - 35
+     - 4472
+   * - | `Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_style_transfer.py>`_
+       | Scale: 1.0
+       | Model: Mosaic
+     - 9
+     - 10
+     - 10
+     - 1305
+   * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
+       | Scale: 1.0
+     - 4
+     - 4
+     - 4
+     - 579
+   * - | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
+       | Scale: 1.0
+     - 14
+     - 15
+     - 15
+     - 1956
+   * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
+       | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
+       | Scale: 1.0
+     - 3
+     - 3
+     - 4
+     - 464
+   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
+       | Scale: 2
+       | Model: FSRCNN
+       | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
+       | `Colorization <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_colorization.py>`_
+       | Scale: 1.0
+     - 8
+     - 8
+     - 8
+     - 1074
 
 User interface
 ==============
