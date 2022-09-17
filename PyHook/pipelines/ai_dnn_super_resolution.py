@@ -6,7 +6,7 @@ with use_local_python():
     import cv2
 
 name = "[AI] DNN Super Resolution"
-version = "0.0.1"
+version = "0.8.1"
 desc = """OpenCV pipeline for DNN super resolution.
 On first stage frame resolution is shorten by given multiplier.
 On second stage selected super resolution is applied."""

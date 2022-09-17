@@ -263,9 +263,11 @@ Installation
 
 You can download selected binary files from `Releases <https://github.com/dwojtasik/pyhook/releases/latest>`_.
 
-1. Download executable and \*.addon files. Place both in same directory.
-2. Start game with `ReShade <https://reshade.me/>`_ installed.
-3. Start PyHook.exe.
+1. Download and unpack zip catalog with PyHook executable, addon and pipelines.
+2. | Prepare Python local environment (read more in `Virtual environment <#virtual-environment>`_) and download pipelines files if needed.
+   | Pipelines has own directories with ``download.txt`` file that has list of files to download.
+3. Start game with `ReShade <https://reshade.me/>`_ installed.
+4. Start PyHook.exe.
 
 For custom pipelines (e.g. AI ones) install requirements and setup ENV variables that points to Python3 binary in required version.
 
@@ -420,8 +422,8 @@ GPU support allows to achieve over ``4x better performance`` for best quality (2
 
 History
 =======
-DEV / NEXT
-----------
+0.8.1 (2022-09-17)
+------------------
 - Added support for DirectX 12 and Vulkan with fallback for older ReShade version.
 - Added support for Vulkan DLL names.
 - Added AI super resolution example using OpenCV DNN super resolution.

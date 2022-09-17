@@ -6,7 +6,7 @@ with use_local_python():
     import cv2
 
 name = "[Test] Static Image"
-version = "0.0.1"
+version = "1.0.0"
 desc = "Dummy pipeline for testing. Displays static image."
 
 settings = {

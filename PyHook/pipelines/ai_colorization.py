@@ -10,7 +10,7 @@ with use_local_python():
     import torch.nn.functional as F
 
 name = "[AI] Colorization"
-version = "0.0.1"
+version = "0.8.1"
 desc = """Torch pipeline for grayscale colorization.
 Color image is converted to grayscale and colorization is applied.
 Based on "Colorful Image Colorization" from:
