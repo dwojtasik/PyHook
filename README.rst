@@ -210,6 +210,23 @@ Results:
      - 8
      - 1074
 
+Super-resolution
+----------------
+
+DNN super-resolution is crucial for fast AI pipeline processing. It allows to process multiple AI effects much faster due to smaller input frame.
+
+.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/sr_flow.jpg
+   :alt: Go to /docs/images/sr_flow.jpg
+
+As shown in the flowchart super-resolution consists of following steps:
+
+- Scale base image down by some factor.
+- Process small frame through AI pipelines to achieve much better performance.
+- Scale processed frame back using DNN super-resolution.
+
+| Possible FPS gains can be checked in `Benchmark <#benchmark>`_ section.
+| Difference between CPU and GPU super-resolution processing can be checked in `OpenCV CPU vs GPU <#opencv-cpu-vs-gpu>`_ section.
+
 User interface
 ==============
 
