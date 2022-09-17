@@ -27,6 +27,7 @@ Features
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
+- Automatic pipeline files download
 
 Graphics API support
 ====================
@@ -422,6 +423,11 @@ GPU support allows to achieve over ``4x better performance`` for best quality (2
 
 History
 =======
+
+NEXT / DEV
+----------
+- Added automatic pipeline files download on startup.
+
 0.8.1 (2022-09-17)
 ------------------
 - Added support for DirectX 12 and Vulkan with fallback for older ReShade version.

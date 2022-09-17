@@ -1,4 +1,4 @@
-Model from:
+# Model from:
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2/raw/master/models/candy.pth
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2/raw/master/models/mosaic.pth
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2/raw/master/models/picasso.pth

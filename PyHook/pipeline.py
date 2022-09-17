@@ -18,6 +18,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
+from downloader import download_file
+
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
 # Search paths (in priority order) for pipelines directory.
@@ -270,6 +272,27 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     )
 
 
+def _download_files(pipeline_dir: str, pipeline_file: str, logger: logging.Logger = None) -> None:
+    """Downloads files if download.txt file exists in pipeline data directory.
+
+    Args:
+        pipeline_dir (str): The pipelines directory.
+        pipeline_file (str): The pipeline filename.
+        logger (logging.Logger, optional): Logger to display informations. Defaults to None.
+    """
+    pipeline_data_dir = f"{pipeline_dir}\\{pipeline_file[:-3]}"
+    download_list_file = f"{pipeline_data_dir}\\download.txt"
+    if exists(download_list_file):
+        try:
+            with open(download_list_file, encoding="utf-8") as d_file:
+                urls = [url for url in d_file.read().split("\n") if len(url) > 1 and not url.startswith("#")]
+                for url in urls:
+                    download_file(url, pipeline_data_dir)
+        except Exception as ex:
+            if logger is not None:
+                logger.info('--- Cannot read / download pipeline files: "%s"', ex)
+
+
 def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
     """Loads pipelines for frame processing.
 
@@ -302,6 +325,7 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
             spec.loader.exec_module(module)
             pipeline = _build_pipeline(module, module_name, path)
             pipelines[pipeline.file] = pipeline
+            _download_files(pipeline_dir, pipeline.file, logger)
             if logger is not None:
                 logger.info('-- Loaded pipeline: "%s".', path)
         except Exception as ex:
