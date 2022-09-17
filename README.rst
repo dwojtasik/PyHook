@@ -34,10 +34,13 @@ Graphics API support
 +----------------+--------+-----------+------------+------------+------------+--------+
 | PyHook version | OpenGL | DirectX 9 | DirectX 10 | DirectX 11 | DirectX 12 | Vulkan |
 +================+========+===========+============+============+============+========+
-| 32-bit         | ✔      | ✔         | ✔          | ✔          | ❌          | ❌      |
+| 32-bit         | ✔      | ✔         | ✔          | ✔          | ✔*         | ✔*     |
 +----------------+--------+-----------+------------+------------+------------+--------+
-| 64-bit         | ✔      | ✔         | ✔          | ✔          | ❌          | ❌      |
+| 64-bit         | ✔      | ✔         | ✔          | ✔          | ✔*         | ✔*     |
 +----------------+--------+-----------+------------+------------+------------+--------+
+
+| \*ReShade version up to 5.4.2 has ImGui affected by pipelines for these API, due to bug:
+| https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
 
 Do note that multisampling is not supported by PyHook at all with any API.
 
@@ -332,6 +335,8 @@ History
 =======
 DEV / NEXT
 ----------
+- Added support for DirectX 12 and Vulkan with fallback for older ReShade version.
+- Added support for Vulkan DLL names.
 - Added AI super resolution example using OpenCV DNN super resolution.
 - Added multistage (multiple passes per frame) pipelines support.
 - Improved error handling in ReShade addon.

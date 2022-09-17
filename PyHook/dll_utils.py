@@ -42,7 +42,16 @@ _RESHADE_VERSION_EXTERN = "ReShadeVersion"
 # ReShade minimum version supported.
 _RESHADE_MIN_VERSION = "5.0.0"
 # ReShade valid DLL names to load and check.
-_RESHADE_VALID_DLL_NAMES = ["d3d9.dll", "d3d10.dll", "d3d11.dll", "d3d12.dll", "dxgi.dll", "opengl32.dll"]
+_RESHADE_VALID_DLL_NAMES = [
+    "d3d9.dll",
+    "d3d10.dll",
+    "d3d11.dll",
+    "d3d12.dll",
+    "dxgi.dll",
+    "opengl32.dll",
+    "reshade64.dll",
+    "reshade32.dll",
+]
 
 
 class AddonNotFoundException(Exception):
@@ -91,7 +100,7 @@ class AddonHandler:
             if not verify
             else list(
                 filter(
-                    lambda path: basename(path) in _RESHADE_VALID_DLL_NAMES,
+                    lambda path: basename(path).lower() in _RESHADE_VALID_DLL_NAMES,
                     [dll_info.path for dll_info in process.memory_maps()],
                 )
             )
