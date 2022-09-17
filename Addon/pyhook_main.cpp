@@ -545,15 +545,10 @@ static void process_frame(device* const device, resource back_buffer, command_qu
 /// </summary>
 static void on_present(command_queue* queue, swapchain* swapchain, const rect*, const rect*, uint32_t, const rect*)
 {
-    if (!pyhook_active)
+    if (!pyhook_active || (!fixed_version && is_new_api))
         return;
 
-    device* const device = swapchain->get_device();
-
-    if (!fixed_version && is_new_api)
-        return; // Procces in on_reshade_present for valid back buffer handle
-
-    process_frame(device, swapchain->get_current_back_buffer(), queue);
+    process_frame(swapchain->get_device(), swapchain->get_current_back_buffer(), queue);
 }
 
 /// <summary>
@@ -564,18 +559,11 @@ static void on_present(command_queue* queue, swapchain* swapchain, const rect*, 
 /// </summary>
 static void on_reshade_present(effect_runtime* runtime)
 {
-    if (fixed_version)
+    // Fallback only for d3d12 and vulkan
+    if (!pyhook_active || fixed_version || !is_new_api)
         return;
 
-    if (!pyhook_active)
-        return;
-
-    device* const device = runtime->get_device();
-
-    if (!is_new_api)
-        return; // Fallback only for d3d12 and vulkan
-
-    process_frame(device, runtime->get_current_back_buffer(), runtime->get_command_queue());
+    process_frame(runtime->get_device(), runtime->get_current_back_buffer(), runtime->get_command_queue());
 }
 
 /// <summary>
