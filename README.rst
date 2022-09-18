@@ -27,7 +27,7 @@ Features
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
-- Automatic pipeline files download
+- ``NEXT/DEV`` Automatic pipeline files download
 
 Graphics API support
 ====================
@@ -123,6 +123,18 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_mosaic.jpg&labl=Base&labr=Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_mosaic.jpg
+   * - | `Multi Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_multi_style_transfer.py>`_
+       | Scale: 1.0
+       | Style: Pencil
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_style_pencil.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_style_pencil.jpg&labl=Base&labr=Multi%20Style%20Transfer
+          :alt: docs/images/gta5_style_pencil.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_style_pencil.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_style_pencil.jpg&labl=Base&labr=Multi%Style%20Transfer
+          :alt: docs/images/crysis3_style_pencil.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_pencil.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_pencil.jpg&labl=Base&labr=Multi%Style%20Transfer
+          :alt: docs/images/trek_to_yomi_style_pencil.jpg
 
 Benchmark
 ---------
@@ -180,6 +192,13 @@ Results:
      - 10
      - 10
      - 1305
+   * - | `Multi Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_multi_style_transfer.py>`_
+       | Scale: 1.0
+       | Style: Pencil
+     - 6
+     - 6
+     - 6
+     - 783
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -443,6 +462,7 @@ History
 
 NEXT / DEV
 ----------
+- Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer
 - Added automatic pipeline files download on startup.
 
 0.8.1 (2022-09-17)

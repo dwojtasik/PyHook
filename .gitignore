@@ -24,7 +24,7 @@ Addon/*.filters
 Addon/*.user
 Addon/*.aps
 
-# Models
-*.pth
-*.pb
-*.h5
+# Pipelines data
+PyHook/pipelines/*/**
+!PyHook/pipelines/*/download.txt
+!PyHook/pipelines/test_static_img/**

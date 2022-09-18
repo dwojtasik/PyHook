@@ -8,7 +8,7 @@ Simple file downloader
 
 import re
 from os.path import basename, getsize
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 from genericpath import exists
@@ -29,7 +29,7 @@ def download_file(url: str, directory: str) -> None:
     if url.startswith("https://drive.google.com"):
         filename = _FILENAME_REGEX.match(response_stream.headers["Content-Disposition"]).group(1)
     else:
-        filename = basename(urlparse(url).path)
+        filename = unquote(basename(urlparse(url).path))
     filepath = f"{directory}\\{filename}"
     filesize = int(response_stream.headers["Content-Length"])
     byte_count = 0

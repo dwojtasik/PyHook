@@ -1,0 +1,24 @@
+# Model from:
+https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer/releases/download/v0.1/21styles.model
+# Style images:
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/Robert_Delaunay%2C_1906%2C_Portrait.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/candy.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/composition_vii.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/escher_sphere.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/feathers.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/frida_kahlo.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/la_muse.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/mosaic.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/mosaic_ducks_massimo.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/pencil.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/picasso_selfport1907.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/rain_princess.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/seated-nude.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/shipwreck.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/starry_night.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/stars2.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/strip.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/the_scream.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/udnie.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/wave.jpg
+https://raw.githubusercontent.com/zhanghang1989/PyTorch-Multi-Style-Transfer/master/experiments/images/21styles/woman-with-hat-matisse.jpg
