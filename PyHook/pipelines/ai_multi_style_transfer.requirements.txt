@@ -1,0 +1,3 @@
+opencv-python==4.6.0.66
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch==1.12.1
