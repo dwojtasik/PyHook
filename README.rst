@@ -480,6 +480,7 @@ History
 
 NEXT / DEV
 ----------
+- Fixed float inaccuracy in pipeline settings.
 - Added AI object detection pipeline example using https://github.com/ultralytics/yolov5
 - Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer
 - Added automatic pipeline files download on startup.

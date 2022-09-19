@@ -46,8 +46,8 @@ bool SliderWithSteps(PipelineVar* pvar, bool is_float)
 
     BeginGroup();
 
-    const int step_count = int((pvar->max - pvar->min) / pvar->step);
-    int int_val = int((pvar->value - pvar->min) / pvar->step);
+    const int step_count = int(round((pvar->max - pvar->min) / pvar->step));
+    int int_val = int(round((pvar->value - pvar->min) / pvar->step));
     bool modified = SliderInt("##slider", &int_val, 0, step_count, value_display);
 
     PopItemWidth();
@@ -73,9 +73,9 @@ bool SliderWithSteps(PipelineVar* pvar, bool is_float)
     EndGroup();
 
     if (is_float)
-        pvar->value = pvar->min + float(int_val) * pvar->step;
+        pvar->value = pvar->min + int_val * pvar->step;
     else
-        pvar->value = int(pvar->min + float(int_val) * pvar->step);
+        pvar->value = int(round(pvar->min + int_val * pvar->step));
     return modified;
 }
 

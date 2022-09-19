@@ -148,6 +148,9 @@ class Pipeline:
             return bool(value)
         if self.mappings[key] == 1 or self.mappings[key] == 3:
             return int(value)
+        step = str(self.settings[key][3])
+        if "." in step:
+            value = round(value, len(step.rsplit(".", maxsplit=1)[-1]))
         return value
 
     def change_settings(self, enabled: bool, key: str, new_value: float) -> None:
