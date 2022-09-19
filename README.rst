@@ -135,6 +135,17 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_pencil.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_style_pencil.jpg&labl=Base&labr=Multi%20Style%20Transfer
           :alt: docs/images/trek_to_yomi_style_pencil.jpg
+   * - | `Object Detection <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_object_detection.py>`_
+       | YOLO Model: Medium
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_yolo.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_yolo.jpg&labl=Base&labr=Object%20Detection
+          :alt: docs/images/gta5_yolo.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_yolo.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_yolo.jpg&labl=Base&labr=Object%20Detection
+          :alt: docs/images/crysis3_yolo.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_yolo.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_yolo.jpg&labl=Base&labr=Object%20Detection
+          :alt: docs/images/trek_to_yomi_yolo.jpg
 
 Benchmark
 ---------
@@ -199,6 +210,12 @@ Results:
      - 6
      - 6
      - 783
+   * - | `Object Detection <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_object_detection.py>`_
+       | YOLO Model: Medium
+     - 28
+     - 32
+     - 36
+     - 4275
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -288,6 +305,7 @@ Build
 - `NumPy <https://pypi.org/project/numpy/>`_ == 1.23.2
 - `psutil <https://pypi.org/project/psutil/>`_ == 5.9.2
 - `Pyinjector <https://pypi.org/project/pyinjector/>`_ == 1.1.0
+- `Requests <https://pypi.org/project/requests/>`_ == 2.28.1
 
 EXE Build
 ---------
@@ -462,6 +480,7 @@ History
 
 NEXT / DEV
 ----------
+- Added AI object detection pipeline example using https://github.com/ultralytics/yolov5
 - Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer
 - Added automatic pipeline files download on startup.
 

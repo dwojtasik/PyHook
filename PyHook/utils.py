@@ -9,9 +9,10 @@ Utils for pipeline creation
 import ctypes
 import os
 import sys
+import types
+from os.path import abspath, dirname
 from subprocess import check_output
 from typing import Any, Dict, List, Union
-from os.path import abspath, dirname
 
 # Runtime info
 # Path to local Python executable.
@@ -110,6 +111,50 @@ class _LocalPython:
         self.close()
 
 
+class _FakeModules:
+    """Allows to use fake Python modules.
+
+    Useful for PyTorch models loading with torch.load(...).
+
+    Remove fake modules by calling close() or using it in a with statement.
+
+    fake_modules (Dict[str, Dict[str, Any]]): The fake modules dictionaries to be used.
+    _old_modules (Dict[str, Any]): Frozen old sys.modules.
+    """
+
+    def __init__(self, fake_modules: Dict[str, Dict[str, Any]]):
+        self.fake_modules = fake_modules
+        self._old_modules = {k: None if k not in sys.modules else sys.modules[k] for k in list(fake_modules.keys())}
+        for module_name, module_dict in fake_modules.items():
+            real_name = module_name.split(".")[-1]
+            module = types.ModuleType(real_name)
+            for key, value in module_dict.items():
+                module.__setattr__(key, value)
+            sys.modules[module_name] = module
+
+    def close(self):
+        """Restores frozen old sys.modules and removes fake ones."""
+        for module_name in self.fake_modules.keys():
+            del sys.modules[module_name]
+            if self._old_modules[module_name] is not None:
+                sys.modules[module_name] = self._old_modules[module_name]
+
+    def __enter__(self) -> "_FakeModules":
+        """Called at the start of with block.
+
+        Returns:
+            _FakeModules: Fake modules handle.
+        """
+        return self
+
+    def __exit__(self, *args) -> None:
+        """Called at the end of with block.
+
+        Closes fake modules handle.
+        """
+        self.close()
+
+
 def _set_local_python() -> None:
     """Reads and stores local Python executable path and local Python sys.path.
 
@@ -164,6 +209,30 @@ def use_local_python() -> _LocalPython:
     if _LOCAL_PYTHON_EXE is None:
         _set_local_python()
     return _LocalPython()
+
+
+def use_fake_modules(fake_modules: Dict[str, Dict[str, Any]]) -> _FakeModules:
+    """Allows to use fake modules in pipelines.
+
+    Useful for PyTorch models loading with torch.load(...).
+
+    Use it with when statement for initializing fake modules, e.g.
+    fake_modules = {
+        "module_xyz": {
+            "a": 2
+        }
+    }
+    with use_fake_modules(fake_modules):
+        print(sys.modules["module_xyz"].a) # This prints 2
+        ...
+
+    Args:
+        fake_modules (Dict[str, Dict[str, Any]]): The fake modules dictionaries to be used.
+
+    Returns:
+        _FakeModules: Fake modules handle. When not closed it allows to use fake modules.
+    """
+    return _FakeModules(fake_modules)
 
 
 def resolve_path(file_path: str) -> str:

@@ -17,6 +17,20 @@ import numpy as np
 # Create pip requirements file for additional modules to be installed
 # Preferred name: "pipeline_file.requirements.txt"
 
+# To fake modules e.g. for loading torch models with torch.load(...)
+# use 'with use_fake_modules(fake_modules_dict) block'.
+# This will map fake modules into sys.modules so they will be available
+# in given code block.
+# Fake modules dictionary has following structure:
+# fake_modules_dict = {
+#     "full.module.path": {
+#         "some_var_or_func": 0
+#     },
+#     "other_module": {
+#         "some_var_or_func": 0
+#     }
+# }
+
 name = "Pipeline name up to 64 characters"
 # OPTIONAL
 # Version string up to 12 characters.

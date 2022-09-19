@@ -1,0 +1,6 @@
+# Model from:
+https://github.com/ultralytics/yolov5/releases/download/v6.2/yolov5n.pt
+https://github.com/ultralytics/yolov5/releases/download/v6.2/yolov5s.pt
+https://github.com/ultralytics/yolov5/releases/download/v6.2/yolov5m.pt
+https://github.com/ultralytics/yolov5/releases/download/v6.2/yolov5l.pt
+https://github.com/ultralytics/yolov5/releases/download/v6.2/yolov5x.pt

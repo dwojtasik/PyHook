@@ -7,11 +7,10 @@ Simple file downloader
 """
 
 import re
-from os.path import basename, getsize
+from os.path import basename, exists, getsize
 from urllib.parse import unquote, urlparse
 
 import requests
-from genericpath import exists
 
 _CHUNK_SIZE = 4096
 _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
