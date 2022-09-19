@@ -59,8 +59,10 @@
     <script>
         //720px img, 50px labels, 20px margins
         function updateScale() {
-            if (screen.width < 1300 || screen.height < 790) {
-                var scale = Math.min(screen.width / 1300, screen.height / 790);
+            w = window.innerWidth
+            h = window.innerHeight
+            if (w < 1300 || h < 790) {
+                var scale = Math.min(w / 1300, h / 790);
                 document.getElementById("frame").style.top = "385px";
                 document.getElementById("canvas").style.scale = scale;
             } else {
