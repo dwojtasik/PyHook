@@ -146,6 +146,18 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_yolo.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_yolo.jpg&labl=Base&labr=Object%20Detection
           :alt: docs/images/trek_to_yomi_yolo.jpg
+   * - | `Semantic Segmentation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_semantic_segmentation.py>`_
+       | Scale: 1.0
+       | PIDNet model: Cityscape (Large)
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_segmentation.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_segmentation.jpg&labl=Base&labr=Semantic%20Segmentation
+          :alt: docs/images/gta5_segmentation.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_segmentation.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_segmentation.jpg&labl=Base&labr=Semantic%20Segmentation
+          :alt: docs/images/crysis3_segmentation.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_segmentation.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_segmentation.jpg&labl=Base&labr=Semantic%20Segmentation
+          :alt: docs/images/trek_to_yomi_segmentation.jpg
 
 Benchmark
 ---------
@@ -216,6 +228,13 @@ Results:
      - 32
      - 36
      - 4275
+   * - | `Semantic Segmentation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_semantic_segmentation.py>`_
+       | Scale: 1.0
+       | PIDNet model: Cityscape (Large)
+     - 8
+     - 8
+     - 8
+     - 1100
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -480,6 +499,7 @@ History
 
 NEXT / DEV
 ----------
+- Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
 - Fixed float inaccuracy in pipeline settings.
 - Added AI object detection pipeline example using https://github.com/ultralytics/yolov5
 - Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer

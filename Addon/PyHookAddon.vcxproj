@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="data_types.h" />
     <ClInclude Include="imgui_overlay.h" />
+    <ClInclude Include="include\imgui.h" />
     <ClInclude Include="include\reshade.hpp" />
     <ClInclude Include="include\reshade_api.hpp" />
     <ClInclude Include="include\reshade_api_device.hpp" />
