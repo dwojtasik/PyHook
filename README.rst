@@ -160,9 +160,9 @@ Pipeline results
           :alt: docs/images/trek_to_yomi_segmentation.jpg
    * - | `Depth Estimation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_depth_estimation.py>`_
        | Scale: 1.0
-     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg
-          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg&labl=Base&labr=Depth%20Estimation
-          :alt: docs/images/crysis3_depth.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_depth.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_depth.jpg&labl=Base&labr=Depth%20Estimation
+          :alt: docs/images/gta5_depth.jpg
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg&labl=Base&labr=Depth%20Estimation
           :alt: docs/images/crysis3_depth.jpg
