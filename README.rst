@@ -148,7 +148,7 @@ Pipeline results
           :alt: docs/images/trek_to_yomi_yolo.jpg
    * - | `Semantic Segmentation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_semantic_segmentation.py>`_
        | Scale: 1.0
-       | PIDNet model: Cityscape (Large)
+       | PIDNet model: Cityscape(Large)
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_segmentation.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_segmentation.jpg&labl=Base&labr=Semantic%20Segmentation
           :alt: docs/images/gta5_segmentation.jpg
@@ -158,6 +158,17 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_segmentation.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_segmentation.jpg&labl=Base&labr=Semantic%20Segmentation
           :alt: docs/images/trek_to_yomi_segmentation.jpg
+   * - | `Depth Estimation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_depth_estimation.py>`_
+       | Scale: 1.0
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg&labl=Base&labr=Depth%20Estimation
+          :alt: docs/images/crysis3_depth.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_depth.jpg&labl=Base&labr=Depth%20Estimation
+          :alt: docs/images/crysis3_depth.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_depth.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_depth.jpg&labl=Base&labr=Depth%20Estimation
+          :alt: docs/images/trek_to_yomi_depth.jpg
 
 Benchmark
 ---------
@@ -230,11 +241,17 @@ Results:
      - 4275
    * - | `Semantic Segmentation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_semantic_segmentation.py>`_
        | Scale: 1.0
-       | PIDNet model: Cityscape (Large)
+       | PIDNet model: Cityscape(Large)
      - 8
      - 8
      - 8
      - 1100
+   * - | `Depth Estimation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_depth_estimation.py>`_
+       | Scale: 1.0
+     - 11
+     - 12
+     - 12
+     - 1570
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -499,6 +516,7 @@ History
 
 NEXT / DEV
 ----------
+- Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch
 - Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
 - Fixed float inaccuracy in pipeline settings.
 - Added AI object detection pipeline example using https://github.com/ultralytics/yolov5

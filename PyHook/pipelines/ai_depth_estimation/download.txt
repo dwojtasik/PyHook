@@ -1,0 +1,3 @@
+# Model from:
+https://github.com/wolverinn/Depth-Estimation-PyTorch/releases/download/v1.0/fyn_model.pt
+https://download.pytorch.org/models/resnet101-63fe2227.pth
