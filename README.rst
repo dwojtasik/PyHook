@@ -44,7 +44,7 @@ Graphics API support
 
 |center_block_end|
 
-| \* For ``ReShade <= 5.4.2`` and ``PyHook <= 0.8.1`` has whole ImGui affected by pipelines for these API, due to bug:
+| \* For ``ReShade <= 5.4.2`` and ``PyHook <= 0.8.1`` whole ImGui is affected by pipelines for these API, due to bug:
 | |nbsp| https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
 | |nbsp| For ``ReShade <= 5.4.2`` and ``PyHook > 0.8.1`` ImGui is not affected but OSD window has cut-out background:
 .. raw:: html
