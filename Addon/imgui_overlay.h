@@ -39,7 +39,7 @@ struct ImGuiWindows
     bool active;
 
     /// <summary>
-    /// Positions of all ImGui windows.
+    /// Display rects of displayed ImGui windows.
     /// </summary>
     std::vector<ImVec4> rects;
 

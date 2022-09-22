@@ -32,6 +32,8 @@ Features
 Graphics API support
 ====================
 
+|center_block_start|
+
 +----------------+--------+-----------+------------+------------+------------+--------+
 | PyHook version | OpenGL | DirectX 9 | DirectX 10 | DirectX 11 | DirectX 12 | Vulkan |
 +================+========+===========+============+============+============+========+
@@ -40,16 +42,23 @@ Graphics API support
 | 64-bit         | ✔      | ✔         | ✔          | ✔          | ✔*         | ✔*     |
 +----------------+--------+-----------+------------+------------+------------+--------+
 
+|center_block_end|
+
 | \* For ``ReShade <= 5.4.2`` and ``PyHook <= 0.8.1`` has whole ImGui affected by pipelines for these API, due to bug:
 | |nbsp| https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
 | |nbsp| For ``ReShade <= 5.4.2`` and ``PyHook > 0.8.1`` ImGui is not affected but OSD window has cut-out background:
-.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/osd_bug.jpg
-   :alt: Go to /docs/images/osd_bug.jpg
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/osd_bug.jpg" alt="Go to /docs/images/osd_bug.jpg">
+   </p>
 
 **Do note that multisampling is not supported by PyHook at all with any API.**
 
 Pipeline results
 ================
+
+|center_block_start|
 
 .. list-table::
    :widths: 10 30 30 30
@@ -172,6 +181,8 @@ Pipeline results
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_depth.jpg&labl=Base&labr=Depth%20Estimation
           :alt: docs/images/trek_to_yomi_depth.jpg
 
+|center_block_end|
+
 Benchmark
 ---------
 
@@ -194,6 +205,8 @@ Benchmark command:
     -extern_plugin GPUMonitor -mode 0 -sound 0 -tooltips 1
 
 Results:
+
+|center_block_start|
 
 .. list-table::
    :widths: 38 14 14 14 20
@@ -284,13 +297,18 @@ Results:
      - 8
      - 1074
 
+|center_block_end|
+
 Super-resolution
 ----------------
 
 DNN super-resolution is crucial for fast AI pipeline processing. It allows to process multiple AI effects much faster due to smaller input frame.
 
-.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/sr_flow.jpg
-   :alt: Go to /docs/images/sr_flow.jpg
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/sr_flow.jpg" alt="Go to /docs/images/sr_flow.jpg">
+   </p>
 
 As shown in the flowchart super-resolution consists of following steps:
 
@@ -308,13 +326,19 @@ User interface
 
 To display pipeline list, open ``ReShade`` UI and go to ``Add-ons`` tab:
 
-.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_pipeline_list.jpg
-   :alt: Go to /docs/images/ui_pipeline_list.jpg
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_pipeline_list.jpg" alt="Go to /docs/images/ui_pipeline_list.jpg">
+   </p>
 
 Settings for enabled pipelines are displayed below mentioned list:
 
-.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_settings.jpg
-   :alt: Go to /docs/images/ui_settings.jpg
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/ui_settings.jpg" alt="Go to /docs/images/ui_settings.jpg">
+   </p>
 
 Supported UI widgets (read more in `pipeline template <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/pipeline_template>`_):
 
@@ -463,8 +487,11 @@ After build new environment variables have to be set:
 | For first print output should be greater than 0.
 | In second print output find following fragment with 2x YES:
 
-.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg
-   :alt: Go to /docs/images/cv2_cuda.jpg
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg" alt="Go to /docs/images/cv2_cuda.jpg">
+   </p>
 
 | The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virual environment.
 | Executable path can be read from python itself:
@@ -491,6 +518,8 @@ Benchmark setup:
 
 Results:
 
+|center_block_start|
+
 +-------------+--------+-----------+------------+-------------+--------+
 | DNN version | FPS    | GPU Usage | GPU Mem MB | CPU Usage % | RAM MB |
 +=============+========+===========+============+=============+========+
@@ -506,6 +535,8 @@ Results:
 +-------------+--------+-----------+------------+-------------+--------+
 | GPU CUDA 4x | 41     | 17%       | 601        | 12          | 1289   |
 +-------------+--------+-----------+------------+-------------+--------+
+
+|center_block_end|
 
 NOTE: Values in ``GPU Mem MB`` and ``RAM MB`` contains memory loaded by pipeline only (game not included).
 
@@ -565,3 +596,10 @@ NEXT / DEV
 - Initial version.
 
 .. |nbsp| unicode:: U+00A0 .. non-breaking space
+.. |center_block_start| raw:: html
+
+    <div align="center">
+
+.. |center_block_end| raw:: html
+
+    </div>
