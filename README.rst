@@ -40,9 +40,11 @@ Graphics API support
 | 64-bit         | ✔      | ✔         | ✔          | ✔          | ✔*         | ✔*     |
 +----------------+--------+-----------+------------+------------+------------+--------+
 
-| \*ReShade version up to 5.4.2 has ImGui affected by pipelines for these API, due to bug:
-| https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
-|
+| \* For ``ReShade <= 5.4.2`` and ``PyHook <= 0.8.1`` has whole ImGui affected by pipelines for these API, due to bug:
+| |nbsp| https://github.com/crosire/reshade/commit/d2d9ae4f6704208c74f7b8971c3d66bf01deec28
+| |nbsp| For ``ReShade <= 5.4.2`` and ``PyHook > 0.8.1`` ImGui is not affected but OSD window has cut-out background:
+.. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/osd_bug.jpg
+   :alt: Go to /docs/images/osd_bug.jpg
 
 **Do note that multisampling is not supported by PyHook at all with any API.**
 
@@ -516,6 +518,7 @@ History
 
 NEXT / DEV
 ----------
+- Fixed ImGui beeing affected for ReShade version up to 5.4.2.
 - Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch
 - Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
 - Fixed float inaccuracy in pipeline settings.
@@ -560,3 +563,5 @@ NEXT / DEV
 0.0.1 (2022-08-27)
 ------------------
 - Initial version.
+
+.. |nbsp| unicode:: U+00A0 .. non-breaking space

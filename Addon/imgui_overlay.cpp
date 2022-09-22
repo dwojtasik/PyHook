@@ -331,3 +331,34 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg)
     if (modified)
         shared_cfg->modified = modified;
 }
+
+void SetImGuiWindows(ImGuiWindows* windows)
+{
+    ImGuiContext* context = reinterpret_cast<ImGuiContext*>(reinterpret_cast<uintptr_t>(&ImGui::GetIO()) - offsetof(ImGuiContext, IO));
+    windows->active = context->WindowsActiveCount > 1;
+    windows->rects.clear();
+    for (int i = 0; i < context->Windows.size(); i++) {
+        if (context->Windows[i]->Hidden || context->Windows[i]->IsExplicitChild || context->Windows[i]->IsFallbackWindow || context->Windows[i]->BeginCount == 0)
+            continue;
+        // Skip transparent windows
+        if (context->Windows[i]->Flags & 128) {
+            // Allow to render original OSD window contents
+            if (strcmp(context->Windows[i]->Name, "OSD") == 0)
+            {
+                float sx = context->Windows[i]->ContentSize.x;
+                float sy = context->Windows[i]->ContentSize.y;
+                float x = context->Windows[i]->Pos.x + (context->Windows[i]->Size.x - sx) / 2;
+                float y = context->Windows[i]->Pos.y + (context->Windows[i]->Size.y - sy) / 2;
+                // Calculate text size to skip dummy that forces OSD window width
+                PushFont(context->Windows[i]->DrawList->_Data->Font);
+                float offset = ImGui::CalcTextSize("1234567890").x; // Consider max OSD text length as 10 chars
+                PopFont();
+                windows->rects.push_back(ImVec4(x + sx - offset, y, x + sx, y + sy - GetStyle().ItemSpacing.y));
+            }
+            continue;
+        }
+        float x = context->Windows[i]->Pos.x;
+        float y = context->Windows[i]->Pos.y;
+        windows->rects.push_back(ImVec4(x, y, x + context->Windows[i]->Size.x, y + context->Windows[i]->Size.y));
+    }
+}

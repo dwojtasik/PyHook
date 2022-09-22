@@ -82,6 +82,9 @@ mapped_region shc_region;
 // Pointer to shared configuration data.
 SharedConfigData* shared_cfg;
 
+// Active ImGui windows rects.
+ImGuiWindows windows{};
+
 /// <summary>
 /// Checks if actual ReShade version has fixed back buffer handle.
 /// </summary>
@@ -301,11 +304,15 @@ void read_rgb(subresource_data mapped)
 
 /// <summary>
 /// Write RGB component values to mapped texture.
+/// If old not fixed version is used windows for ImGui will be skipped in mapping.
 /// </summary>
 /// <param name="mapped">Mapped texture.</param>
-void write_rgb(subresource_data mapped)
+/// <param name="previous">Pointer to previous texture used to read ImGui UI pixels.</param>
+void write_rgb(subresource_data mapped, subresource_data* previous = 0)
 {
+    bool skip_imgui = !fixed_version && is_new_api && windows.active;
     auto mapped_data = static_cast<uint8_t*>(mapped.data);
+    auto previous_data = skip_imgui && previous != 0 ? static_cast<uint8_t*>(previous->data) : 0;
     for (uint32_t y = 0; y < shared_data->height; ++y)
     {
         short r_idx = 0, g_idx = 1, b_idx = 2; //_idx = 3 means that component is set to 0.
@@ -333,6 +340,12 @@ void write_rgb(subresource_data mapped)
             {
                 const uint32_t mpx_index = y * row_pitch + x * bytes;
                 const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+                if (skip_imgui && windows.HasPixel(x, y))
+                {
+                    if (previous != 0)
+                        *reinterpret_cast<uint32_t*>(mapped_data + mpx_index) = *reinterpret_cast<uint32_t*>(previous_data + mpx_index);
+                    continue;
+                }
                 auto a = 3 << 30;
                 auto b = (shared_data->frame[fpx_index + b_idx] * 4) << 20;
                 auto g = (shared_data->frame[fpx_index + g_idx] * 4) << 10;
@@ -345,6 +358,18 @@ void write_rgb(subresource_data mapped)
         {
             const uint32_t mpx_index = y * row_pitch + x * bytes;
             const uint32_t fpx_index = (y * shared_data->width + x) * 3;
+            if (skip_imgui && windows.HasPixel(x, y))
+            {
+                if (previous != 0)
+                {
+                    mapped_data[mpx_index + r_idx] = previous_data[mpx_index + r_idx];
+                    if (g_idx != 3)
+                        mapped_data[mpx_index + g_idx] = previous_data[mpx_index + g_idx];
+                    if (b_idx != 3)
+                        mapped_data[mpx_index + b_idx] = previous_data[mpx_index + b_idx];
+                }
+                continue;
+            }
             mapped_data[mpx_index + r_idx] = shared_data->frame[fpx_index + 0];
             if (g_idx != 3)
                 mapped_data[mpx_index + g_idx] = shared_data->frame[fpx_index + 1];
@@ -503,7 +528,7 @@ static void process_frame(device* const device, resource back_buffer, command_qu
             return;
         }
 
-        write_rgb(mapped_up);
+        write_rgb(mapped_up, &mapped);
     }
     else {
         write_rgb(mapped);
@@ -567,12 +592,29 @@ static void on_reshade_present(effect_runtime* runtime)
 }
 
 /// <summary>
+/// ReShade addon callback.
+/// Used as fallback for older, not fixed ReShade version where
+/// on_present gives invalid handle for back buffer.
+/// See reshade::addon_event::on_reshade_overlay
+/// </summary>
+static void on_reshade_overlay(effect_runtime*)
+{
+    // Fallback only for d3d12 and vulkan
+    if (!pyhook_active || fixed_version || !is_new_api)
+        return;
+
+    SetImGuiWindows(&windows);
+}
+
+/// <summary>
 /// ReShade addon ImGui overlay callback.
 /// See reshade::register_overlay
 /// </summary>
-static void draw_overlay(effect_runtime*) {
+static void draw_overlay(effect_runtime*)
+{
     if (!pyhook_active)
         return;
+
     DrawSettingsOverlay(shared_cfg);
 }
 
@@ -585,6 +627,7 @@ void register_events()
     reshade::register_event<reshade::addon_event::create_swapchain>(on_create_swapchain);
     reshade::register_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
     reshade::register_event<reshade::addon_event::present>(on_present);
+    reshade::register_event<reshade::addon_event::reshade_overlay>(on_reshade_overlay);
     reshade::register_event<reshade::addon_event::reshade_present>(on_reshade_present);
 }
 
@@ -594,6 +637,7 @@ void register_events()
 void unregister_events()
 {
     reshade::unregister_event<reshade::addon_event::reshade_present>(on_reshade_present);
+    reshade::unregister_event<reshade::addon_event::reshade_overlay>(on_reshade_overlay);
     reshade::unregister_event<reshade::addon_event::present>(on_present);
     reshade::unregister_event<reshade::addon_event::init_swapchain>(on_init_swapchain);
     reshade::unregister_event<reshade::addon_event::create_swapchain>(on_create_swapchain);

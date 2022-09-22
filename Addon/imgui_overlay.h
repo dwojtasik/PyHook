@@ -11,6 +11,7 @@
 #define ImTextureID unsigned long long
 
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <reshade.hpp>
 #include <string>
 #include <vector>
@@ -28,6 +29,33 @@ struct ComboVar
     /// The actual tooltip for combo variable.
     /// </summary>
     char tooltip[256];
+};
+
+struct ImGuiWindows
+{
+    /// <summary>
+    /// Flag if ImGui is rendered.
+    /// </summary>
+    bool active;
+
+    /// <summary>
+    /// Positions of all ImGui windows.
+    /// </summary>
+    std::vector<ImVec4> rects;
+
+    /// <summary>
+    /// Checks if given pixel is used by ImGui windows.
+    /// </summary>
+    /// <param name="x">Pixel X coord.</param>
+    /// <param name="y">Pixel Y coord.</param>
+    /// <returns>True if pixel is used by ImGui windows.</returns>
+    bool HasPixel(int x, int y)
+    {
+        for (int i = 0; i < rects.size(); i++)
+            if (x >= rects[i].x && x <= rects[i].z && y >= rects[i].y && y <= rects[i].w)
+                return true;
+        return false;
+    }
 };
 
 /// <summary>
@@ -55,3 +83,9 @@ bool ComboWithVector(PipelineVar* pvar, ComboVar* cvar);
 /// </summary>
 /// <param name="shared_cfg">Pointer to configuration in shared memory.</param>
 void DrawSettingsOverlay(SharedConfigData* shared_cfg);
+
+/// <summary>
+/// Reads and stores ImGui window rects.
+/// </summary>
+/// <param name="windows">Pointer to Windows structur.</param>
+void SetImGuiWindows(ImGuiWindows* windows);
