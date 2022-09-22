@@ -5,9 +5,11 @@ Python hook for ReShade processing
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
+import json
 import logging
 import os
 import sys
+from os.path import exists
 from threading import Timer
 
 import numpy as np
@@ -22,6 +24,7 @@ from dll_utils import (
     ReShadeNotFoundException,
     get_reshade_addon_handler,
 )
+from keys import SettingsKeys
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitAddonNotFoundException, WaitProcessNotFoundException
 from pipeline import (
     FrameSizeModificationError,
@@ -32,8 +35,15 @@ from pipeline import (
 )
 from win_utils import is_started_as_admin
 
-# Time in seconds after last settings change to wait until autosave.
-_AUTOSAVE_SETTINGS_SECONDS = 5
+# Settings file path
+_SETTINGS_PATH = "settings.json"
+
+# PyHook settings
+_SETTINGS = {
+    SettingsKeys.KEY_AUTOSAVE: 5,
+    SettingsKeys.KEY_AUTODOWNLOAD: True,
+    SettingsKeys.KEY_DOWNLOADED: [],
+}
 
 
 def _get_logger() -> logging.Logger:
@@ -48,6 +58,63 @@ def _get_logger() -> logging.Logger:
     handler.setLevel(logging.INFO)
     logger.addHandler(handler)
     return logger
+
+
+# PyHook main logger
+_LOGGER = _get_logger()
+
+
+def _save_settings() -> None:
+    """Saves PyHook settings to file."""
+    try:
+        with open(_SETTINGS_PATH, "w", encoding="utf-8") as settings_file:
+            json.dump(_SETTINGS, settings_file, indent=4)
+    except PermissionError:
+        if _LOGGER is not None:
+            _LOGGER.info(
+                "-- Error: Cannot save settings to file %s. Permission denied. Try to run PyHook as admin.",
+                _SETTINGS_PATH,
+            )
+    except Exception as ex:
+        if _LOGGER is not None:
+            _LOGGER.error(
+                "-- Error: Cannot save settings to file %s. Unhandled exception occurres.", _SETTINGS_PATH, exc_info=ex
+            )
+
+
+def _load_settings() -> None:
+    """Loads PyHook settings from file."""
+    _LOGGER.info("- Loading settings...")
+    if exists(_SETTINGS_PATH):
+        with open(_SETTINGS_PATH, encoding="utf-8") as settings_file:
+            settings = json.load(settings_file)
+            for key, value in settings.items():
+                if key == SettingsKeys.KEY_AUTOSAVE:
+                    if not isinstance(value, int):
+                        _LOGGER.info("-- Warning: Invalid value for key: %s=%s. Skipping...", key, str(value))
+                        continue
+                    if int(value) < 1:
+                        _LOGGER.info(
+                            "-- Warning: Value for %s has to be bigger than 0. Actual value: %s. Restored value %s.",
+                            key,
+                            str(value),
+                            str(_SETTINGS[key]),
+                        )
+                        continue
+                    _SETTINGS[key] = int(value)
+                elif key == SettingsKeys.KEY_AUTODOWNLOAD:
+                    _SETTINGS[key] = bool(value)
+                elif key == SettingsKeys.KEY_DOWNLOADED:
+                    if not isinstance(value, list):
+                        _LOGGER.info("-- Warning: Invalid value for key: %s=%s. Skipping...", key, str(value))
+                        continue
+                    _SETTINGS[key] = list(value)
+                else:
+                    _LOGGER.info("-- Warning: Unrecognized settings key: %s. Skipping...", key)
+        _LOGGER.info("-- Settings have been loaded.")
+    else:
+        _LOGGER.info("-- Settings not found. Creating default settings...")
+        _save_settings()
 
 
 def _wait_on_exit(code: int) -> None:
@@ -89,21 +156,18 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def _pid_input_fallback(logger: logging.Logger) -> AddonHandler:
+def _pid_input_fallback() -> AddonHandler:
     """Fallback to manual PID supply.
-
-    Args:
-        logger (logging.Logger): Logger for error display.
 
     Returns:
         AddonHandler: The handler for PyHook addon management.
     """
-    logger.info("- Fallback to manual PID input...")
+    _LOGGER.info("- Fallback to manual PID input...")
     pid = None
     try:
         pid = int(input("-- PID: "))
     except ValueError:
-        logger.error("--- Invalid PID number.")
+        _LOGGER.error("--- Invalid PID number.")
         _wait_on_exit(1)
     return get_reshade_addon_handler(pid)
 
@@ -113,47 +177,49 @@ def _main():
     try:
         os.system("cls")  # To clear PyInstaller warnings.
         displayed_ms_error = False
-        logger = _get_logger()
-        logger.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
-        logger.info("- Loading pipelines...")
-        pipelines = load_pipelines(logger)
+        _LOGGER.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
+        _load_settings()
+        _LOGGER.info("- Loading pipelines...")
+        pipelines, has_changes = load_pipelines(_SETTINGS, _LOGGER)
+        if has_changes:
+            _save_settings()
         if len(pipelines) == 0:
-            logger.error("-- Cannot find any pipeline to process.")
+            _LOGGER.error("-- Cannot find any pipeline to process.")
             _wait_on_exit(1)
         try:
-            logger.info("- Searching for process with ReShade...")
+            _LOGGER.info("- Searching for process with ReShade...")
             addon_handler = get_reshade_addon_handler()
         except ReShadeNotFoundException:
-            logger.error("-- Cannot find any active process with ReShade loaded.")
+            _LOGGER.error("-- Cannot find any active process with ReShade loaded.")
             if not is_started_as_admin():
-                logger.info("-- NOTE: Try to run this program as administrator.")
-            addon_handler = _pid_input_fallback(logger)
+                _LOGGER.info("-- NOTE: Try to run this program as administrator.")
+            addon_handler = _pid_input_fallback()
         memory_manager = MemoryManager(addon_handler.pid)
-        logger.info("-- Selected process: %s", addon_handler.get_info())
-        logger.info("- Started addon injection for %s...", addon_handler.addon_path)
+        _LOGGER.info("-- Selected process: %s", addon_handler.get_info())
+        _LOGGER.info("- Started addon injection for %s...", addon_handler.addon_path)
         try:
             addon_handler.inject_addon()
-            logger.info("-- Addon injected!")
+            _LOGGER.info("-- Addon injected!")
         except Exception as ex:
-            logger.error("-- Cannot inject addon into given process.", exc_info=ex)
+            _LOGGER.error("-- Cannot inject addon into given process.", exc_info=ex)
             _wait_on_exit(1)
-        logger.info("- Loading PyHook configuration if exists...")
+        _LOGGER.info("- Loading PyHook configuration if exists...")
         save_later = None
         runtime_data, data_exists = load_settings(pipelines, addon_handler.dir_path)
         if not data_exists:
             save_settings(
-                pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path, logger
+                pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path, _LOGGER
             )
-        logger.info("- Writing configuration to addon...")
+        _LOGGER.info("- Writing configuration to addon...")
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
-        logger.info("- Started processing...")
+        _LOGGER.info("- Started processing...")
         while True:
             memory_manager.wait(addon_handler)
             data = memory_manager.read_shared_data()
             # Multisampled buffer cannot be processed.
             if data.multisampled:
                 if not displayed_ms_error:
-                    logger.error("-- Disable multisampling (MSAA) in game to process frames!")
+                    _LOGGER.error("-- Disable multisampling (MSAA) in game to process frames!")
                     displayed_ms_error = True
                 memory_manager.unlock()
                 continue
@@ -172,7 +238,7 @@ def _main():
                 if save_later is not None and not save_later.finished.is_set():
                     save_later.cancel()
                 save_later = Timer(
-                    _AUTOSAVE_SETTINGS_SECONDS,
+                    _SETTINGS[SettingsKeys.KEY_AUTOSAVE],
                     save_settings,
                     [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path],
                 )
@@ -206,28 +272,28 @@ def _main():
                     raise FrameSizeModificationError()
                 _encode_frame(data, frame)
             except FrameSizeModificationError:
-                logger.info("-- ERROR: Frame modification detected! Frame skipped...")
+                _LOGGER.info("-- ERROR: Frame modification detected! Frame skipped...")
             memory_manager.unlock()
     except PipelinesDirNotFoundError:
-        logger.error("-- Cannot find pipelines directory.")
-        logger.info("-- Make sure pipelines directory exists in PyHook directory.")
+        _LOGGER.error("-- Cannot find pipelines directory.")
+        _LOGGER.info("-- Make sure pipelines directory exists in PyHook directory.")
         _wait_on_exit(1)
     except AddonNotFoundException:
-        logger.error("-- Cannot find addon file.")
-        logger.info("-- Make sure that *.addon file is built and exists in PyHook directory.")
+        _LOGGER.error("-- Cannot find addon file.")
+        _LOGGER.info("-- Make sure that *.addon file is built and exists in PyHook directory.")
         _wait_on_exit(1)
     except ProcessNotFoundException:
-        logger.error("--- Process with given PID does not exists.")
+        _LOGGER.error("--- Process with given PID does not exists.")
         _wait_on_exit(1)
     except WaitProcessNotFoundException:
-        logger.error("-- Connected process does not exists anymore. Exiting...")
+        _LOGGER.error("-- Connected process does not exists anymore. Exiting...")
         _wait_on_exit(1)
     except WaitAddonNotFoundException:
-        logger.error("-- Connected process does not have addon loaded anymore. Exiting...")
-        logger.error("-- Check ReShade logs for more informations.")
+        _LOGGER.error("-- Connected process does not have addon loaded anymore. Exiting...")
+        _LOGGER.error("-- Check ReShade logs for more informations.")
         _wait_on_exit(1)
     except Exception as ex:
-        logger.error("Unhandled exception occurres.", exc_info=ex)
+        _LOGGER.error("Unhandled exception occurres.", exc_info=ex)
         _wait_on_exit(1)
 
 

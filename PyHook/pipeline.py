@@ -19,6 +19,7 @@ from typing import Any, Callable, Dict, List, Tuple
 import numpy as np
 
 from downloader import download_file
+from keys import SettingsKeys
 
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
@@ -296,19 +297,21 @@ def _download_files(pipeline_dir: str, pipeline_file: str, logger: logging.Logge
                 logger.info('--- Cannot read / download pipeline files: "%s"', ex)
 
 
-def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
+def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> Tuple[Dict[str, Pipeline], bool]:
     """Loads pipelines for frame processing.
 
     Args:
+        settings (Dict[str, Any]): PyHook settings json.
         logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
             Defaults to None.
 
     Returns:
-        Dict[str, Pipeline]: File to pipeline map.
+        Tuple[Dict[str, Pipeline], bool]: File to pipeline map and flag if settings were changed.
 
     Raises:
         PipelinesDirNotFoundError: When pipelines directory does not exists.
     """
+    has_settings_change = False
     pipeline_dir = None
     for path in _PIPELINE_DIRS:
         if isdir(path):
@@ -328,14 +331,17 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
             spec.loader.exec_module(module)
             pipeline = _build_pipeline(module, module_name, path)
             pipelines[pipeline.file] = pipeline
-            _download_files(pipeline_dir, pipeline.file, logger)
+            if settings[SettingsKeys.KEY_AUTODOWNLOAD] and pipeline.file not in settings[SettingsKeys.KEY_DOWNLOADED]:
+                _download_files(pipeline_dir, pipeline.file, logger)
+                settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline.file)
+                has_settings_change = True
             if logger is not None:
                 logger.info('-- Loaded pipeline: "%s".', path)
         except Exception as ex:
             if logger is not None:
                 logger.error('-- Cannot load pipeline file "%s".', path)
                 logger.error("--- Error: %s", ex)
-    return pipelines
+    return pipelines, has_settings_change
 
 
 def save_settings(

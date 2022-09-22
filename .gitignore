@@ -28,3 +28,6 @@ Addon/*.aps
 PyHook/pipelines/*/**
 !PyHook/pipelines/*/download.txt
 !PyHook/pipelines/test_static_img/**
+
+# PyHook data
+settings.json

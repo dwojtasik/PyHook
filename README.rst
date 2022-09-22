@@ -549,6 +549,7 @@ History
 
 NEXT / DEV
 ----------
+- Added PyHook settings file.
 - Fixed ImGui beeing affected for ReShade version up to 5.4.2.
 - Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch
 - Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
