@@ -325,6 +325,8 @@ def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> T
     for path in pipeline_files:
         module_name = basename(path)[:-3]
         try:
+            if logger is not None:
+                logger.info('-- Loading pipeline: "%s".', path)
             spec = importlib.util.spec_from_file_location(module_name, path)
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
@@ -335,8 +337,6 @@ def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> T
                 _download_files(pipeline_dir, pipeline.file, logger)
                 settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline.file)
                 has_settings_change = True
-            if logger is not None:
-                logger.info('-- Loaded pipeline: "%s".', path)
         except Exception as ex:
             if logger is not None:
                 logger.error('-- Cannot load pipeline file "%s".', path)
