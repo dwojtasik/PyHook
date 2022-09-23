@@ -61,5 +61,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon='pyhook_icon.ico',
     version='VERSION.txt',
 )

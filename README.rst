@@ -1,6 +1,6 @@
-===========================================
-PyHook - Python hook for ReShade processing
-===========================================
+==================================================
+PyHook |icon| - Python hook for ReShade processing
+==================================================
 
 **PyHook** is an MIT licensed software, written in Python and C++, for access and
 modification of ReShade back buffer.
@@ -604,3 +604,7 @@ NEXT / DEV
 .. |center_block_end| raw:: html
 
     </div>
+
+.. |icon| raw:: html
+
+    <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/pyhook_icon.ico" alt="Icon" width="34px" height="34px">
