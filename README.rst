@@ -27,7 +27,7 @@ Features
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
-- ``NEXT/DEV`` Automatic pipeline files download
+- Automatic pipeline files download
 
 Graphics API support
 ====================
@@ -380,7 +380,7 @@ EXE Build
 Installation
 ============
 
-You can download selected binary files from `Releases <https://github.com/dwojtasik/pyhook/releases/latest>`_.
+You can download selected PyHook archives from `Releases <https://github.com/dwojtasik/pyhook/releases/latest>`_.
 
 1. Download and unpack zip catalog with PyHook executable, addon and pipelines.
 2. | Prepare Python local environment (read more in `Virtual environment <#virtual-environment>`_) and download pipelines files if needed.
@@ -546,11 +546,19 @@ Conclusion:
 
 GPU support allows to achieve over ``4x better performance`` for best quality (2x) DNN super resolution and almost 2x for worst (4x).
 
+Breaking changes
+================
+
+0.8.1 → 0.9.0
+-------------
+| Pipelines created in ``0.9.0`` with use of ``use_fake_modules`` utils method will not work in ``0.8.1``.
+| However they can be rewritten to ``0.8.1`` by simply adding ``use_fake_modules`` definition directly in pipeline file.
+
 History
 =======
 
-NEXT / DEV
-----------
+0.9.0 (2022-09-23)
+------------------
 - Added PyHook settings file.
 - Fixed ImGui beeing affected for ReShade version up to 5.4.2.
 - Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch

@@ -13,7 +13,7 @@
 #include <sstream>
 
  // Export special variables for ReShade addon.
-extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.0.1
+extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.9.0
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed back buffer to Python pipeline.";
 
 // ReShade version
