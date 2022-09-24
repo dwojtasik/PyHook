@@ -60,8 +60,9 @@
     <script>
         //720px img, 50px labels, 20px margins
         function updateScale() {
-            w = window.innerWidth
-            h = window.innerHeight
+            useScreen = window.innerWidth > window.screen.width;
+            w = useScreen ? window.screen.width : window.innerWidth
+            h = useScreen ? window.screen.height : window.innerHeight
             if (w < 1300 || h < 790) {
                 var scale = Math.min(w / 1300, h / 790);
                 document.getElementById("frame").style.top = "385px";
