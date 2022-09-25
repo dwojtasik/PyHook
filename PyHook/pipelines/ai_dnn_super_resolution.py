@@ -49,7 +49,7 @@ def after_change_settings(key: str, value: float) -> None:
 
 def on_load() -> None:
     setup_model()
-    supported_device = "GPU" if cv2.cuda.getCudaEnabledDeviceCount() > 0 else "CPU"
+    supported_device = "CUDA" if cv2.cuda.getCudaEnabledDeviceCount() > 0 else "CPU"
     print(f'Pipeline="{name}" was loaded with {supported_device} support.')
 
 def on_frame_process_stage(frame: np.array, width: int, height: int, frame_num: int, stage: int) -> np.array:

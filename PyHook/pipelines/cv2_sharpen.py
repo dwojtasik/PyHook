@@ -27,7 +27,7 @@ def on_load() -> None:
         cuda_blur = cv2.cuda.createGaussianFilter(
             srcType=cv2.CV_32FC3, dstType=cv2.CV_32FC3, ksize=(5, 5), sigma1=1, sigma2=0
         )
-    print(f'Pipeline="{name}" was loaded with {"GPU" if has_cuda else "CPU"} support.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if has_cuda else "CPU"} support.')
 
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:

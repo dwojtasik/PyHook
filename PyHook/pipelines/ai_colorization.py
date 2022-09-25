@@ -218,7 +218,6 @@ def postprocess_tens(tens_orig_l, out_ab):
 
 device = None
 net = None
-has_cuda = False
 
 def after_change_settings(key: str, value: float) -> None:
     if key == "Scale":
@@ -226,9 +225,8 @@ def after_change_settings(key: str, value: float) -> None:
             torch.cuda.empty_cache()
 
 def on_load() -> None:
-    global device, net, has_cuda
-    has_cuda = torch.cuda.is_available()
-    device = torch.device('cuda' if has_cuda else 'cpu')
+    global device, net
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     with torch.no_grad():
         net = SIGGRAPHGenerator()
         model_path = resolve_path('ai_colorization\\siggraph17-df00044c.pth')
@@ -236,10 +234,10 @@ def on_load() -> None:
         net.load_state_dict(state_dict)
         net.to(device)
         net.eval()
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if device.type == "cuda" else "CPU"} support.')
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
-    global net, has_cuda
+    global device, net
     scale = read_value(settings, "Scale")
     with torch.no_grad():
         if scale != 1:
@@ -249,18 +247,16 @@ def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -
         frame_lab_rs = cv2.cvtColor((frame_rs / 255.0).astype(np.float32), cv2.COLOR_RGB2LAB)
         tens_l = torch.Tensor(frame_lab[:,:,0])[None,None,:,:]
         tens_l_rs = torch.Tensor(frame_lab_rs[:,:,0])[None,None,:,:]
-        if has_cuda:
-            tens_l_rs = tens_l_rs.cuda()
+        tens_l_rs = tens_l_rs.to(device)
         img = postprocess_tens(tens_l, net(tens_l_rs).cpu())
         if img.shape[1] != width or img.shape[0] != height:
             img = cv2.resize(img, (width, height))
         return (img * 255).astype(np.uint8)
 
 def on_unload() -> None:
-    global device, net, has_cuda
+    global device, net
     device = None
     net = None
-    has_cuda = False
     if torch.cuda.is_available():
         gc.collect()
         torch.cuda.empty_cache()

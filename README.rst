@@ -238,10 +238,9 @@ Results:
      - 101
      - 120
      - 13449
-   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
+   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_ ``CUDA``
        | Scale: 2
        | Model: FSRCNN
-       | CUDA support
      - 30
      - 33
      - 35
@@ -279,16 +278,14 @@ Results:
      - 12
      - 12
      - 1570
-   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_ ``CUDA``
        | Amount: 1.0
-       | CUDA support
      - 33
      - 37
      - 39
      - 4887
-   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_ ``CPU``
        | Amount: 1.0
-       | CPU support
      - 26
      - 28
      - 29
@@ -585,6 +582,7 @@ History
 
 NEXT / DEV
 ----------
+- Updated pipelines with information about selected device (CPU or CUDA).
 - Added OpenCV sharpen pipeline with CPU/CUDA support.
 
 0.9.0 (2022-09-23)

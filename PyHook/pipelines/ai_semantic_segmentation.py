@@ -636,7 +636,7 @@ def on_load() -> None:
         model = get_pred_model(f"pidnet-{model_size}", 19 if "Cityscapes" in model_path else 11)
         model = load_pretrained(model, model_path).to(device)
         model.eval()
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if device.type == "cuda" else "CPU"} support.')
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global device, model

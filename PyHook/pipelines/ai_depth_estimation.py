@@ -128,7 +128,7 @@ def on_load() -> None:
         i2d = I2D().to(device)
         i2d.load_state_dict(torch.load(model_path, map_location='cpu'))
         i2d.eval()
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if device.type == "cuda" else "CPU"} support.')
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global device, rgb_transform, i2d

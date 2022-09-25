@@ -145,7 +145,7 @@ def on_load() -> None:
         net.load_state_dict(state_dict)
         net.to(device)
         net.eval()
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if device.type == "cuda" else "CPU"} support.')
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global transform, net

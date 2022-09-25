@@ -445,7 +445,7 @@ def on_load() -> None:
         style_v = style_loader.get(style)
         style_v = Variable(style_v.data)
         style_model.setTarget(style_v)
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if cuda else "CPU"} support.')
 
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:

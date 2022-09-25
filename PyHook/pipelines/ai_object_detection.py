@@ -770,7 +770,7 @@ def on_load() -> None:
         colors = Colors()
         model_path = paths[read_value(settings, "YOLO Model")]
         model = DetectMultiBackend(model_path, device=device, dnn=False, data=None, fp16=False, fuse=False)
-    print(f'Pipeline="{name}" was loaded.')
+    print(f'Pipeline="{name}" was loaded with {"CUDA" if device.type == "cuda" else "CPU"} support.')
 
 def on_frame_process(frame: np.array, width: int, height: int, frame_num: int) -> np.array:
     global device, model, colors
