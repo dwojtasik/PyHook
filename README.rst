@@ -582,6 +582,7 @@ History
 
 NEXT / DEV
 ----------
+- Fixed initial pipeline values loaded from file.
 - Updated pipelines with information about selected device (CPU or CUDA).
 - Added OpenCV sharpen pipeline with CPU/CUDA support.
 

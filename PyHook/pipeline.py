@@ -154,6 +154,28 @@ class Pipeline:
             value = round(value, len(step.rsplit(".", maxsplit=1)[-1]))
         return value
 
+    def set_initial_value(self, key: str, value: Any) -> None:
+        """Sets initial value for given key.
+
+        Args:
+            key (str): Variable name.
+            value (Any): Variable value.
+        """
+        if self.mappings[key] == 0:
+            self.settings[key][0] = bool(value)
+            return
+        min_val = self.settings[key][1]
+        max_val = self.settings[key][2]
+        step = self.settings[key][3]
+        if self.mappings[key] == 1 or self.mappings[key] == 3:
+            self.settings[key][0] = int(max(min_val, min(max_val, round(int(value) / step) * step)))
+            return
+        precision = None
+        str_step = str(step)
+        if "." in str_step:
+            precision = len(str_step.rsplit(".", maxsplit=1)[-1])
+        self.settings[key][0] = max(min_val, min(max_val, round(round(float(value) / step) * step, precision)))
+
     def change_settings(self, enabled: bool, key: str, new_value: float) -> None:
         """Changes given key-value pair and calls before_change_settings and after_change_settings callbacks.
 
@@ -395,7 +417,7 @@ def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[Pipeli
                 if p_file in pipelines and pipelines[p_file].settings is not None:
                     for key, value in p_settings.items():
                         if key in pipelines[p_file].settings:
-                            pipelines[p_file].settings[key][0] = value
+                            pipelines[p_file].set_initial_value(key, value)
             total_order = []
             for _, pipeline in pipelines.items():
                 total_order.extend([pipeline.file] * pipeline.multistage)
