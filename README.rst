@@ -204,6 +204,7 @@ Benchmark setup:
 - Intel Core i9 9900KS
 - RTX 2080 Super 8GB
 - 32GB DDR4 RAM
+- Pipelines were run with ``CUDA`` with few additional runs labelled as ``CPU``
 
 Benchmark command:
 
@@ -238,13 +239,17 @@ Results:
      - 101
      - 120
      - 13449
-   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_ ``CUDA``
+   * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
        | Scale: 2
        | Model: FSRCNN
-     - 30
-     - 33
-     - 35
-     - 4472
+     - | 30 ``CUDA``
+       | 15 ``CPU``
+     - | 33 ``CUDA``
+       | 15 ``CPU``
+     - | 35 ``CUDA``
+       | 16 ``CPU``
+     - | 4472 ``CUDA``
+       | 2052 ``CPU``
    * - | `Style Transfer <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_style_transfer.py>`_
        | Scale: 1.0
        | Model: Mosaic
@@ -261,10 +266,14 @@ Results:
      - 783
    * - | `Object Detection <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_object_detection.py>`_
        | YOLO Model: Medium
-     - 28
-     - 32
-     - 36
-     - 4275
+     - | 28 ``CUDA``
+       | 4 ``CPU``
+     - | 32 ``CUDA``
+       | 4 ``CPU``
+     - | 36 ``CUDA``
+       | 4 ``CPU``
+     - | 4275 ``CUDA``
+       | 537 ``CPU``
    * - | `Semantic Segmentation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_semantic_segmentation.py>`_
        | Scale: 1.0
        | PIDNet model: Cityscape(Large)
@@ -278,18 +287,16 @@ Results:
      - 12
      - 12
      - 1570
-   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_ ``CUDA``
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
        | Amount: 1.0
-     - 33
-     - 37
-     - 39
-     - 4887
-   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_ ``CPU``
-       | Amount: 1.0
-     - 26
-     - 28
-     - 29
-     - 3719
+     - | 33 ``CUDA``
+       | 26 ``CPU``
+     - | 37 ``CUDA``
+       | 28 ``CPU``
+     - | 39 ``CUDA``
+       | 29 ``CPU``
+     - | 4887 ``CUDA``
+       | 3719 ``CPU``
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
