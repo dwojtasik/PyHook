@@ -180,6 +180,17 @@ Pipeline results
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_depth.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_depth.jpg&labl=Base&labr=Depth%20Estimation
           :alt: docs/images/trek_to_yomi_depth.jpg
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
+       | Amount: 1.0
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_sharpen.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_sharpen.jpg&labl=Base&labr=Sharpen
+          :alt: docs/images/gta5_sharpen.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_sharpen.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/crysis3.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/crysis3_sharpen.jpg&labl=Base&labr=Sharpen
+          :alt: docs/images/crysis3_sharpen.jpg
+     - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_sharpen.jpg
+          :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/trek_to_yomi.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/trek_to_yomi_sharpen.jpg&labl=Base&labr=Sharpen
+          :alt: docs/images/trek_to_yomi_sharpen.jpg
 
 |center_block_end|
 
@@ -230,6 +241,7 @@ Results:
    * - | `DNN Super Resolution <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_dnn_super_resolution.py>`_
        | Scale: 2
        | Model: FSRCNN
+       | CUDA support
      - 30
      - 33
      - 35
@@ -267,6 +279,20 @@ Results:
      - 12
      - 12
      - 1570
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
+       | Amount: 1.0
+       | CUDA support
+     - 33
+     - 37
+     - 39
+     - 4887
+   * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
+       | Amount: 1.0
+       | CPU support
+     - 26
+     - 28
+     - 29
+     - 3719
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -556,6 +582,10 @@ Breaking changes
 
 History
 =======
+
+NEXT / DEV
+----------
+- Added OpenCV sharpen pipeline with CPU/CUDA support.
 
 0.9.0 (2022-09-23)
 ------------------
