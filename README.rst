@@ -645,6 +645,241 @@ NEXT / DEV
 ------------------
 - Initial version.
 
+Acknowledgement
+===============
+
+The `pipeline files code <https://github.com/dwojtasik/PyHook/tree/main/PyHook/pipelines>`_ benefits from prior work and implementations including:
+
+- | Fast neural style with MobileNetV2 bottleneck blocks
+  | https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2
+- | Cartoon-GAN
+  | https://github.com/FilipAndersson245/cartoon-gan
+- | Colorful Image Colorization
+  | https://github.com/richzhang/colorization
+- | PyTorch-Style-Transfer
+  | https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer
+- | YOLOv5
+  | https://github.com/ultralytics/yolov5
+- | PIDNet: A Real-time Semantic Segmentation Network Inspired from PID Controller
+  | https://github.com/XuJiacong/PIDNet
+- | Depth-Estimation-PyTorch
+  | https://github.com/wolverinn/Depth-Estimation-PyTorch
+- | Towards Robust Monocular Depth Estimation: Mixing Datasets for Zero-shot Cross-dataset Transfer
+  | https://github.com/isl-org/MiDaS
+
+Citation
+========
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1603.08155,
+    doi = {10.48550/ARXIV.1603.08155},
+    url = {https://arxiv.org/abs/1603.08155},
+    author = {Johnson, Justin and Alahi, Alexandre and Fei-Fei, Li},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), Machine Learning (cs.LG), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Perceptual Losses for Real-Time Style Transfer and Super-Resolution},
+    publisher = {arXiv},
+    year = {2016},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @article{https://doi.org/10.48550/arxiv.1801.04381,
+    doi = {10.48550/ARXIV.1801.04381},
+    url = {https://arxiv.org/abs/1801.04381},
+    author = {Sandler, Mark and Howard, Andrew and Zhu, Menglong and Zhmoginov, Andrey and Chen, Liang-Chieh},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {MobileNetV2: Inverted Residuals and Linear Bottlenecks},
+    publisher = {arXiv},
+    year = {2018},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1508.06576,
+    doi = {10.48550/ARXIV.1508.06576},
+    url = {https://arxiv.org/abs/1508.06576},
+    author = {Gatys, Leon A. and Ecker, Alexander S. and Bethge, Matthias},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), Neural and Evolutionary Computing (cs.NE), Neurons and Cognition (q-bio.NC), FOS: Computer and information sciences, FOS: Computer and information sciences, FOS: Biological sciences, FOS: Biological sciences},
+    title = {A Neural Algorithm of Artistic Style},
+    publisher = {arXiv},
+    year = {2015},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1607.08022,
+    doi = {10.48550/ARXIV.1607.08022},
+    url = {https://arxiv.org/abs/1607.08022},
+    author = {Ulyanov, Dmitry and Vedaldi, Andrea and Lempitsky, Victor},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Instance Normalization: The Missing Ingredient for Fast Stylization},
+    publisher = {arXiv},
+    year = {2016},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @misc{andersson2020generative,
+    title={Generative Adversarial Networks for photo to Hayao Miyazaki style cartoons},
+    author={Filip Andersson and Simon Arvidsson},
+    year={2020},
+    eprint={2005.07702},
+    archivePrefix={arXiv},
+    primaryClass={cs.GR}
+  }
+
+::
+
+  @inproceedings{zhang2016colorful,
+    title={Colorful Image Colorization},
+    author={Zhang, Richard and Isola, Phillip and Efros, Alexei A},
+    booktitle={ECCV},
+    year={2016}
+  }
+
+  @article{zhang2017real,
+    title={Real-Time User-Guided Image Colorization with Learned Deep Priors},
+    author={Zhang, Richard and Zhu, Jun-Yan and Isola, Phillip and Geng, Xinyang and Lin, Angela S and Yu, Tianhe and Efros, Alexei A},
+    journal={ACM Transactions on Graphics (TOG)},
+    volume={9},
+    number={4},
+    year={2017},
+    publisher={ACM}
+  }
+
+::
+
+  @article{zhang2017multistyle,
+    title={Multi-style Generative Network for Real-time Transfer},
+    author={Zhang, Hang and Dana, Kristin},
+    journal={arXiv preprint arXiv:1703.06953},
+    year={2017}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1603.03417,
+    doi = {10.48550/ARXIV.1603.03417},
+    url = {https://arxiv.org/abs/1603.03417},
+    author = {Ulyanov, Dmitry and Lebedev, Vadim and Vedaldi, Andrea and Lempitsky, Victor},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Texture Networks: Feed-forward Synthesis of Textures and Stylized Images},
+    publisher = {arXiv},
+    year = {2016},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @InProceedings{Gatys_2016_CVPR,
+    author = {Gatys, Leon A. and Ecker, Alexander S. and Bethge, Matthias},
+    title = {Image Style Transfer Using Convolutional Neural Networks},
+    booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month = {June},
+    year = {2016}
+  }
+
+::
+
+  @misc{xu2022pidnet,
+    title={PIDNet: A Real-time Semantic Segmentation Network Inspired from PID Controller},
+    author={Jiacong Xu and Zixiang Xiong and Shankar P. Bhattacharyya},
+    year={2022},
+    eprint={2206.02066},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1612.03144,
+    doi = {10.48550/ARXIV.1612.03144},
+    url = {https://arxiv.org/abs/1612.03144},
+    author = {Lin, Tsung-Yi and Dollár, Piotr and Girshick, Ross and He, Kaiming and Hariharan, Bharath and Belongie, Serge},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Feature Pyramid Networks for Object Detection},
+    publisher = {arXiv},
+    year = {2016},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1604.03901,
+    doi = {10.48550/ARXIV.1604.03901},
+    url = {https://arxiv.org/abs/1604.03901},
+    author = {Chen, Weifeng and Fu, Zhao and Yang, Dawei and Deng, Jia},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), Artificial Intelligence (cs.AI), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {Single-Image Depth Perception in the Wild},
+    publisher = {arXiv},
+    year = {2016},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @inproceedings{NIPS2014_7bccfde7,
+    author = {Eigen, David and Puhrsch, Christian and Fergus, Rob},
+    booktitle = {Advances in Neural Information Processing Systems},
+    editor = {Z. Ghahramani and M. Welling and C. Cortes and N. Lawrence and K.Q. Weinberger},
+    pages = {},
+    publisher = {Curran Associates, Inc.},
+    title = {Depth Map Prediction from a Single Image using a Multi-Scale Deep Network},
+    url = {https://proceedings.neurips.cc/paper/2014/file/7bccfde7714a1ebadf06c5f4cea752c1-Paper.pdf},
+    volume = {27},
+    year = {2014}
+  }
+
+::
+
+  @misc{https://doi.org/10.48550/arxiv.1708.08267,
+    doi = {10.48550/ARXIV.1708.08267},
+    url = {https://arxiv.org/abs/1708.08267},
+    author = {Fu, Huan and Gong, Mingming and Wang, Chaohui and Tao, Dacheng},
+    keywords = {Computer Vision and Pattern Recognition (cs.CV), FOS: Computer and information sciences, FOS: Computer and information sciences},
+    title = {A Compromise Principle in Deep Monocular Depth Estimation},
+    publisher = {arXiv},
+    year = {2017},
+    copyright = {arXiv.org perpetual, non-exclusive license}
+  }
+
+::
+
+  @ARTICLE {Ranftl2022,
+    author = "Ren\'{e} Ranftl and Katrin Lasinger and David Hafner and Konrad Schindler and Vladlen Koltun",
+    title = "Towards Robust Monocular Depth Estimation: Mixing Datasets for Zero-Shot Cross-Dataset Transfer",
+    journal = "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+    year = "2022",
+    volume = "44",
+    number = "3"
+  }
+
+::
+
+  @article{Ranftl2021,
+    author = {Ren\'{e} Ranftl and Alexey Bochkovskiy and Vladlen Koltun},
+    title = {Vision Transformers for Dense Prediction},
+    journal = {ICCV},
+    year = {2021},
+  }
+
+::
+
+  @misc{rw2019timm,
+    author = {Ross Wightman},
+    title = {PyTorch Image Models},
+    year = {2019},
+    publisher = {GitHub},
+    journal = {GitHub repository},
+    doi = {10.5281/zenodo.4414861},
+    howpublished = {\url{https://github.com/rwightman/pytorch-image-models}}
+  }
+
 .. |nbsp| unicode:: U+00A0 .. non-breaking space
 .. |center_block_start| raw:: html
 
