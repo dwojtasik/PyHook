@@ -171,6 +171,7 @@ Pipeline results
           :alt: docs/images/trek_to_yomi_segmentation.jpg
    * - | `Depth Estimation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_depth_estimation.py>`_
        | Scale: 1.0
+       | Model: DPT Hybrid
      - .. image:: https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_depth.jpg
           :target: https://dwojtasik.github.io/PyHook/?imgl=https://raw.githubusercontent.com/dwojtasik/PyHook/main/PyHook/pipelines/test_static_img/gta5.jpg&imgr=https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gta5_depth.jpg&labl=Base&labr=Depth%20Estimation
           :alt: docs/images/gta5_depth.jpg
@@ -283,10 +284,11 @@ Results:
      - 1100
    * - | `Depth Estimation <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_depth_estimation.py>`_
        | Scale: 1.0
-     - 11
-     - 12
-     - 12
-     - 1570
+       | Model: DPT Hybrid
+     - 9
+     - 9
+     - 9
+     - 1207
    * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
        | Amount: 1.0
      - | 33 ``CUDA``
@@ -589,6 +591,7 @@ History
 
 NEXT / DEV
 ----------
+- Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
 - Fixed initial pipeline values loaded from file.
 - Updated pipelines with information about selected device (CPU or CUDA).
 - Added OpenCV sharpen pipeline with CPU/CUDA support.

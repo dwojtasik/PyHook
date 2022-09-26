@@ -1,3 +1,6 @@
 # Model from:
-https://github.com/wolverinn/Depth-Estimation-PyTorch/releases/download/v1.0/fyn_model.pt
-https://download.pytorch.org/models/resnet101-63fe2227.pth
+https://download.pytorch.org/models/ig_resnext101_32x8-c38310e5.pth
+https://github.com/AlexeyAB/MiDaS/releases/download/midas_dpt/midas_v21_small-70d6b9c8.pt
+https://github.com/AlexeyAB/MiDaS/releases/download/midas_dpt/midas_v21-f6b98070.pt
+https://github.com/intel-isl/DPT/releases/download/1_0/dpt_hybrid-midas-501f0c75.pt
+https://github.com/intel-isl/DPT/releases/download/1_0/dpt_large-midas-2f21e586.pt
