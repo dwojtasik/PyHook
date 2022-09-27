@@ -27,6 +27,7 @@ from dll_utils import (
 from keys import SettingsKeys
 from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitAddonNotFoundException, WaitProcessNotFoundException
 from pipeline import (
+    FrameProcessingError,
     FrameSizeModificationError,
     PipelinesDirNotFoundError,
     load_pipelines,
@@ -44,18 +45,6 @@ _SETTINGS = {
     SettingsKeys.KEY_AUTODOWNLOAD: True,
     SettingsKeys.KEY_DOWNLOADED: [],
 }
-
-
-class FrameProcessingError(Exception):
-    """Raised when any frame was raised during frame processing.
-
-    message (str): Error message to display.
-    exception (Exception): The cause of exception in pipeline.
-    """
-
-    def __init__(self, message, exception):
-        self.message = message
-        self.exception = exception
 
 
 def _get_logger() -> logging.Logger:
@@ -303,22 +292,17 @@ def _main():
                             passes[active_pipeline] = 0
                         passes[active_pipeline] += 1
                         stage = passes[active_pipeline]
-                    try:
-                        frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
-                    except Exception as ex:
-                        raise FrameProcessingError(
-                            "Unexpected error during frame processing: "
-                            f'Pipeline="{active_pipeline}", stage={stage}, frame={f_count}:',
-                            ex,
-                        ) from ex
+                    frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
                     if stage is not None:
                         f_width = frame.shape[1]
                         f_height = frame.shape[0]
                 if f_width != data.width or f_height != data.height or f_channels != frame.shape[2]:
-                    raise FrameSizeModificationError()
+                    raise FrameSizeModificationError(
+                        f"multistage processing in frame={f_count}",
+                    )
                 _encode_frame(data, frame)
-            except FrameSizeModificationError:
-                _LOGGER.info("-- ERROR: Frame modification detected! Frame skipped...")
+            except FrameSizeModificationError as ex:
+                _LOGGER.info("-- ERROR: Frame modification detected for %s! Frame skipped...", ex)
             except FrameProcessingError as ex:
                 _LOGGER.error("-- ERROR: %s", ex.message, exc_info=ex.exception)
             memory_manager.unlock()

@@ -33,6 +33,18 @@ class PipelinesDirNotFoundError(Exception):
     """Raised when pipelines directory does not exists."""
 
 
+class FrameProcessingError(Exception):
+    """Raised when any error was raised during frame processing.
+
+    message (str): Error message to display.
+    exception (Exception): The cause of exception in pipeline.
+    """
+
+    def __init__(self, message: str, exception: Exception):
+        self.message = message
+        self.exception = exception
+
+
 class FrameSizeModificationError(Exception):
     """Raised when frame shape changes during processing."""
 
@@ -213,17 +225,27 @@ class Pipeline:
             numpy.array: The processed frame image as numpy array.
 
         Raises:
+            FrameProcessingError: When any error was raised during frame processing.
             FrameSizeModificationError: When frame shape changes during processing for not multistage pipeline.
         """
-        if stage is None:
-            input_shape = frame.shape
-            frame = self.callbacks.on_frame_process(frame, width, height, frame_num)
-            output_shape = frame.shape
-            if input_shape != output_shape:
-                raise FrameSizeModificationError()
-        else:
-            frame = self.callbacks.on_frame_process_stage(frame, width, height, frame_num, stage)
-        return frame
+        try:
+            if stage is None:
+                input_shape = frame.shape
+                frame = self.callbacks.on_frame_process(frame, width, height, frame_num)
+                output_shape = frame.shape
+                if input_shape != output_shape:
+                    raise FrameSizeModificationError(f'pipeline="{self.file}", frame={frame_num}')
+            else:
+                frame = self.callbacks.on_frame_process_stage(frame, width, height, frame_num, stage)
+            return frame
+        except Exception as ex:
+            if isinstance(ex, FrameSizeModificationError):
+                raise ex
+            raise FrameProcessingError(
+                "Unexpected error during frame processing: "
+                f'Pipeline="{self.file}", stage={stage}, frame={frame_num}:',
+                ex,
+            ) from ex
 
     def unload(self) -> None:
         """Calls on_unload callback to destroy pipeline."""
