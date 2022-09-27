@@ -291,14 +291,10 @@ Results:
      - 1207
    * - | `Sharpen <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/cv2_sharpen.py>`_
        | Amount: 1.0
-     - | 33 ``CUDA``
-       | 26 ``CPU``
-     - | 37 ``CUDA``
-       | 28 ``CPU``
-     - | 39 ``CUDA``
-       | 29 ``CPU``
-     - | 4887 ``CUDA``
-       | 3719 ``CPU``
+     - 51 ``CPU``
+     - 61 ``CPU``
+     - 67 ``CPU``
+     - 8128 ``CPU``
    * - | `Cartoon-GAN <https://github.com/dwojtasik/PyHook/blob/main/PyHook/pipelines/ai_cartoon_gan.py>`_
        | Scale: 1.0
      - 4
@@ -594,7 +590,7 @@ NEXT / DEV
 - Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
 - Fixed initial pipeline values loaded from file.
 - Updated pipelines with information about selected device (CPU or CUDA).
-- Added OpenCV sharpen pipeline with CPU/CUDA support.
+- Added OpenCV sharpen pipeline with CPU support.
 
 0.9.0 (2022-09-23)
 ------------------
