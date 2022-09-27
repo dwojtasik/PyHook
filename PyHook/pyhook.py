@@ -46,6 +46,18 @@ _SETTINGS = {
 }
 
 
+class FrameProcessingError(Exception):
+    """Raised when any frame was raised during frame processing.
+
+    message (str): Error message to display.
+    exception (Exception): The cause of exception in pipeline.
+    """
+
+    def __init__(self, message, exception):
+        self.message = message
+        self.exception = exception
+
+
 def _get_logger() -> logging.Logger:
     """Returns logger for PyHook.
 
@@ -226,13 +238,40 @@ def _main():
             # Process pipelines changes.
             runtime_data, needs_save = memory_manager.read_pipelines()
             for unload_pipeline in runtime_data.to_unload:
-                pipelines[unload_pipeline].unload()
+                try:
+                    pipelines[unload_pipeline].unload()
+                except Exception as ex:
+                    _LOGGER.error(
+                        '-- ERROR: Unexpected error during unload of pipeline="%s"', unload_pipeline, exc_info=ex
+                    )
+            has_to_disable = []
             for load_pipeline in runtime_data.to_load:
-                pipelines[load_pipeline].load()
+                try:
+                    pipelines[load_pipeline].load()
+                except Exception as ex:
+                    _LOGGER.error(
+                        '-- ERROR: Unexpected error during load of pipeline="%s"', load_pipeline, exc_info=ex
+                    )
+                    runtime_data.active_pipelines.remove(load_pipeline)
+                    has_to_disable.append(load_pipeline)
+            if len(has_to_disable) > 0:
+                memory_manager.force_disable_pipelines(has_to_disable)
             for update_pipeline, settings in runtime_data.changes.items():
                 is_active = update_pipeline in runtime_data.active_pipelines
                 for key, value in settings.items():
-                    pipelines[update_pipeline].change_settings(is_active, key, value)
+                    old_value = pipelines[update_pipeline].settings[key][0]
+                    try:
+                        pipelines[update_pipeline].change_settings(is_active, key, value)
+                    except Exception as ex:
+                        pipelines[update_pipeline].settings[key][0] = old_value
+                        _LOGGER.error(
+                            '-- ERROR: Unexpected error during setting change of pipeline="%s" for "%s"=%s',
+                            update_pipeline,
+                            key,
+                            pipelines[update_pipeline]._to_value(key, value),
+                            exc_info=ex,
+                        )
+                        _LOGGER.info("--- Restored old value=%s", old_value)
             # Autosave settings.
             if needs_save:
                 if save_later is not None and not save_later.finished.is_set():
@@ -264,7 +303,14 @@ def _main():
                             passes[active_pipeline] = 0
                         passes[active_pipeline] += 1
                         stage = passes[active_pipeline]
-                    frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
+                    try:
+                        frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
+                    except Exception as ex:
+                        raise FrameProcessingError(
+                            "Unexpected error during frame processing: "
+                            f'Pipeline="{active_pipeline}", stage={stage}, frame={f_count}:',
+                            ex,
+                        ) from ex
                     if stage is not None:
                         f_width = frame.shape[1]
                         f_height = frame.shape[0]
@@ -273,6 +319,8 @@ def _main():
                 _encode_frame(data, frame)
             except FrameSizeModificationError:
                 _LOGGER.info("-- ERROR: Frame modification detected! Frame skipped...")
+            except FrameProcessingError as ex:
+                _LOGGER.error("-- ERROR: %s", ex.message, exc_info=ex.exception)
             memory_manager.unlock()
     except PipelinesDirNotFoundError:
         _LOGGER.error("-- Cannot find pipelines directory.")

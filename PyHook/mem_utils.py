@@ -261,6 +261,23 @@ class MemoryManager:
             needs_save,
         )
 
+    def force_disable_pipelines(self, disable_pipelines: List[str]) -> None:
+        """Forces given pipelines to be disabled.
+
+        Called when pipelines cannot be loaded due to errors.
+
+        Args:
+            disable_pipelines (List[str]): List of pipelines to be disabled.
+        """
+        pipeline_data = SharedConfigData.from_buffer(self._shcfg)
+        pipeline_array = [ActivePipeline.from_buffer(buf) for buf in pipeline_data.pipelines[: pipeline_data.count]]
+        for pipeline in pipeline_array:
+            if pipeline.enabled:
+                p_key = pipeline.file.decode("utf8")
+                if p_key in disable_pipelines:
+                    pipeline.enabled = False
+        self._active_pipelines = [p_key for p_key in self._active_pipelines if p_key not in disable_pipelines]
+
     def write_shared_pipelines(self, pipelines: List[Pipeline], runtime_data: PipelineRuntimeData) -> None:
         """Writes pipelines data into shared configuration.
 

@@ -587,6 +587,7 @@ History
 
 NEXT / DEV
 ----------
+- Improved error handling for pipeline processing.
 - Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
 - Fixed initial pipeline values loaded from file.
 - Updated pipelines with information about selected device (CPU or CUDA).
