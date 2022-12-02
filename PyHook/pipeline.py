@@ -335,7 +335,7 @@ def _download_files(pipeline_dir: str, pipeline_file: str, logger: logging.Logge
             with open(download_list_file, encoding="utf-8") as d_file:
                 urls = [url for url in d_file.read().split("\n") if len(url) > 1 and not url.startswith("#")]
                 for url in urls:
-                    download_file(url, pipeline_data_dir)
+                    download_file(url, pipeline_data_dir, logger)
         except Exception as ex:
             if logger is not None:
                 logger.info('--- Cannot read / download pipeline files: "%s"', ex)

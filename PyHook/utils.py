@@ -162,8 +162,7 @@ def _set_local_python() -> None:
     If not set it will try to read executable path from python3 binary that is set in path.
     When executable is found it will try to read local Python sys.path.
     """
-    # pylint: disable=global-statement
-    global _LOCAL_PYTHON_EXE, _LOCAL_PATHS
+    global _LOCAL_PYTHON_EXE, _LOCAL_PATHS  # pylint: disable=global-statement
     used_env = _LOCAL_PYTHON_ENV_64 if _IS_64_BIT else _LOCAL_PYTHON_ENV_32
     path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
@@ -201,8 +200,7 @@ def use_local_python() -> _LocalPython:
     Returns:
         _LocalPython: Local Python handle. When not closed it allows to load modules from local setup.
     """
-    # pylint: disable=global-statement
-    global _RUNTIME_HANDLE
+    global _RUNTIME_HANDLE  # pylint: disable=global-statement
     # For 64-bit vcruntime needs additional library to be loaded
     if _IS_64_BIT and _RUNTIME_HANDLE is None and _is_frozen_bundle():
         _RUNTIME_HANDLE = ctypes.cdll[f"{getattr(sys, _MEIPASS)}\\{_RUNTIME_DLL}"]

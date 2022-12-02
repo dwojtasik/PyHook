@@ -8,8 +8,7 @@ Utils for shared memory management
 
 import mmap
 
-# pylint: disable=wildcard-import,unused-wildcard-import
-from ctypes import *
+from ctypes import *  # pylint: disable=wildcard-import,unused-wildcard-import
 from os import getpid
 from typing import List, Tuple
 

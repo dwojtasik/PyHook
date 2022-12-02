@@ -6,33 +6,30 @@ Simple file downloader
 :license: MIT, see LICENSE for more details.
 """
 
+import logging
 import re
-import sys
 from os.path import basename, exists, getsize
 from urllib.parse import unquote, urlparse
 
 import requests
 
+# Default chunk size in bytes for stream downloading.
 _CHUNK_SIZE = 4096
+
+# Regex filename for Google Drive URLs.
 _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
 
-
-def _print(text: str) -> None:
-    """Prints directly to OS console.
-
-    Args:
-        text (str): Text to print.
-    """
-    sys.stdout.write(text)
-    sys.stdout.flush()
+# Steps displayed in progress bar for downloading.
+_DOWNLOAD_PROGRESS_STEPS = 20
 
 
-def download_file(url: str, directory: str) -> None:
+def download_file(url: str, directory: str, logger: logging.Logger = None) -> None:
     """Download file from given url and save it into directory.
 
     Args:
         url (str): The url to given file.
         directory (str): The directory to save downloaded file.
+        logger (logging.Logger, optional): Optional logger to log progress.
     """
     response_stream = requests.get(url, stream=True, timeout=10)
     response_stream.raise_for_status()
@@ -43,14 +40,19 @@ def download_file(url: str, directory: str) -> None:
     filepath = f"{directory}\\{filename}"
     filesize = int(response_stream.headers["Content-Length"])
     byte_count = 0
+    step = -1
     if not exists(filepath) or getsize(filepath) != filesize:
         with open(filepath, "wb") as d_file:
-
-            _print(f"--- Downloading file: {filename}\n")
+            if logger is not None:
+                logger.info(f"--- Downloading file: {filename}")
             for chunk in response_stream.iter_content(_CHUNK_SIZE):
                 d_file.write(chunk)
                 byte_count += _CHUNK_SIZE
                 if byte_count > filesize:
                     byte_count = filesize
-                _print(f"---- Progress: {byte_count / filesize * 100:.2f}%\r")
-            _print("\n")
+                percent = byte_count / filesize * 100
+                if logger is not None:
+                    actual_step = int(percent // (100 // _DOWNLOAD_PROGRESS_STEPS))
+                    if actual_step > step:
+                        step = actual_step
+                        logger.info(f"---- Progress: [{'|' * step}{' ' * (_DOWNLOAD_PROGRESS_STEPS - step)}]")

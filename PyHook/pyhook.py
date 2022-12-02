@@ -7,18 +7,18 @@ Python hook for ReShade processing
 """
 import json
 import logging
-import os
 import sys
+from logging.handlers import QueueHandler
+from multiprocessing import Queue, Value
 from os.path import exists
 from threading import Timer
 
 import numpy as np
 
-# pylint: disable=unused-import
-import utils  # To be available in PyInstaller frozen bundle.
+# To be available in PyInstaller frozen bundle.
+import utils  # pylint: disable=unused-import
 from _version import __version__
 from dll_utils import (
-    AddonHandler,
     AddonNotFoundException,
     ProcessNotFoundException,
     ReShadeNotFoundException,
@@ -46,23 +46,46 @@ _SETTINGS = {
     SettingsKeys.KEY_DOWNLOADED: [],
 }
 
-
-def _get_logger() -> logging.Logger:
-    """Returns logger for PyHook.
-
-    Returns:
-        logging.Logger: The configured logger.
-    """
-    logger = logging.getLogger("PyHook")
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
-    logger.addHandler(handler)
-    return logger
-
-
 # PyHook main logger
-_LOGGER = _get_logger()
+_LOGGER: logging.Logger = None
+
+
+class LogWriter:
+    """Allows to redirect stdout to logger.
+
+    Args:
+        logger (logging.Logger): Logger to write.
+    """
+
+    def __init__(self, logger: logging.Logger):
+        self.logger = logger
+
+    def write(self, text: str) -> None:
+        """Writes message to logger with info level.
+
+        Args:
+            text (str): Text to write.
+        """
+        for line in text.splitlines():
+            if line:
+                self.logger.info(line.rstrip())
+
+    def flush(self) -> None:
+        """Empty flush method."""
+        pass  # pylint: disable=unnecessary-pass
+
+
+def _init_logger(log_queue: Queue) -> None:
+    """Initializes logger for PyHook.
+
+    Args:
+        log_queue (Queue): Log queue from parent process.
+    """
+    global _LOGGER  # pylint: disable=global-statement
+    if _LOGGER is None:
+        _LOGGER = logging.getLogger("PyHook")
+        _LOGGER.setLevel(logging.INFO)
+        _LOGGER.addHandler(QueueHandler(log_queue))
 
 
 def _save_settings() -> None:
@@ -118,13 +141,14 @@ def _load_settings() -> None:
         _save_settings()
 
 
-def _wait_on_exit(code: int) -> None:
-    """Waits for dummy input to display errors before exiting.
+def _exit(running: Value, code: int) -> None:
+    """Changes flag for session state and exits.
 
     Args:
+        running (Value[bool]): Shared flag if process is running.
         code (int): The exit code.
     """
-    input("Press any key to exit...")
+    running.value = False
     sys.exit(code)
 
 
@@ -148,7 +172,7 @@ def _encode_frame(data, frame) -> None:
 
     Args:
         data (SharedData): The shared data to store frame C array.
-        array (numpy.array): The frame image as numpy array.
+        frame (numpy.array): The frame image as numpy array.
             Array has to be 3-D with height, width, channels as dimensions.
             Array has to contains uint8 values.
     """
@@ -157,27 +181,19 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def _pid_input_fallback() -> AddonHandler:
-    """Fallback to manual PID supply.
+def pyhook_main(running: Value, pid: Value, name: Value, log_queue: Queue) -> None:
+    """PyHook entrypoint.
 
-    Returns:
-        AddonHandler: The handler for PyHook addon management.
+    Args:
+        running (Value[bool]): Shared flag if process is running.
+        pid (Value[int]): Shared integer process id.
+        name (Value[str]): Shared string process name.
+        log_queue (Queue): Log queue from parent process.
     """
-    _LOGGER.info("- Fallback to manual PID input...")
-    pid = None
     try:
-        pid = int(input("-- PID: "))
-    except ValueError:
-        _LOGGER.error("--- Invalid PID number.")
-        _wait_on_exit(1)
-    return get_reshade_addon_handler(pid)
-
-
-def _main():
-    """Script entrypoint"""
-    try:
-        os.system("cls")  # To clear PyInstaller warnings.
         displayed_ms_error = False
+        _init_logger(log_queue)
+        sys.stdout = LogWriter(_LOGGER)
         _LOGGER.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
         _load_settings()
         _LOGGER.info("- Loading pipelines...")
@@ -186,15 +202,21 @@ def _main():
             _save_settings()
         if len(pipelines) == 0:
             _LOGGER.error("-- Cannot find any pipeline to process.")
-            _wait_on_exit(1)
-        try:
-            _LOGGER.info("- Searching for process with ReShade...")
-            addon_handler = get_reshade_addon_handler()
-        except ReShadeNotFoundException:
-            _LOGGER.error("-- Cannot find any active process with ReShade loaded.")
-            if not is_started_as_admin():
-                _LOGGER.info("-- NOTE: Try to run this program as administrator.")
-            addon_handler = _pid_input_fallback()
+            _exit(running, 1)
+        if pid.value < 0:
+            try:
+                _LOGGER.info("- Searching for process with ReShade...")
+                addon_handler = get_reshade_addon_handler()
+                pid.value = addon_handler.pid
+                name.value = str.encode(addon_handler.process_name)
+            except ReShadeNotFoundException:
+                _LOGGER.error("-- Cannot find any active process with ReShade loaded.")
+                if not is_started_as_admin():
+                    _LOGGER.info("-- NOTE: Try to run this program as administrator.")
+                _exit(running, 1)
+        else:
+            _LOGGER.info("- Creating handler for PID: %d...", pid.value)
+            addon_handler = get_reshade_addon_handler(pid.value)
         memory_manager = MemoryManager(addon_handler.pid)
         _LOGGER.info("-- Selected process: %s", addon_handler.get_info())
         _LOGGER.info("- Started addon injection for %s...", addon_handler.addon_path)
@@ -203,7 +225,7 @@ def _main():
             _LOGGER.info("-- Addon injected!")
         except Exception as ex:
             _LOGGER.error("-- Cannot inject addon into given process.", exc_info=ex)
-            _wait_on_exit(1)
+            _exit(running, 1)
         _LOGGER.info("- Loading PyHook configuration if exists...")
         save_later = None
         runtime_data, data_exists = load_settings(pipelines, addon_handler.dir_path)
@@ -214,7 +236,7 @@ def _main():
         _LOGGER.info("- Writing configuration to addon...")
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
         _LOGGER.info("- Started processing...")
-        while True:
+        while running.value:
             memory_manager.wait(addon_handler)
             data = memory_manager.read_shared_data()
             # Multisampled buffer cannot be processed.
@@ -306,28 +328,25 @@ def _main():
             except FrameProcessingError as ex:
                 _LOGGER.error("-- ERROR: %s", ex.message, exc_info=ex.exception)
             memory_manager.unlock()
+        sys.exit(0)
     except PipelinesDirNotFoundError:
         _LOGGER.error("-- Cannot find pipelines directory.")
         _LOGGER.info("-- Make sure pipelines directory exists in PyHook directory.")
-        _wait_on_exit(1)
+        _exit(running, 1)
     except AddonNotFoundException:
         _LOGGER.error("-- Cannot find addon file.")
         _LOGGER.info("-- Make sure that *.addon file is built and exists in PyHook directory.")
-        _wait_on_exit(1)
+        _exit(running, 1)
     except ProcessNotFoundException:
         _LOGGER.error("--- Process with given PID does not exists.")
-        _wait_on_exit(1)
+        _exit(running, 1)
     except WaitProcessNotFoundException:
         _LOGGER.error("-- Connected process does not exists anymore. Exiting...")
-        _wait_on_exit(1)
+        _exit(running, 1)
     except WaitAddonNotFoundException:
         _LOGGER.error("-- Connected process does not have addon loaded anymore. Exiting...")
         _LOGGER.error("-- Check ReShade logs for more informations.")
-        _wait_on_exit(1)
+        _exit(running, 1)
     except Exception as ex:
         _LOGGER.error("Unhandled exception occurres.", exc_info=ex)
-        _wait_on_exit(1)
-
-
-if __name__ == "__main__":
-    _main()
+        _exit(running, 1)

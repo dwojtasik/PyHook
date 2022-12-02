@@ -17,6 +17,7 @@ PyHook consists of two elements:
 Features
 ========
 
+- Graphical user interface that allows to manage multiple PyHook sessions
 - Automatic ReShade detection and DLL validation
 - Automatic addon DLL injection
 - Shared memory as storage
@@ -397,6 +398,7 @@ Build
 - `NumPy <https://pypi.org/project/numpy/>`_ == 1.23.2
 - `psutil <https://pypi.org/project/psutil/>`_ == 5.9.2
 - `Pyinjector <https://pypi.org/project/pyinjector/>`_ == 1.1.0
+- `PySimpleGUI <https://pypi.org/project/PySimpleGUI/>`_ == 4.60.3
 - `Requests <https://pypi.org/project/requests/>`_ == 2.28.1
 
 EXE Build
@@ -587,6 +589,7 @@ History
 
 NEXT / DEV
 ----------
+- Added GUI with multiple PyHook sessions support.
 - Improved error handling for pipeline processing.
 - Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
 - Fixed initial pipeline values loaded from file.
