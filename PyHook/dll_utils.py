@@ -14,7 +14,7 @@ from os.path import abspath, basename, dirname, exists
 import psutil
 from pyinjector import inject
 
-from win.api import get_dll_extern_variable, unload_dll
+from win.api import get_dll_extern_variable, FreeLibrary
 from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
@@ -180,7 +180,7 @@ class AddonHandler:
                     pass
                 finally:
                     if test_dll_handle is not None:
-                        unload_dll(test_dll_handle, self.is_64_bit)
+                        FreeLibrary(test_dll_handle._handle)
                         del test_dll_handle
             return False
         finally:

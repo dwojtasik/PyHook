@@ -7,26 +7,30 @@ GUI for PyHook
 """
 
 import atexit
+import os
 import sys
+import webbrowser
 from typing import List
 
 import PySimpleGUI as sg
 
 from _version import __version__
 from session import ProcessInfo, Session, get_process_list
+from win.api import get_hq_icon_raw
+from gui.image import format_raw_data, get_img
 from gui.keys import SGKeys
-from gui.utils import show_popup, to_combo_list, with_border
+from gui.style import *  # pylint: disable=wildcard-import
+from gui.utils import EventCallback, show_popup, show_popup_text, to_combo_list, with_border
+from utils.common import is_frozen_bundle
 
-# Default font
-_FONT_DEFAULT = ("Arial", 16)
-# Medium default font
-_FONT_MID_DEFAULT = ("Arial", 14)
-# Default monospace font
-_FONT_MONO_DEFAULT = ("Consolas", 14)
-# Default console font
-_FONT_CONSOLE = ("Consolas", 10)
 # Maximum amount of sessions
 _MAX_SESSIONS = 15
+
+# Default icon to display
+if is_frozen_bundle():
+    _APP_ICON = format_raw_data(get_hq_icon_raw(sys.executable), thumb_size=(128, 128))
+else:
+    _APP_ICON = get_img(f"{os.getcwd()}\\pyhook_icon.ico", thumb_size=(128, 128))
 
 # Set default theme
 sg.theme("DarkBlue")
@@ -155,23 +159,30 @@ def _update_session_overview(window: sg.Window, selected_session: Session | None
     window[SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON].update(visible=visible)
 
 
+# Application menu layout
+_MENU_LAYOUT = [
+    ["App", [SGKeys.MENU_SETTIGS_OPTION, SGKeys.MENU_EXIT_OPTION]],
+    ["Help", [SGKeys.MENU_ABOUT_OPTION]],
+]
+
 # Application UI layout
 _APP_LAYOUT = [
+    [sg.Menu(_MENU_LAYOUT, tearoff=False, font=FONT_SMALL, text_color="black", background_color="white")],
     [
         sg.Text("Process"),
         sg.Combo(
             [],
             key=SGKeys.PROCESS_LIST,
             enable_events=True,
-            font=_FONT_MONO_DEFAULT,
+            font=FONT_MONO_DEFAULT,
             size=(50, 1),
             tooltip="Process to inject PyHook",
         ),
-        sg.Button("\u274C", key=SGKeys.INJECT_CLEAR, font=_FONT_MONO_DEFAULT, size=(2, 1), tooltip="Clear input"),
+        sg.Button("\u274C", key=SGKeys.INJECT_CLEAR, font=FONT_MONO_DEFAULT, size=(2, 1), tooltip="Clear input"),
         sg.Button(
             "\u21BB",
             key=SGKeys.PROCESS_RELOAD,
-            font=_FONT_MONO_DEFAULT,
+            font=FONT_MONO_DEFAULT,
             size=(2, 1),
             tooltip="Reload process list",
         ),
@@ -197,7 +208,7 @@ _APP_LAYOUT = [
                 [
                     sg.Text(
                         "Select session...",
-                        font=_FONT_MID_DEFAULT,
+                        font=FONT_MID_DEFAULT,
                         pad=(10, 10),
                         justification="left",
                         key=SGKeys.SESSION_TITLE,
@@ -213,7 +224,7 @@ _APP_LAYOUT = [
                     sg.Button(
                         "\u21BB",
                         key=SGKeys.SESSION_RESTART_BUTTON,
-                        font=_FONT_MONO_DEFAULT,
+                        font=FONT_MONO_DEFAULT,
                         size=(2, 1),
                         tooltip="Restart exited session",
                         disabled=True,
@@ -222,7 +233,7 @@ _APP_LAYOUT = [
                     sg.Button(
                         "\u274C",
                         key=SGKeys.SESSION_CLOSE_OVERVIEW_BUTTON,
-                        font=_FONT_MONO_DEFAULT,
+                        font=FONT_MONO_DEFAULT,
                         size=(2, 1),
                         tooltip="Close overview",
                         visible=True,
@@ -231,7 +242,7 @@ _APP_LAYOUT = [
                 [
                     sg.Multiline(
                         "",
-                        font=_FONT_CONSOLE,
+                        font=FONT_CONSOLE,
                         size=(80, 16),
                         key=SGKeys.SESSION_LOGS,
                         enable_events=True,
@@ -249,7 +260,7 @@ _APP_LAYOUT = [
                                 sg.Button(
                                     "\u2191",
                                     key=SGKeys.SESSION_LOGS_SCROLL_TOP_BUTTON,
-                                    font=_FONT_MONO_DEFAULT,
+                                    font=FONT_MONO_DEFAULT,
                                     size=(2, 1),
                                     tooltip="Scroll to top",
                                     visible=True,
@@ -264,7 +275,7 @@ _APP_LAYOUT = [
                                 sg.Button(
                                     "\u2193",
                                     key=SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON,
-                                    font=_FONT_MONO_DEFAULT,
+                                    font=FONT_MONO_DEFAULT,
                                     size=(2, 1),
                                     tooltip="Scroll to bottom",
                                     visible=True,
@@ -283,7 +294,12 @@ _APP_LAYOUT = [
 ]
 
 
-def gui_main():
+def open_github() -> None:
+    """Opens PyHook GitHub page."""
+    webbrowser.open("https://github.com/dwojtasik/PyHook")
+
+
+def gui_main() -> None:
     """App GUI entrypoint"""
 
     # Last read process list
@@ -308,7 +324,7 @@ def gui_main():
     window = sg.Window(
         f"PyHook v{__version__} (c) 2022 by Dominik Wojtasik",
         _APP_LAYOUT,
-        font=_FONT_DEFAULT,
+        font=FONT_DEFAULT,
         finalize=True,
     )
 
@@ -318,7 +334,7 @@ def gui_main():
 
     while True:
         event, values = window.read(timeout=1000 / 60)
-        if event in (sg.WIN_CLOSED, "Exit"):
+        if event in (sg.WIN_CLOSED, SGKeys.MENU_EXIT_OPTION):
             break
         if event == sg.TIMEOUT_EVENT:
             if last_process_filter != values[SGKeys.PROCESS_LIST]:
@@ -340,20 +356,20 @@ def gui_main():
             last_pid = None
         elif event == SGKeys.INJECT:
             if last_pid is None:
-                show_popup("Error", "First select process to inject PyHook.")
+                show_popup_text("Error", "First select process to inject PyHook.")
                 continue
             if any(session.pid.value == last_pid for session in sessions):
-                show_popup("Error", "Session with given PID already exists.")
+                show_popup_text("Error", "Session with given PID already exists.")
                 continue
             if len(sessions) == _MAX_SESSIONS:
-                show_popup("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
+                show_popup_text("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
                 continue
             last_process_filter = ""
             process_info = ProcessInfo.from_pid(last_pid)
             if process_info is None:
                 process_list = get_process_list()
                 _update_process_list(window, process_list, last_process_filter)
-                show_popup("Error", "Process does not exists anymore.")
+                show_popup_text("Error", "Process does not exists anymore.")
                 continue
             _update_process_list(window, process_list, last_process_filter)
             selected_session = Session(process_info)
@@ -363,7 +379,7 @@ def gui_main():
         elif event == SGKeys.INJECT_AUTO:
             auto_sessions: List[Session] = list(filter(lambda session: session.pid.value == -1, sessions))
             if len(auto_sessions) > 0 and auto_sessions[0].is_running():
-                show_popup("Error", "Automatic session is already running.")
+                show_popup_text("Error", "Automatic session is already running.")
                 continue
             last_process_filter = ""
             _update_process_list(window, process_list, last_process_filter)
@@ -373,7 +389,7 @@ def gui_main():
                 selected_session.restart()
             else:
                 if len(sessions) == _MAX_SESSIONS:
-                    show_popup("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
+                    show_popup_text("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
                     continue
                 selected_session = Session()
                 sessions.append(selected_session)
@@ -401,6 +417,21 @@ def gui_main():
         elif event == SGKeys.SESSION_LOGS_CLEAR_BUTTON:
             selected_session.clear_logs()
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
+
+        elif event == SGKeys.MENU_SETTIGS_OPTION:
+            # TODO: Add settings window
+            pass
+        elif event == SGKeys.MENU_ABOUT_OPTION:
+            show_popup(
+                "About",
+                [
+                    [sg.Image(data=_APP_ICON, size=(128, 128))],
+                    [sg.Text(f"PyHook v{__version__}", justification="center")],
+                    [sg.Text("(c) 2022 by Dominik Wojtasik", justification="center")],
+                    [sg.Button("GitHub", size=(10, 1), pad=(0, 10), font=FONT_SMALL, key=SGKeys.ABOUT_GITHUB_BUTTON)],
+                ],
+                events={SGKeys.ABOUT_GITHUB_BUTTON: EventCallback(open_github, False)},
+            )
 
         if selected_session is not None:
             if selected_session.should_update_logs():

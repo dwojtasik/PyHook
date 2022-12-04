@@ -396,6 +396,7 @@ Build
 - `Boost <https://www.boost.org/>`_ == 1.80.0 (used for Boost.Interprocess shared memory)
 - `Dear ImGui <https://github.com/ocornut/imgui>`_ == 1.86
 - `NumPy <https://pypi.org/project/numpy/>`_ == 1.23.2
+- `Pillow <https://pypi.org/project/Pillow/>`_ == 9.2.0
 - `psutil <https://pypi.org/project/psutil/>`_ == 5.9.2
 - `Pyinjector <https://pypi.org/project/pyinjector/>`_ == 1.1.0
 - `PySimpleGUI <https://pypi.org/project/PySimpleGUI/>`_ == 4.60.3

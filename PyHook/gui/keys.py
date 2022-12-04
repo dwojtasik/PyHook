@@ -29,6 +29,10 @@ class SGKeys:
     SESSION_LOGS_CLEAR_BUTTON (str): Key for: Session logs clear button.
     SESSION_LOGS_SCROLL_BOT_BUTTON (str): Key for: Session logs scroll bottom button.
     BORDER_SUFFIX (str): Key for: Border suffix.
+    MENU_SETTIGS_OPTION (str): Key for: Menu settings option.
+    MENU_EXIT_OPTION (str): Key for: Menu exit option.
+    MENU_ABOUT_OPTION (str): Key for: Menu about option.
+    ABOUT_GITHUB_BUTTON (str): Key for: About GitHub button.
     """
 
     PROCESS_LIST = "-PROCESS_LIST-"
@@ -48,6 +52,10 @@ class SGKeys:
     SESSION_LOGS_CLEAR_BUTTON = "-SESSION_LOGS_CLEAR_BUTTON-"
     SESSION_LOGS_SCROLL_BOT_BUTTON = "-SESSION_LOGS_SCROLL_BOT_BUTTON-"
     BORDER_SUFFIX = "-BORDER-"
+    MENU_SETTIGS_OPTION = "Settings"
+    MENU_EXIT_OPTION = "Exit"
+    MENU_ABOUT_OPTION = "About"
+    ABOUT_GITHUB_BUTTON = "-GITHUB-"
 
     @staticmethod
     def get_session_key(session_idx: int) -> str:
