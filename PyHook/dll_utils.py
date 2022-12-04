@@ -8,16 +8,14 @@ Utils for DLL management
 
 import glob
 import os
-from ctypes import CDLL, c_char_p, c_void_p, cdll, windll
+from ctypes import c_char_p, cdll
 from os.path import abspath, basename, dirname, exists
-from typing import TypeVar
 
 import psutil
 from pyinjector import inject
 
-from win_utils import is_process_64_bit, to_arch_string
-
-T = TypeVar("T")
+from win.api import get_dll_extern_variable, unload_dll
+from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
 _ADDON_PATHS_32BIT = [
@@ -171,7 +169,7 @@ class AddonHandler:
                 try:
                     test_dll_handle = cdll[test_dll_path]
                     if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
-                        self.reshade_version = _get_dll_extern_variable(
+                        self.reshade_version = get_dll_extern_variable(
                             test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
                         ).decode("utf-8")
                         if self.reshade_version >= _RESHADE_MIN_VERSION:
@@ -182,7 +180,7 @@ class AddonHandler:
                     pass
                 finally:
                     if test_dll_handle is not None:
-                        _unload_dll(test_dll_handle, self.is_64_bit)
+                        unload_dll(test_dll_handle, self.is_64_bit)
                         del test_dll_handle
             return False
         finally:
@@ -190,41 +188,6 @@ class AddonHandler:
             new_logs = [log_f for log_f in logs_after if log_f not in logs_before]
             for new_log in new_logs:
                 os.remove(new_log)
-
-
-def _unload_dll(dll_handle: CDLL, is_64_bit: bool) -> None:
-    """Unloads given dll from PyHook process.
-
-    NOTE: After this 'del variable' should be called to remove it from memory.
-
-    Args:
-        dll_handle (ctypes.CDLL): Loaded dll handle.
-        is_64_bit (bool): Flag if true owner process is 64 bit.
-    """
-    if is_64_bit:
-        windll.kernel32.FreeLibrary(c_void_p(dll_handle._handle))
-    else:
-        windll.kernel32.FreeLibrary(dll_handle._handle)
-
-
-def _get_dll_extern_variable(dll_handle: CDLL, variable_name: str, out_type: T) -> T:
-    """Returns extern value of given output type from DLL.
-
-    Args:
-        dll_handle (ctypes.CDLL): Loaded dll handle.
-        variable_name (str): The name of extern C variable to get.
-        out_type (T): The type of C variable from ctypes.
-
-    Returns:
-        T: The DLL's extern C variable casted to valid Python type using ctypes.
-
-    Raises:
-        ValueError: When variable cannot be read.
-    """
-    try:
-        return out_type.in_dll(dll_handle, variable_name).value
-    except Exception as ex:
-        raise ValueError(f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}') from ex
 
 
 def get_reshade_addon_handler(pid: int = None) -> AddonHandler:

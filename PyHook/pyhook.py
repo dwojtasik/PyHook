@@ -15,8 +15,6 @@ from threading import Timer
 
 import numpy as np
 
-# To be available in PyInstaller frozen bundle.
-import utils  # pylint: disable=unused-import
 from _version import __version__
 from dll_utils import (
     AddonNotFoundException,
@@ -34,7 +32,7 @@ from pipeline import (
     load_settings,
     save_settings,
 )
-from win_utils import is_started_as_admin
+from win.api import is_started_as_admin
 
 # Settings file path
 _SETTINGS_PATH = "settings.json"

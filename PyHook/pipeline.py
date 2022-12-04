@@ -18,8 +18,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
-from downloader import download_file
 from keys import SettingsKeys
+from utils.downloader import download_file
 
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"

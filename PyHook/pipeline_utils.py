@@ -1,6 +1,6 @@
 """
-utils for PyHook
-~~~~~~~~~~~~~~~~~~~
+pipeline_utils for PyHook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Utils for pipeline creation
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.

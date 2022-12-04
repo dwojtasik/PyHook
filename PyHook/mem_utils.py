@@ -7,18 +7,15 @@ Utils for shared memory management
 """
 
 import mmap
-
 from ctypes import *  # pylint: disable=wildcard-import,unused-wildcard-import
 from os import getpid
 from typing import List, Tuple
 
 from psutil import pid_exists
 
-from pipeline import Pipeline, PipelineRuntimeData
 from dll_utils import AddonHandler
-
-# Handle for kernel32 DLL.
-_KERNEL32 = windll.kernel32
+from pipeline import Pipeline, PipelineRuntimeData
+from win.api import WAIT_OBJECT_0, CreateEvent, SetEvent, WaitForSingleObject
 
 # Timeout in millis for event singnaling.
 # If timeout occurs PyHook will check if connected process does still exists.
@@ -197,8 +194,8 @@ class MemoryManager:
     def __init__(self, pid: int):
         self.pid = pid
         spid = str(pid)
-        self._lock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_LOCK_NAME + spid)
-        self._unlock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
+        self._lock_event = CreateEvent(0, 0, 0, self._EVENT_LOCK_NAME + spid)
+        self._unlock_event = CreateEvent(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
         self._shmem = mmap.mmap(-1, sizeof(SharedData), self._SHMEM_NAME + spid)
         self._shcfg = mmap.mmap(-1, sizeof(SharedConfigData), self._SHCFG_NAME + spid)
         self._pipeline_order = []
@@ -342,8 +339,8 @@ class MemoryManager:
             WaitAddonNotFoundException: When process with given PID does not have addon loaded anymore.
         """
         while True:
-            wait_result = _KERNEL32.WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
-            if wait_result == 0x00000000:
+            wait_result = WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
+            if wait_result == WAIT_OBJECT_0:
                 return
             if not pid_exists(self.pid):
                 raise WaitProcessNotFoundException()
@@ -354,4 +351,4 @@ class MemoryManager:
         """Sends signal to unlock event handle.
         After finish it allows ReShade to process frame from Python.
         """
-        _KERNEL32.SetEvent(self._unlock_event)
+        SetEvent(self._unlock_event)

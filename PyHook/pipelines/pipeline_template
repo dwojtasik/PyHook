@@ -2,7 +2,7 @@
 # Has to be used to import external (OS) modules
 # Should be used to build/read settings values and for resolving resources paths
 # Check docstrings for more informations
-from utils import *
+from pipeline_utils import *
 
 # Optional numpy import from PyHook frozen bundle
 import numpy as np

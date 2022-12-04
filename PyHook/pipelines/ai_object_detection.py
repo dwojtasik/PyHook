@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-from utils import *
+from pipeline_utils import *
 
 with use_local_python():
     import cv2

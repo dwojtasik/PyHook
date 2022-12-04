@@ -1,6 +1,6 @@
 """
-downloader for PyHook
-~~~~~~~~~~~~~~~~~~~~~~~
+utils.downloader for PyHook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Simple file downloader
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.

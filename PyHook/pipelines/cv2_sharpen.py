@@ -1,4 +1,4 @@
-from utils import *
+from pipeline_utils import *
 import numpy as np
 
 with use_local_python():

@@ -1,5 +1,5 @@
 """
-gui_utils for PyHook
+gui.utils for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 GUI utilities for PyHook
 :copyright: (c) 2022 by Dominik Wojtasik.
@@ -10,8 +10,8 @@ from typing import List
 
 import PySimpleGUI as sg
 
-from keys import SGKeys
 from session import ProcessInfo
+from gui.keys import SGKeys
 
 
 def to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -> List[str]:

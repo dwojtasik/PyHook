@@ -1,4 +1,4 @@
-from utils import build_variable, read_value
+from pipeline_utils import build_variable, read_value
 import numpy as np
 
 name = "[Test] RGB"

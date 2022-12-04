@@ -1,5 +1,5 @@
 """
-gui for PyHook
+gui.app for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 GUI for PyHook
 :copyright: (c) 2022 by Dominik Wojtasik.
@@ -8,19 +8,18 @@ GUI for PyHook
 
 import atexit
 import sys
-from multiprocessing import freeze_support
 from typing import List
 
 import PySimpleGUI as sg
 
 from _version import __version__
-from gui_utils import show_popup, to_combo_list, with_border
-from keys import SGKeys
 from session import ProcessInfo, Session, get_process_list
+from gui.keys import SGKeys
+from gui.utils import show_popup, to_combo_list, with_border
 
 # Default font
 _FONT_DEFAULT = ("Arial", 16)
-# Smaller default font
+# Medium default font
 _FONT_MID_DEFAULT = ("Arial", 14)
 # Default monospace font
 _FONT_MONO_DEFAULT = ("Consolas", 14)
@@ -284,8 +283,8 @@ _APP_LAYOUT = [
 ]
 
 
-def _main():
-    """App entrypoint"""
+def gui_main():
+    """App GUI entrypoint"""
 
     # Last read process list
     process_list = get_process_list()
@@ -414,8 +413,3 @@ def _main():
     window.close()
     close_all_sessions()
     sys.exit(0)
-
-
-if __name__ == "__main__":
-    freeze_support()
-    _main()
