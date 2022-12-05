@@ -41,12 +41,12 @@ desc = "Pipeline description up to 512 characters."
 # OPTIONAL
 # Variables that pipeline can use.
 # Contains up to 10 variables, use utils to create variable data.
-settings = {                     # Util method to build variable.
-                                 # Needs values in order: initial, min, max, step (for slider).
-                                 # Supports bool, int and float.
-                                 # For bool set None value for min, max and step [see below 'Bool example'].
-                                 # For combo box use %COMBO[labels_comma_separated]Tooltip format in tooltip.
-                                 # Combo box is treated as int selection - selected index will be returned, counted from 0.
+settings = {  # Util method to build variable.
+    # Needs values in order: initial, min, max, step (for slider).
+    # Supports bool, int and float.
+    # For bool set None value for min, max and step [see below 'Bool example'].
+    # For combo box use %COMBO[labels_comma_separated]Tooltip format in tooltip.
+    # Combo box is treated as int selection - selected index will be returned, counted from 0.
     "Label up to 32 characters": build_variable(1, 0, 10, 1, "Variable tooltip up to 256 characters."),
     "Bool example": build_variable(False, None, None, None, "Test bool variable."),
     "Int example": build_variable(1, 0, 10, 1, "Test int variable."),
@@ -56,7 +56,7 @@ settings = {                     # Util method to build variable.
 
 # OPTIONAL
 # Number of passes per frame processing
-# Multistage pipelines can change frame shape but on the last pass it has to be restored to orignal shape.
+# Multistage pipelines can change frame shape but on the last pass it has to be restored to original shape.
 # If multistage is set to > 1 pipeline has to implement on_frame_process_stage instead of on_frame_process.
 multistage = 1
 
@@ -65,7 +65,7 @@ multistage = 1
 def before_change_settings(key: str, value: float) -> None:
     # Called right before the settings change.
     # Check which variable will be changed with 'key'.
-    # New value will be supplied here as float, so parse it respectivly to bool or int if needed.
+    # New value will be supplied here as float, so parse it respectively to bool or int if needed.
     # Should reinit all objects connected to given 'key'.
     pass
 
@@ -74,7 +74,7 @@ def before_change_settings(key: str, value: float) -> None:
 def after_change_settings(key: str, value: float) -> None:
     # Called right after the settings change.
     # Check which variable was changed with 'key'.
-    # New value will be supplied here as float, so parse it respectivly to bool or int if needed.
+    # New value will be supplied here as float, so parse it respectively to bool or int if needed.
     # Should reinit all objects connected to given 'key'.
     pass
 

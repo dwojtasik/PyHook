@@ -8,7 +8,7 @@ Common utils
 
 import sys
 
-# Name of temporary directory that Pyinstaller will create with bundled Python.
+# Name of temporary directory that PyInstaller will create with bundled Python.
 _MEIPASS = "_MEIPASS"
 
 

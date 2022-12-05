@@ -32,7 +32,7 @@ _LOCAL_PYTHON_ENV_32 = "LOCAL_PYTHON_32"
 _LOCAL_PYTHON_ENV_64 = "LOCAL_PYTHON_64"
 # Name of runtime DLL needed for 64-bit PyHook.
 _RUNTIME_DLL = "vcruntime140_1.dll"
-# Name of temporary directory that Pyinstaller will create with bundled Python.
+# Name of temporary directory that PyInstaller will create with bundled Python.
 _MEIPASS = "_MEIPASS"
 
 
@@ -237,7 +237,7 @@ def resolve_path(file_path: str) -> str:
     """Returns absolute path to pipeline resource file.
 
     Args:
-        file_path (str): Realtive path to resource file.
+        file_path (str): Relative path to resource file.
 
     Returns:
         str: Absolute path to resource file.

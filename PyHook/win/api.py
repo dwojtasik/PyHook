@@ -172,7 +172,7 @@ LockResource.restype = LPVOID
 
 
 def is_started_as_admin() -> bool:
-    """Cheks if program was started with administrator rights.
+    """Checks if program was started with administrator rights.
 
     Returns:
         bool: True if program was stared as admin.

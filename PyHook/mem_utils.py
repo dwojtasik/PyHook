@@ -17,7 +17,7 @@ from dll_utils import AddonHandler
 from pipeline import Pipeline, PipelineRuntimeData
 from win.api import WAIT_OBJECT_0, CreateEvent, SetEvent, WaitForSingleObject
 
-# Timeout in millis for event singnaling.
+# Timeout in milliseconds for event signaling.
 # If timeout occurs PyHook will check if connected process does still exists.
 _WAIT_TIME_MS = 2000
 
@@ -48,7 +48,7 @@ class WaitProcessNotFoundException(Exception):
 
 
 class WaitAddonNotFoundException(Exception):
-    """Raised when process with given PID does not have addon loadad anymore and cannot set signaled state."""
+    """Raised when process with given PID does not have addon loaded anymore and cannot set signaled state."""
 
 
 class SharedData(Structure):
@@ -75,7 +75,7 @@ class SharedData(Structure):
 
 
 class PipelineVar(Structure):
-    """Sturcture for active pipeline variables.
+    """Structure for active pipeline variables.
 
     modified (c_bool): Flag if given variable was modified.
     key (PIPELINE_KEY_STRING): Name of the variable.
@@ -105,7 +105,7 @@ PIPELINE_SETTINGS = PIPELINE_VAR_LIMIT * PipelineVar
 
 
 class ActivePipeline(Structure):
-    """Sturcture for active pipeline data.
+    """Structure for active pipeline data.
 
     enabled (c_bool): Flag if given pipeline is enabled.
     modified (c_bool): Flag if given pipeline had it settings modified.
@@ -124,7 +124,7 @@ class ActivePipeline(Structure):
 
 
 class PipelineData(ActivePipeline):
-    """Sturcture for shared pipeline data.
+    """Structure for shared pipeline data.
 
     name (PIPELINE_STRING): Pipeline name.
     version (PIPELINE_SHORT_STRING): Pipeline version.

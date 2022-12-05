@@ -346,5 +346,5 @@ def pyhook_main(running: Value, pid: Value, name: Value, log_queue: Queue) -> No
         _LOGGER.error("-- Check ReShade logs for more informations.")
         _exit(running, 1)
     except Exception as ex:
-        _LOGGER.error("Unhandled exception occurres.", exc_info=ex)
+        _LOGGER.error("Unhandled exception occurred.", exc_info=ex)
         _exit(running, 1)

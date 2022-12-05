@@ -161,7 +161,7 @@ def _update_session_overview(window: sg.Window, selected_session: Session | None
 
 # Application menu layout
 _MENU_LAYOUT = [
-    ["App", [SGKeys.MENU_SETTIGS_OPTION, SGKeys.MENU_EXIT_OPTION]],
+    ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.MENU_EXIT_OPTION]],
     ["Help", [SGKeys.MENU_ABOUT_OPTION]],
 ]
 
@@ -418,7 +418,7 @@ def gui_main() -> None:
             selected_session.clear_logs()
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
 
-        elif event == SGKeys.MENU_SETTIGS_OPTION:
+        elif event == SGKeys.MENU_SETTINGS_OPTION:
             # TODO: Add settings window
             pass
         elif event == SGKeys.MENU_ABOUT_OPTION:

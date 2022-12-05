@@ -31,7 +31,7 @@ def to_arch_string(is_64_bit: bool) -> str:
 
 
 def is_32_bit_os() -> bool:
-    """Cheks if OS is 32 bit.
+    """Checks if OS is 32 bit.
 
     Returns:
         bool: True if OS is 32 bit

@@ -50,7 +50,7 @@ def format_raw_data(raw_data: bytes, thumb_size: Tuple[int, int] = None) -> byte
     """Formats image data into RGBA PNG format.
 
     Args:
-        raw_data (bytes): Raw bytes read from memory.
+        raw_data (bytes): Raw bytes read from memory in BGRA pixel bytes.
         thumb_size (Tuple[int, int], optional): Size of additional thumbnail in format (width, height).
             Defaults to None.
 

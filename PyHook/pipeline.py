@@ -416,7 +416,7 @@ def save_settings(
             logger.info("-- Error: Cannot save %s. Permission denied. Try to run PyHook as admin.", _SETTINGS_FILE)
     except Exception as ex:
         if logger is not None:
-            logger.error("-- Error: Cannot save %s. Unhandled exception occurres.", _SETTINGS_FILE, exc_info=ex)
+            logger.error("-- Error: Cannot save %s. Unhandled exception occurred.", _SETTINGS_FILE, exc_info=ex)
 
 
 def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[PipelineRuntimeData, bool]:

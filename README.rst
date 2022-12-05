@@ -429,7 +429,7 @@ Available ENV variables:
 
 Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
 
-If antyvirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
+If antivirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 
 Build
 =====
@@ -526,7 +526,7 @@ After build new environment variables have to be set:
       <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg" alt="Go to /docs/images/cv2_cuda.jpg">
    </p>
 
-| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virual environment.
+| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virtual environment.
 | Executable path can be read from python itself:
 
 .. code-block:: python
@@ -600,9 +600,9 @@ NEXT / DEV
 0.9.0 (2022-09-23)
 ------------------
 - Added PyHook settings file.
-- Fixed ImGui beeing affected for ReShade version up to 5.4.2.
+- Fixed ImGui being affected for ReShade version up to 5.4.2.
 - Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch
-- Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
+- Added AI semantic segmentation pipeline example using https://github.com/XuJiacong/PIDNet
 - Fixed float inaccuracy in pipeline settings.
 - Added AI object detection pipeline example using https://github.com/ultralytics/yolov5
 - Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer
