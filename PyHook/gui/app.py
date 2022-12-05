@@ -10,6 +10,8 @@ import atexit
 import os
 import sys
 import webbrowser
+from threading import Thread
+from time import sleep
 from typing import List
 
 import PySimpleGUI as sg
@@ -167,7 +169,7 @@ _MENU_LAYOUT = [
 
 # Application UI layout
 _APP_LAYOUT = [
-    [sg.Menu(_MENU_LAYOUT, tearoff=False, font=FONT_SMALL, text_color="black", background_color="white")],
+    [sg.Menu(_MENU_LAYOUT, font=FONT_SMALL, text_color="black", background_color="white")],
     [
         sg.Text("Process"),
         sg.Combo(
@@ -300,8 +302,10 @@ def open_github() -> None:
 
 
 def gui_main() -> None:
-    """App GUI entrypoint"""
+    """App GUI entrypoint."""
 
+    # Flag if GUI is running
+    running = True
     # Last read process list
     process_list = get_process_list()
     # Last process filter string
@@ -312,13 +316,6 @@ def gui_main() -> None:
     sessions: List[Session] = []
     # Selected session to display overview
     selected_session: Session = None
-
-    def close_all_sessions():
-        """Closes all PyHook sessions on app exit."""
-        for session in sessions:
-            session.close()
-
-    atexit.register(close_all_sessions)
 
     # Application window
     window = sg.Window(
@@ -332,7 +329,32 @@ def gui_main() -> None:
     _update_session_overview(window, selected_session)
     _update_process_list(window, process_list, "")
 
-    while True:
+    def _close_all_sessions():
+        """Closes all PyHook sessions on app exit."""
+        for session in sessions:
+            session.close()
+
+    atexit.register(_close_all_sessions)
+
+    def _update_ui():
+        """Updates UI window."""
+        while running:
+            if selected_session is not None:
+                if selected_session.should_update_logs():
+                    scroll_state = window[SGKeys.SESSION_LOGS].Widget.yview()
+                    window[SGKeys.SESSION_LOGS].update(
+                        value=selected_session.get_logs(), autoscroll=scroll_state[1] == 1
+                    )
+
+            if any([session.should_update_ui() for session in sessions[:]]):
+                _update_sessions_active_view(window, sessions, selected_session)
+
+            sleep(1 / 60)
+
+    ui_worker = Thread(target=_update_ui)
+    ui_worker.start()
+
+    while running:
         event, values = window.read(timeout=1000 / 60)
         if event in (sg.WIN_CLOSED, SGKeys.MENU_EXIT_OPTION):
             break
@@ -433,14 +455,8 @@ def gui_main() -> None:
                 events={SGKeys.ABOUT_GITHUB_BUTTON: EventCallback(open_github, False)},
             )
 
-        if selected_session is not None:
-            if selected_session.should_update_logs():
-                scroll_state = window[SGKeys.SESSION_LOGS].Widget.yview()
-                window[SGKeys.SESSION_LOGS].update(value=selected_session.get_logs(), autoscroll=scroll_state[1] == 1)
-
-        if any([session.should_update_ui() for session in sessions]):
-            _update_sessions_active_view(window, sessions, selected_session)
-
+    running = False
+    ui_worker.join()
     window.close()
-    close_all_sessions()
+    _close_all_sessions()
     sys.exit(0)
