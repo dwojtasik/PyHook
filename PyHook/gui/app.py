@@ -19,9 +19,9 @@ import PySimpleGUI as sg
 from _version import __version__
 from session import ProcessInfo, Session, get_process_list
 from win.api import get_hq_icon_raw
-from gui.image import format_raw_data, get_img
+from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
 from gui.keys import SGKeys
-from gui.style import *  # pylint: disable=wildcard-import
+from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from gui.utils import EventCallback, show_popup, show_popup_text, to_combo_list, with_border
 from utils.common import is_frozen_bundle
 
@@ -30,9 +30,12 @@ _MAX_SESSIONS = 15
 
 # Default icon to display
 if is_frozen_bundle():
-    _APP_ICON = format_raw_data(get_hq_icon_raw(sys.executable), thumb_size=(128, 128))
+    _APP_ICON = get_as_buffer(format_raw_data(get_hq_icon_raw(sys.executable), thumb_size=(128, 128)))
 else:
     _APP_ICON = get_img(f"{os.getcwd()}\\pyhook_icon.ico", thumb_size=(128, 128))
+
+# Default clear button image
+_BUTTON_IMAGE_NONE = get_as_buffer(get_button_image_template())
 
 # Set default theme
 sg.theme("DarkBlue")
@@ -53,7 +56,14 @@ def _get_sessions_layout() -> List[List[sg.Column]]:
             rows.append([])
         rows[i // per_row_sessions].append(
             with_border(
-                sg.Button("", size=(9, 6), pad=(3, 3), tooltip="", key=SGKeys.get_session_key(i)),
+                sg.Button(
+                    image_data=_BUTTON_IMAGE_NONE,
+                    size=SESSION_BUTTON_ICON_SIZE,
+                    pad=(2, 3),
+                    button_color=SESSION_BUTTON_COLORS,
+                    tooltip="",
+                    key=SGKeys.get_session_key(i),
+                ),
                 color="green",
                 visible=i < 6,
             )
@@ -78,7 +88,7 @@ def _update_process_list(window: sg.Window, process_list: List[ProcessInfo], fil
     Args:
         window (sg.Window): Parent window.
         process_list (List[ProcessInfo]): List of new process info.
-        filter_string (str): Filter to be applied. For empty string filtering will be ommited.
+        filter_string (str): Filter to be applied. For empty string filtering will be omitted.
     """
     window[SGKeys.PROCESS_LIST].update(
         value=filter_string,
@@ -103,7 +113,7 @@ def _update_sessions_active_view(window: sg.Window, sessions: List[Session], sel
         session_key = SGKeys.get_session_key(i)
         running = session.is_running()
         window[session_key].ParentRowFrame.config(background="green" if running else "red")
-        window[session_key].update(text=f"{sessions[i].get_name()}")
+        window[session_key].update(image_data=sessions[i].button_image)
         window[session_key].set_tooltip(
             f"Process: {sessions[i].get_name()}\nStatus: {'Running' if running else 'Exited'}"
         )
@@ -127,12 +137,15 @@ def _update_sessions_view(window: sg.Window, sessions: List[Session]) -> None:
             running = sessions[i].is_running()
             window[session_key + SGKeys.BORDER_SUFFIX].update(visible=True)
             window[session_key].ParentRowFrame.config(background="green" if running else "red")
-            window[session_key].update(text=f"{sessions[i].get_name()}")
+            if sessions[i].button_image is None:
+                window[session_key].update(image_data=_BUTTON_IMAGE_NONE)
+            else:
+                window[session_key].update(image_data=sessions[i].button_image)
             window[session_key].set_tooltip(
                 f"Process: {sessions[i].get_name()}\nStatus: {'Running' if running else 'Exited'}"
             )
         else:
-            window[session_key].update(text="")
+            window[session_key].update(image_data=_BUTTON_IMAGE_NONE)
             window[session_key].set_tooltip("")
             window[session_key + SGKeys.BORDER_SUFFIX].update(visible=False)
     window[SGKeys.SESSION_LIST].contents_changed()

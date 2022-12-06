@@ -16,7 +16,9 @@ from typing import List
 
 import psutil
 
+from gui.image import get_as_buffer, get_button_image
 from pyhook import pyhook_main
+from win.api import get_hq_icon_raw
 
 # Default log formatter.
 _DEFAULT_FORMATTER = logging.Formatter()
@@ -34,12 +36,17 @@ class ProcessInfo:
     process (psutil.Process): Process object.
     pid (str): Process ID.
     name (str): Process name if available.
+    path (str): Process path if available.
     """
 
     def __init__(self, process: psutil.Process):
         self.pid = process.pid
         _proc_name = process.name()
         self.name = _proc_name if len(_proc_name) > 0 else _UNKNOWN_PROCESS
+        try:
+            self.path = process.exe()
+        except Exception:
+            self.path = ""
 
     def get_combo_string(self) -> str:
         """Returns formatted string to be displayed in process combo box.
@@ -72,6 +79,8 @@ class Session:
     process_info (ProcessInfo, optional): Basic process info.
     pid (Value[int]): Shared integer process id.
     name (Value[bytes]): Shared bytes string process name.
+    path (Value[bytes]): Shared bytes string process executable path.
+    button_image (bytes | None): Image button to be displayed in UI.
     _is_auto (bool): Flag if PyHook session is running in automatic detection mode.
     _has_new_logs (bool): Flag if new logs are ready to be displayed.
     _has_ui_change (bool): Flag if PyHook session was stopped by any reason.
@@ -86,6 +95,8 @@ class Session:
     def __init__(self, process_info: ProcessInfo | None = None):
         self.pid = Value("i", -1 if process_info is None else process_info.pid)
         self.name = Value(c_char_p, b"" if process_info is None else str.encode(process_info.name))
+        self.path = Value(c_char_p, b"" if process_info is None else str.encode(process_info.path))
+        self.button_image = None
         self._is_auto = process_info is None
         self._has_new_logs = False
         self._has_ui_change = False
@@ -95,9 +106,10 @@ class Session:
         self._log = ""
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self._log_queue),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue),
         )
         self._worker = Thread(target=self._update_self)
+        self._set_button_image()
         self._process.start()
         self._worker.start()
 
@@ -139,7 +151,7 @@ class Session:
         self._running.value = True
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self._log_queue),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue),
         )
         self._worker = Thread(target=self._update_self)
         self._process.start()
@@ -177,6 +189,15 @@ class Session:
         self._has_new_logs = False
         return output
 
+    def _set_button_image(self) -> None:
+        """Sets button image based on session data."""
+        if self._is_auto:
+            return
+        if self.path.value == "":
+            return
+        icon = get_hq_icon_raw(self.path.value.decode("utf-8"))
+        self.button_image = get_as_buffer(get_button_image(icon, self.name.value.decode("utf-8"), self.pid.value))
+
     def _update_self(self) -> None:
         """Updated self state based on subprocess data.
         Formats and appends new logs from queue to log string.
@@ -186,6 +207,7 @@ class Session:
             if self._is_auto:
                 if self.pid.value != -1:
                     self._is_auto = False
+                    self._set_button_image()
                     self._has_ui_change = True
             try:
                 self._log += _DEFAULT_FORMATTER.format(self._log_queue.get(block=False)) + "\n"

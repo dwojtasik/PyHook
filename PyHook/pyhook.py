@@ -179,13 +179,14 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def pyhook_main(running: Value, pid: Value, name: Value, log_queue: Queue) -> None:
+def pyhook_main(running: Value, pid: Value, name: Value, path: Value, log_queue: Queue) -> None:
     """PyHook entrypoint.
 
     Args:
         running (Value[bool]): Shared flag if process is running.
         pid (Value[int]): Shared integer process id.
         name (Value[str]): Shared string process name.
+        path (Value[str]): Shared string process executable path.
         log_queue (Queue): Log queue from parent process.
     """
     try:
@@ -207,6 +208,7 @@ def pyhook_main(running: Value, pid: Value, name: Value, log_queue: Queue) -> No
                 addon_handler = get_reshade_addon_handler()
                 pid.value = addon_handler.pid
                 name.value = str.encode(addon_handler.process_name)
+                path.value = str.encode(addon_handler.exe)
             except ReShadeNotFoundException:
                 _LOGGER.error("-- Cannot find any active process with ReShade loaded.")
                 if not is_started_as_admin():
