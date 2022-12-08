@@ -8,7 +8,8 @@ PyHook subprocess sessions for PyHook
 
 import logging
 import queue
-from multiprocessing import Process, Queue, Array, Value
+import uuid
+from multiprocessing import Array, Process, Queue, Value
 from threading import Thread
 from time import sleep
 from typing import List
@@ -76,6 +77,7 @@ class Session:
     If process_info is not supplied automatic injection will be used.
 
     process_info (ProcessInfo, optional): Basic process info.
+    uuid (str): Session unique identifier.
     pid (Value[int]): Shared integer process id.
     name (Array[bytes]): Shared string bytes process name.
     path (Array[bytes]): Shared string bytes process executable path.
@@ -92,6 +94,7 @@ class Session:
     """
 
     def __init__(self, process_info: ProcessInfo | None = None):
+        self.uuid = str(uuid.uuid4())
         self.pid = Value("i", -1 if process_info is None else process_info.pid)
         self.name = Array("c", 150 if process_info is None else str.encode(process_info.name))
         self.path = Array("c", 250 if process_info is None else str.encode(process_info.path))

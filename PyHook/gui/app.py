@@ -12,7 +12,7 @@ import sys
 import webbrowser
 from threading import Thread
 from time import sleep
-from typing import List
+from typing import Dict, List
 
 import PySimpleGUI as sg
 
@@ -330,6 +330,8 @@ def gui_main() -> None:
     last_pid: int = None
     # List of active sessions
     sessions: List[Session] = []
+    # Dictionary of session uuid to it's killing thread
+    killed_sessions: Dict[str, Thread] = {}
     # Selected session to display overview
     selected_session: Session = None
 
@@ -345,10 +347,21 @@ def gui_main() -> None:
     _update_session_overview(window, selected_session)
     _update_process_list(window, process_list, "")
 
+    def _kill_session(session: Session):
+        def _kill_self():
+            session.close()
+            del killed_sessions[session.uuid]
+
+        killed_sessions[session.uuid] = Thread(target=_kill_self)
+        killed_sessions[session.uuid].start()
+
     def _close_all_sessions():
         """Closes all PyHook sessions on app exit."""
         for session in sessions:
             session.close()
+        for killing_thread in list(killed_sessions.values()):
+            if killing_thread.is_alive():
+                killing_thread.join()
 
     atexit.register(_close_all_sessions)
 
@@ -438,7 +451,7 @@ def gui_main() -> None:
             _update_session_overview(window, selected_session)
         elif event == SGKeys.SESSION_KILL_BUTTON:
             sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
-            selected_session.close()
+            _kill_session(selected_session)
             _update_sessions_view(window, sessions)
             selected_session = None
             _update_session_overview(window, selected_session)

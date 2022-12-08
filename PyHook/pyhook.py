@@ -190,6 +190,8 @@ def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue:
         log_queue (Queue): Log queue from parent process.
     """
     try:
+        if not running.value:
+            sys.exit(0)
         displayed_ms_error = False
         _init_logger(log_queue)
         sys.stdout = LogWriter(_LOGGER)
