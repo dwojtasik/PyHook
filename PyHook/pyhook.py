@@ -9,7 +9,7 @@ import json
 import logging
 import sys
 from logging.handlers import QueueHandler
-from multiprocessing import Queue, Value
+from multiprocessing import Queue, Array, Value
 from os.path import exists
 from threading import Timer
 
@@ -179,14 +179,14 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def pyhook_main(running: Value, pid: Value, name: Value, path: Value, log_queue: Queue) -> None:
+def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue: Queue) -> None:
     """PyHook entrypoint.
 
     Args:
         running (Value[bool]): Shared flag if process is running.
         pid (Value[int]): Shared integer process id.
-        name (Value[str]): Shared string process name.
-        path (Value[str]): Shared string process executable path.
+        name (Array[bytes]): Shared string bytes process name.
+        path (Array[bytes]): Shared string bytes process executable path.
         log_queue (Queue): Log queue from parent process.
     """
     try:
@@ -206,9 +206,9 @@ def pyhook_main(running: Value, pid: Value, name: Value, path: Value, log_queue:
             try:
                 _LOGGER.info("- Searching for process with ReShade...")
                 addon_handler = get_reshade_addon_handler()
-                pid.value = addon_handler.pid
                 name.value = str.encode(addon_handler.process_name)
                 path.value = str.encode(addon_handler.exe)
+                pid.value = addon_handler.pid
             except ReShadeNotFoundException:
                 _LOGGER.error("-- Cannot find any active process with ReShade loaded.")
                 if not is_started_as_admin():

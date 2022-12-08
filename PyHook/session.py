@@ -8,26 +8,25 @@ PyHook subprocess sessions for PyHook
 
 import logging
 import queue
-from ctypes import c_char_p
-from multiprocessing import Process, Queue, Value
+from multiprocessing import Process, Queue, Array, Value
 from threading import Thread
 from time import sleep
 from typing import List
 
 import psutil
 
-from gui.image import get_as_buffer, get_button_image
+from gui.image import get_as_buffer, get_button_image, get_button_image_template
 from pyhook import pyhook_main
 from win.api import get_hq_icon_raw
 
 # Default log formatter.
 _DEFAULT_FORMATTER = logging.Formatter()
-
 # Name for unknown process.
 _UNKNOWN_PROCESS = "Unknown"
-
 # Name for automatic detection process.
 _AUTO_NAME = "AUTO"
+# Session button icon for automatic process
+_AUTOMATIC_ICON = get_as_buffer(get_button_image(get_button_image_template(), "AUTO...", None))
 
 
 class ProcessInfo:
@@ -78,8 +77,8 @@ class Session:
 
     process_info (ProcessInfo, optional): Basic process info.
     pid (Value[int]): Shared integer process id.
-    name (Value[bytes]): Shared bytes string process name.
-    path (Value[bytes]): Shared bytes string process executable path.
+    name (Array[bytes]): Shared string bytes process name.
+    path (Array[bytes]): Shared string bytes process executable path.
     button_image (bytes | None): Image button to be displayed in UI.
     _is_auto (bool): Flag if PyHook session is running in automatic detection mode.
     _has_new_logs (bool): Flag if new logs are ready to be displayed.
@@ -94,8 +93,8 @@ class Session:
 
     def __init__(self, process_info: ProcessInfo | None = None):
         self.pid = Value("i", -1 if process_info is None else process_info.pid)
-        self.name = Value(c_char_p, b"" if process_info is None else str.encode(process_info.name))
-        self.path = Value(c_char_p, b"" if process_info is None else str.encode(process_info.path))
+        self.name = Array("c", 150 if process_info is None else str.encode(process_info.name))
+        self.path = Array("c", 250 if process_info is None else str.encode(process_info.path))
         self.button_image = None
         self._is_auto = process_info is None
         self._has_new_logs = False
@@ -192,10 +191,13 @@ class Session:
     def _set_button_image(self) -> None:
         """Sets button image based on session data."""
         if self._is_auto:
+            self.button_image = _AUTOMATIC_ICON
             return
-        if self.path.value == "":
+        path = self.path.value.decode("utf-8")
+        if len(path) == 0:
+            self.button_image = _AUTOMATIC_ICON
             return
-        icon = get_hq_icon_raw(self.path.value.decode("utf-8"))
+        icon = get_hq_icon_raw(path)
         self.button_image = get_as_buffer(get_button_image(icon, self.name.value.decode("utf-8"), self.pid.value))
 
     def _update_self(self) -> None:

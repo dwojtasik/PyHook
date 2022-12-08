@@ -118,7 +118,10 @@ def _update_sessions_active_view(window: sg.Window, sessions: List[Session], sel
             f"Process: {sessions[i].get_name()}\nStatus: {'Running' if running else 'Exited'}"
         )
         if selected_session is not None and selected_session.pid.value == session.pid.value:
+            window[SGKeys.SESSION_TITLE].update(value=selected_session.get_name())
             window[SGKeys.SESSION_RESTART_BUTTON].update(disabled=running)
+        if selected_session is None:
+            window[SGKeys.SESSION_TITLE].update(value="Select session...")
 
 
 def _update_sessions_view(window: sg.Window, sessions: List[Session]) -> None:
@@ -434,8 +437,8 @@ def gui_main() -> None:
             selected_session = sessions[SGKeys.get_session_idx(event)]
             _update_session_overview(window, selected_session)
         elif event == SGKeys.SESSION_KILL_BUTTON:
-            selected_session.close()
             sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
+            selected_session.close()
             _update_sessions_view(window, sessions)
             selected_session = None
             _update_session_overview(window, selected_session)
