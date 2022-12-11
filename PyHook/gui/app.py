@@ -21,23 +21,25 @@ from session import ProcessInfo, Session, get_process_list
 from win.api import get_hq_icon_raw
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
 from gui.keys import SGKeys
+from gui.pipeline_download import verify_download
+from gui.settings import display_settings_window, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
-from gui.utils import EventCallback, show_popup, show_popup_text, to_combo_list, with_border
+from gui.utils import EventCallback, show_popup, show_popup_text, with_border
 from utils.common import is_frozen_bundle
 
-# Maximum amount of sessions
+# Maximum amount of sessions.
 _MAX_SESSIONS = 15
 
-# Default icon to display
+# Default icon to display.
 if is_frozen_bundle():
     _APP_ICON = get_as_buffer(format_raw_data(get_hq_icon_raw(sys.executable), thumb_size=(128, 128)))
 else:
     _APP_ICON = get_img(f"{os.getcwd()}\\pyhook_icon.ico", thumb_size=(128, 128))
 
-# Default clear button image
+# Default clear button image.
 _BUTTON_IMAGE_NONE = get_as_buffer(get_button_image_template())
 
-# Set default theme
+# Set default theme.
 sg.theme("DarkBlue")
 
 
@@ -92,7 +94,7 @@ def _update_process_list(window: sg.Window, process_list: List[ProcessInfo], fil
     """
     window[SGKeys.PROCESS_LIST].update(
         value=filter_string,
-        values=to_combo_list(process_list, filter_string if filter_string else None),
+        values=_to_combo_list(process_list, filter_string if filter_string else None),
     )
 
 
@@ -177,15 +179,41 @@ def _update_session_overview(window: sg.Window, selected_session: Session | None
     window[SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON].update(visible=visible)
 
 
+def _to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -> List[str]:
+    """Filters list of processes to combo list.
+
+    Args:
+        process_list (List[ProcessInfo]): List of processes.
+        filter_string (str, optional): Filter to be applied. Defaults to None.
+
+    Returns:
+        List[str]: List of combo strings.
+    """
+    if filter_string is None:
+        return [process.get_combo_string() for process in process_list]
+    if filter_string.isnumeric():
+        filter_pid = filter_string
+        filter_name = ""
+    else:
+        filter_pid = ""
+        filter_name = filter_string.lower()
+    return [
+        process.get_combo_string()
+        for process in process_list
+        if (filter_pid and filter_pid in str(process.pid)) or (filter_name and filter_name in process.name.lower())
+    ]
+
+
 # Application menu layout
 _MENU_LAYOUT = [
-    ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.MENU_EXIT_OPTION]],
+    ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.EXIT]],
+    ["Pipeline", [SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION]],
     ["Help", [SGKeys.MENU_ABOUT_OPTION]],
 ]
 
 # Application UI layout
 _APP_LAYOUT = [
-    [sg.Menu(_MENU_LAYOUT, font=FONT_SMALL, text_color="black", background_color="white")],
+    [sg.Menu(_MENU_LAYOUT, font=FONT_SMALL_DEFAULT, text_color="black", background_color="white")],
     [
         sg.Text("Process"),
         sg.Combo(
@@ -347,15 +375,25 @@ def gui_main() -> None:
     _update_session_overview(window, selected_session)
     _update_process_list(window, process_list, "")
 
-    def _kill_session(session: Session):
-        def _kill_self():
+    load_settings()
+    verify_download()
+
+    def _kill_session(session: Session) -> None:
+        """Kills given sessions.
+
+        Args:
+            session (Session): PyHook session.
+        """
+
+        def _kill_self() -> None:
+            """Kills session."""
             session.close()
             del killed_sessions[session.uuid]
 
         killed_sessions[session.uuid] = Thread(target=_kill_self)
         killed_sessions[session.uuid].start()
 
-    def _close_all_sessions():
+    def _close_all_sessions() -> None:
         """Closes all PyHook sessions on app exit."""
         for session in sessions:
             session.close()
@@ -365,7 +403,7 @@ def gui_main() -> None:
 
     atexit.register(_close_all_sessions)
 
-    def _update_ui():
+    def _update_ui() -> None:
         """Updates UI window."""
         while running:
             if selected_session is not None:
@@ -385,7 +423,7 @@ def gui_main() -> None:
 
     while running:
         event, values = window.read(timeout=1000 / 60)
-        if event in (sg.WIN_CLOSED, SGKeys.MENU_EXIT_OPTION):
+        if event in (sg.WIN_CLOSED, SGKeys.EXIT):
             break
         if event == sg.TIMEOUT_EVENT:
             if last_process_filter != values[SGKeys.PROCESS_LIST]:
@@ -393,7 +431,7 @@ def gui_main() -> None:
                 _update_process_list(window, process_list, last_process_filter)
                 last_pid = None
         elif event == SGKeys.PROCESS_LIST:
-            last_process_filter = values[SGKeys.PROCESS_LIST]
+            last_process_filter = values[event]
             pid_string = str(last_process_filter).split("|", maxsplit=1)[0].strip()
             if pid_string.isnumeric():
                 last_pid = int(pid_string)
@@ -468,10 +506,10 @@ def gui_main() -> None:
         elif event == SGKeys.SESSION_LOGS_CLEAR_BUTTON:
             selected_session.clear_logs()
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
-
         elif event == SGKeys.MENU_SETTINGS_OPTION:
-            # TODO: Add settings window
-            pass
+            display_settings_window()
+        elif event == SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION:
+            verify_download(True)
         elif event == SGKeys.MENU_ABOUT_OPTION:
             show_popup(
                 "About",
@@ -479,9 +517,10 @@ def gui_main() -> None:
                     [sg.Image(data=_APP_ICON, size=(128, 128))],
                     [sg.Text(f"PyHook v{__version__}", justification="center")],
                     [sg.Text("(c) 2022 by Dominik Wojtasik", justification="center")],
-                    [sg.Button("GitHub", size=(10, 1), pad=(0, 10), font=FONT_SMALL, key=SGKeys.ABOUT_GITHUB_BUTTON)],
+                    [sg.Button("GitHub", size=(10, 1), pad=((0, 0), (10, 0)), key=SGKeys.ABOUT_GITHUB_BUTTON)],
                 ],
                 events={SGKeys.ABOUT_GITHUB_BUTTON: EventCallback(open_github, False)},
+                min_width=275,
             )
 
     running = False

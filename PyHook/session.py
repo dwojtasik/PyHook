@@ -17,6 +17,7 @@ from typing import List
 import psutil
 
 from gui.image import get_as_buffer, get_button_image, get_button_image_template
+from gui.settings import get_settings
 from pyhook import pyhook_main
 from win.api import get_hq_icon_raw
 
@@ -108,7 +109,7 @@ class Session:
         self._log = ""
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings()),
         )
         self._worker = Thread(target=self._update_self)
         self._set_button_image()
@@ -153,7 +154,7 @@ class Session:
         self._running.value = True
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings()),
         )
         self._worker = Thread(target=self._update_self)
         self._process.start()

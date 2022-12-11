@@ -201,7 +201,7 @@ def use_local_python() -> _LocalPython:
         _LocalPython: Local Python handle. When not closed it allows to load modules from local setup.
     """
     global _RUNTIME_HANDLE  # pylint: disable=global-statement
-    # For 64-bit vcruntime needs additional library to be loaded
+    # For 64-bit vcruntime needs additional library to be loaded.
     if _IS_64_BIT and _RUNTIME_HANDLE is None and _is_frozen_bundle():
         _RUNTIME_HANDLE = ctypes.cdll[f"{getattr(sys, _MEIPASS)}\\{_RUNTIME_DLL}"]
     if _LOCAL_PYTHON_EXE is None:

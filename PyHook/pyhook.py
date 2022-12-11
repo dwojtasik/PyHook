@@ -5,13 +5,12 @@ Python hook for ReShade processing
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
-import json
 import logging
 import sys
 from logging.handlers import QueueHandler
 from multiprocessing import Queue, Array, Value
-from os.path import exists
 from threading import Timer
+from typing import Any, Dict
 
 import numpy as np
 
@@ -34,17 +33,7 @@ from pipeline import (
 )
 from win.api import is_started_as_admin
 
-# Settings file path
-_SETTINGS_PATH = "settings.json"
-
-# PyHook settings
-_SETTINGS = {
-    SettingsKeys.KEY_AUTOSAVE: 5,
-    SettingsKeys.KEY_AUTODOWNLOAD: True,
-    SettingsKeys.KEY_DOWNLOADED: [],
-}
-
-# PyHook main logger
+# PyHook main logger.
 _LOGGER: logging.Logger = None
 
 
@@ -84,59 +73,6 @@ def _init_logger(log_queue: Queue) -> None:
         _LOGGER = logging.getLogger("PyHook")
         _LOGGER.setLevel(logging.INFO)
         _LOGGER.addHandler(QueueHandler(log_queue))
-
-
-def _save_settings() -> None:
-    """Saves PyHook settings to file."""
-    try:
-        with open(_SETTINGS_PATH, "w", encoding="utf-8") as settings_file:
-            json.dump(_SETTINGS, settings_file, indent=4)
-    except PermissionError:
-        if _LOGGER is not None:
-            _LOGGER.info(
-                "-- Error: Cannot save settings to file %s. Permission denied. Try to run PyHook as admin.",
-                _SETTINGS_PATH,
-            )
-    except Exception as ex:
-        if _LOGGER is not None:
-            _LOGGER.error(
-                "-- Error: Cannot save settings to file %s. Unhandled exception occurres.", _SETTINGS_PATH, exc_info=ex
-            )
-
-
-def _load_settings() -> None:
-    """Loads PyHook settings from file."""
-    _LOGGER.info("- Loading settings...")
-    if exists(_SETTINGS_PATH):
-        with open(_SETTINGS_PATH, encoding="utf-8") as settings_file:
-            settings = json.load(settings_file)
-            for key, value in settings.items():
-                if key == SettingsKeys.KEY_AUTOSAVE:
-                    if not isinstance(value, int):
-                        _LOGGER.info("-- Warning: Invalid value for key: %s=%s. Skipping...", key, str(value))
-                        continue
-                    if int(value) < 1:
-                        _LOGGER.info(
-                            "-- Warning: Value for %s has to be bigger than 0. Actual value: %s. Restored value %s.",
-                            key,
-                            str(value),
-                            str(_SETTINGS[key]),
-                        )
-                        continue
-                    _SETTINGS[key] = int(value)
-                elif key == SettingsKeys.KEY_AUTODOWNLOAD:
-                    _SETTINGS[key] = bool(value)
-                elif key == SettingsKeys.KEY_DOWNLOADED:
-                    if not isinstance(value, list):
-                        _LOGGER.info("-- Warning: Invalid value for key: %s=%s. Skipping...", key, str(value))
-                        continue
-                    _SETTINGS[key] = list(value)
-                else:
-                    _LOGGER.info("-- Warning: Unrecognized settings key: %s. Skipping...", key)
-        _LOGGER.info("-- Settings have been loaded.")
-    else:
-        _LOGGER.info("-- Settings not found. Creating default settings...")
-        _save_settings()
 
 
 def _exit(running: Value, code: int) -> None:
@@ -179,7 +115,9 @@ def _encode_frame(data, frame) -> None:
     data.frame = FRAME_ARRAY.from_buffer(arr)
 
 
-def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue: Queue) -> None:
+def pyhook_main(
+    running: Value, pid: Value, name: Array, path: Array, log_queue: Queue, settings: Dict[str, Any]
+) -> None:
     """PyHook entrypoint.
 
     Args:
@@ -188,6 +126,7 @@ def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue:
         name (Array[bytes]): Shared string bytes process name.
         path (Array[bytes]): Shared string bytes process executable path.
         log_queue (Queue): Log queue from parent process.
+        settings (Dict[Str, Any]): PyHook actual settings.
     """
     try:
         if not running.value:
@@ -196,11 +135,8 @@ def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue:
         _init_logger(log_queue)
         sys.stdout = LogWriter(_LOGGER)
         _LOGGER.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
-        _load_settings()
         _LOGGER.info("- Loading pipelines...")
-        pipelines, has_changes = load_pipelines(_SETTINGS, _LOGGER)
-        if has_changes:
-            _save_settings()
+        pipelines = load_pipelines(_LOGGER)
         if len(pipelines) == 0:
             _LOGGER.error("-- Cannot find any pipeline to process.")
             _exit(running, 1)
@@ -290,7 +226,7 @@ def pyhook_main(running: Value, pid: Value, name: Array, path: Array, log_queue:
                 if save_later is not None and not save_later.finished.is_set():
                     save_later.cancel()
                 save_later = Timer(
-                    _SETTINGS[SettingsKeys.KEY_AUTOSAVE],
+                    settings[SettingsKeys.KEY_AUTOSAVE],
                     save_settings,
                     [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path],
                 )

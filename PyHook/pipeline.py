@@ -18,8 +18,6 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
-from keys import SettingsKeys
-from utils.downloader import download_file
 
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
@@ -320,51 +318,49 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     )
 
 
-def _download_files(pipeline_dir: str, pipeline_file: str, logger: logging.Logger = None) -> None:
-    """Downloads files if download.txt file exists in pipeline data directory.
-
-    Args:
-        pipeline_dir (str): The pipelines directory.
-        pipeline_file (str): The pipeline filename.
-        logger (logging.Logger, optional): Logger to display informations. Defaults to None.
-    """
-    pipeline_data_dir = f"{pipeline_dir}\\{pipeline_file[:-3]}"
-    download_list_file = f"{pipeline_data_dir}\\download.txt"
-    if exists(download_list_file):
-        try:
-            with open(download_list_file, encoding="utf-8") as d_file:
-                urls = [url for url in d_file.read().split("\n") if len(url) > 1 and not url.startswith("#")]
-                for url in urls:
-                    download_file(url, pipeline_data_dir, logger)
-        except Exception as ex:
-            if logger is not None:
-                logger.info('--- Cannot read / download pipeline files: "%s"', ex)
-
-
-def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> Tuple[Dict[str, Pipeline], bool]:
-    """Loads pipelines for frame processing.
-
-    Args:
-        settings (Dict[str, Any]): PyHook settings json.
-        logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
-            Defaults to None.
+def get_pipeline_directory() -> str:
+    """Returns pipeline directory.
 
     Returns:
-        Tuple[Dict[str, Pipeline], bool]: File to pipeline map and flag if settings were changed.
+        str: Pipeline directory.
 
     Raises:
         PipelinesDirNotFoundError: When pipelines directory does not exists.
     """
-    has_settings_change = False
-    pipeline_dir = None
     for path in _PIPELINE_DIRS:
         if isdir(path):
-            pipeline_dir = abspath(path)
-    if pipeline_dir is None:
-        raise PipelinesDirNotFoundError()
+            return abspath(path)
+    raise PipelinesDirNotFoundError()
 
+
+def get_pipeline_file_list(pipeline_dir: str) -> List[str]:
+    """Returns list of pipeline files.
+
+    Args:
+        pipeline_dir (str): Pipeline directory.
+
+    Returns:
+        List[str]: List of pipeline files.
+    """
+    return glob.glob(f"{pipeline_dir}/*.py")
+
+
+def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
+    """Loads pipelines for frame processing.
+
+    Args:
+        logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
+            Defaults to None.
+
+    Returns:
+        Dict[str, Pipeline]: File to pipeline map.
+
+    Raises:
+        PipelinesDirNotFoundError: When pipelines directory does not exists.
+    """
     pipelines = {}
-    pipeline_files = glob.glob(f"{pipeline_dir}/*.py")
+    pipeline_dir = get_pipeline_directory()
+    pipeline_files = get_pipeline_file_list(pipeline_dir)
 
     for path in pipeline_files:
         module_name = basename(path)[:-3]
@@ -377,15 +373,11 @@ def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> T
             spec.loader.exec_module(module)
             pipeline = _build_pipeline(module, module_name, path)
             pipelines[pipeline.file] = pipeline
-            if settings[SettingsKeys.KEY_AUTODOWNLOAD] and pipeline.file not in settings[SettingsKeys.KEY_DOWNLOADED]:
-                _download_files(pipeline_dir, pipeline.file, logger)
-                settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline.file)
-                has_settings_change = True
         except Exception as ex:
             if logger is not None:
                 logger.error('-- Cannot load pipeline file "%s".', path)
                 logger.error("--- Error: %s", ex)
-    return pipelines, has_settings_change
+    return pipelines
 
 
 def save_settings(

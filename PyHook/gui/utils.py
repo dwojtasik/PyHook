@@ -10,47 +10,21 @@ from typing import Callable, Dict, List
 
 import PySimpleGUI as sg
 
-from session import ProcessInfo
 from gui.keys import SGKeys
-from gui.style import FONT_SMALL
+from gui.style import FONT_SMALL_DEFAULT
 
 
 class EventCallback:
     """Callback for UI event.
 
-    callback (Callable): Callback to execute.
+    callback (Callable[[], None]): Callback to execute.
     close_window (bool, optional): Flag if windows should be closed after event.
         Defaults to False.
     """
 
-    def __init__(self, callback: Callable, close_window: bool = False):
+    def __init__(self, callback: Callable[[], None], close_window: bool = False):
         self.callback = callback
         self.close_window = close_window
-
-
-def to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -> List[str]:
-    """Filters list of processes to combo list.
-
-    Args:
-        process_list (List[ProcessInfo]): List of processes.
-        filter_string (str, optional): Filter to be applied. Defaults to None.
-
-    Returns:
-        List[str]: List of combo strings.
-    """
-    if filter_string is None:
-        return [process.get_combo_string() for process in process_list]
-    if filter_string.isnumeric():
-        filter_pid = filter_string
-        filter_name = ""
-    else:
-        filter_pid = ""
-        filter_name = filter_string.lower()
-    return [
-        process.get_combo_string()
-        for process in process_list
-        if (filter_pid and filter_pid in str(process.pid)) or (filter_name and filter_name in process.name.lower())
-    ]
 
 
 def with_border(elem: sg.Element, color: str, visible: bool = True) -> sg.Column:
@@ -76,6 +50,7 @@ def show_popup(
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
     events: Dict[str, EventCallback] = None,
+    min_width: int = None,
 ) -> bool:
     """Displays customized popup window.
 
@@ -86,18 +61,22 @@ def show_popup(
         cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
         events (Dict[str, EventCallback], optional): Map of event keys with callbacks. Defaults to None.
+        min_width (int, optional): Minimum width of popup window in pixels. Defaults to None.
 
     Returns:
         bool: Flag if OK button was pressed.
     """
-    buttons = [sg.Button(ok_label, size=(8, 1), font=FONT_SMALL, key=SGKeys.POPUP_KEY_OK_BUTTON)]
+    buttons = [sg.Button(ok_label, size=(8, 1), pad=((5, 5), (10, 5)), key=SGKeys.POPUP_KEY_OK_BUTTON)]
     if cancel_button:
-        buttons.append(sg.Button(cancel_label, size=(8, 1), font=FONT_SMALL))
+        buttons.append(sg.Button(cancel_label, size=(8, 1), pad=((5, 5), (10, 5)), key=SGKeys.POPUP_KEY_CANCEL_BUTTON))
     layout.append(buttons)
+    if min_width is not None:
+        layout.append([sg.Image(size=(min_width, 0), pad=(0, 0))])
     popup = sg.Window(
         title,
         layout,
-        element_justification="c",
+        font=FONT_SMALL_DEFAULT,
+        element_justification="center",
         disable_minimize=True,
         modal=True,
         keep_on_top=True,
@@ -110,7 +89,12 @@ def show_popup(
     result = False
     while True:
         event, _ = popup.read()
-        if event in (sg.WIN_CLOSED, SGKeys.MENU_EXIT_OPTION, SGKeys.POPUP_KEY_OK_BUTTON):
+        if event in (
+            sg.WIN_CLOSED,
+            SGKeys.EXIT,
+            SGKeys.POPUP_KEY_OK_BUTTON,
+            SGKeys.POPUP_KEY_CANCEL_BUTTON,
+        ):
             result = event == SGKeys.POPUP_KEY_OK_BUTTON
             break
         if event in events:
