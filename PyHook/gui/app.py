@@ -405,7 +405,14 @@ def gui_main() -> None:
 
     def _update_ui() -> None:
         """Updates UI window."""
+        nonlocal last_process_filter, last_pid
         while running:
+            process_filter_value = str(window[SGKeys.PROCESS_LIST].get())
+            if last_process_filter != process_filter_value:
+                last_process_filter = process_filter_value
+                _update_process_list(window, process_list, last_process_filter)
+                last_pid = None
+
             if selected_session is not None:
                 if selected_session.should_update_logs():
                     scroll_state = window[SGKeys.SESSION_LOGS].Widget.yview()
@@ -422,15 +429,10 @@ def gui_main() -> None:
     ui_worker.start()
 
     while running:
-        event, values = window.read(timeout=1000 / 60)
+        event, values = window.read()
         if event in (sg.WIN_CLOSED, SGKeys.EXIT):
             break
-        if event == sg.TIMEOUT_EVENT:
-            if last_process_filter != values[SGKeys.PROCESS_LIST]:
-                last_process_filter = values[SGKeys.PROCESS_LIST]
-                _update_process_list(window, process_list, last_process_filter)
-                last_pid = None
-        elif event == SGKeys.PROCESS_LIST:
+        if event == SGKeys.PROCESS_LIST:
             last_process_filter = values[event]
             pid_string = str(last_process_filter).split("|", maxsplit=1)[0].strip()
             if pid_string.isnumeric():
