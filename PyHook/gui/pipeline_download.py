@@ -5,6 +5,7 @@ Pipeline download window for PyHook
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
+
 from os.path import basename, exists
 
 import PySimpleGUI as sg
@@ -14,7 +15,7 @@ from pipeline import PipelinesDirNotFoundError, get_pipeline_directory, get_pipe
 from gui.keys import SGKeys
 from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
-from gui.utils import show_popup_text
+from gui.utils import show_popup_exception, show_popup_text
 from utils.downloader import download_file
 
 # Text format for pipeline verify title.
@@ -22,16 +23,19 @@ _VERIFY_TEXT_FORMAT = "Pipeline (%d/%d): %s"
 # Text format for pipeline file downloading.
 _FILE_VERIFY_TEXT_FORMAT = "File (%d/%d): %s"
 # Maximum number of characters to display for URLs.
-_MAX_URL_LENGTH = 50
+_MAX_URL_LENGTH = 60
 
 
-def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> None:
+def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> bool:
     """Verify and download files for given pipeline.
 
     Args:
         window (sg.Window): UI window with progress.
         pipeline_dir (str): Pipeline directory.
         pipeline_file (str): Pipeline file.
+
+    Returns:
+        bool: Flag if all files were successfully verified.
     """
 
     def _progress_callback(progress: int) -> None:
@@ -58,14 +62,16 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> N
                             i + 1,
                             count,
                             url
-                            if len(url) <= _MAX_URL_LENGTH
+                            if len(url) <= _MAX_URL_LENGTH + 3
                             else f"{url[: _MAX_URL_LENGTH // 2]}...{url[-_MAX_URL_LENGTH // 2 :]}",
                         )
                     )
                     _progress_callback(-1)
                     download_file(url, pipeline_data_dir, _progress_callback)
+            return True
         except Exception as ex:
-            show_popup_text("Error", f"Cannot read / download pipeline files!\n{ex}")
+            show_popup_exception("Error", "Cannot read / download pipeline files!", ex)
+            return False
 
 
 def verify_download(forced: bool = False) -> None:
@@ -111,7 +117,7 @@ def verify_download(forced: bool = False) -> None:
                     [
                         sg.ProgressBar(
                             100,
-                            size_px=(355, 14),
+                            size_px=(450, 14),
                             visible=True,
                             key=SGKeys.DOWNLOAD_PROGRESS_BAR,
                         ),
@@ -119,7 +125,7 @@ def verify_download(forced: bool = False) -> None:
                             "Verifying for download...", visible=False, key=SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT
                         ),
                     ],
-                    [sg.Image(size=(500, 0), pad=(0, 0))],
+                    [sg.Image(size=(600, 0), pad=(0, 0))],
                 ],
                 font=FONT_SMALL_DEFAULT,
                 element_justification="center",
@@ -136,9 +142,9 @@ def verify_download(forced: bool = False) -> None:
                 window[SGKeys.DOWNLOAD_FILE_VERIFY_TEXT].update(value="")
                 window.refresh()
                 if pipeline not in settings[SettingsKeys.KEY_DOWNLOADED]:
-                    _verify_files(window, pipeline_dir, pipeline)
-                    settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline)
-                    has_change = True
+                    if _verify_files(window, pipeline_dir, pipeline):
+                        settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline)
+                        has_change = True
             window.close()
     if has_change:
         save_settings(settings)

@@ -15,7 +15,6 @@ import requests
 
 # Default chunk size in bytes for stream downloading.
 _CHUNK_SIZE = 4096
-
 # Regex filename for Google Drive URLs.
 _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
 

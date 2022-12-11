@@ -5,13 +5,13 @@ GUI utilities for PyHook
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
-
+import textwrap
 from typing import Callable, Dict, List
 
 import PySimpleGUI as sg
 
 from gui.keys import SGKeys
-from gui.style import FONT_SMALL_DEFAULT
+from gui.style import FONT_CONSOLE, FONT_SMALL_DEFAULT
 
 
 class EventCallback:
@@ -125,4 +125,33 @@ def show_popup_text(
         bool: Flag if OK button was pressed.
     """
     layout = [[sg.Text(text, justification="center")]]
+    return show_popup(title, layout, ok_label, cancel_button, cancel_label)
+
+
+def show_popup_exception(
+    title: str,
+    text: str,
+    ex: Exception,
+    ok_label: str = "OK",
+    cancel_button: bool = False,
+    cancel_label: str = "Cancel",
+) -> bool:
+    """Displays customized popup window.
+
+    Args:
+        title (str): Popup title.
+        text (str): Popup text.
+        ex (Exception): Exception to be displayed.
+        ok_label (str, optional): Label for OK button. Defaults to "OK".
+        cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
+        cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
+
+    Returns:
+        bool: Flag if OK button was pressed.
+    """
+    ex_lines = "\n".join(textwrap.wrap(f"Error: {ex}", width=50, break_on_hyphens=False))
+    layout = [
+        [sg.Text(text, justification="center")],
+        [sg.Text(ex_lines, justification="left", font=FONT_CONSOLE)],
+    ]
     return show_popup(title, layout, ok_label, cancel_button, cancel_label)
