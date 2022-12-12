@@ -407,7 +407,12 @@ def gui_main() -> None:
         """Updates UI window."""
         nonlocal last_process_filter, last_pid
         while running:
-            process_filter_value = str(window[SGKeys.PROCESS_LIST].get())
+            try:
+                _, values = window.read(timeout=0)
+            except Exception:
+                # Window not available
+                return
+            process_filter_value = values[SGKeys.PROCESS_LIST]
             if last_process_filter != process_filter_value:
                 last_process_filter = process_filter_value
                 _update_process_list(window, process_list, last_process_filter)
@@ -490,11 +495,18 @@ def gui_main() -> None:
             selected_session = sessions[SGKeys.get_session_idx(event)]
             _update_session_overview(window, selected_session)
         elif event == SGKeys.SESSION_KILL_BUTTON:
-            sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
-            _kill_session(selected_session)
-            _update_sessions_view(window, sessions)
-            selected_session = None
-            _update_session_overview(window, selected_session)
+            if show_popup_text(
+                "Confirm session kill",
+                f"Are you sure to kill session: {selected_session.get_name()}?",
+                ok_label="Yes",
+                cancel_button=True,
+                cancel_label="No",
+            ):
+                sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
+                _kill_session(selected_session)
+                _update_sessions_view(window, sessions)
+                selected_session = None
+                _update_session_overview(window, selected_session)
         elif event == SGKeys.SESSION_RESTART_BUTTON:
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
             selected_session.restart()
