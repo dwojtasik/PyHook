@@ -87,5 +87,5 @@ void DrawSettingsOverlay(SharedConfigData* shared_cfg);
 /// <summary>
 /// Reads and stores ImGui window rects.
 /// </summary>
-/// <param name="windows">Pointer to Windows structur.</param>
+/// <param name="windows">Pointer to Windows structure.</param>
 void SetImGuiWindows(ImGuiWindows* windows);

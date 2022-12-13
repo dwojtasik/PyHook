@@ -52,7 +52,7 @@ class WaitAddonNotFoundException(Exception):
 
 
 class SharedData(Structure):
-    """Sturcture for shared memory data.
+    """Structure for shared memory data.
 
     frame_count (c_longlong): Actual frame count calculated since addon initialization.
     width (c_uint32): Frame width in pixels.

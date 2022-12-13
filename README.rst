@@ -24,7 +24,7 @@ Features
 - Dynamic pipelines ordering and settings in ReShade UI via addon
 - Pipeline lifecycle support (load/process/unload)
 - Pipeline settings callbacks (before and after change)
-- Pipeline multipass - process frame multiple times in single pipeline
+- Pipeline multi-pass - process frame multiple times in single pipeline
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
@@ -484,7 +484,7 @@ OpenCV with CUDA support
 | OpenCV Python module is not shipped with CUDA support by default so you have to build it from the source.
 | To do this install all requirements listed below:
 
-- `Anaconda <https://www.anaconda.com/>`_ for virual environment
+- `Anaconda <https://www.anaconda.com/>`_ for virtual environment
 - `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3 (or last supported by your GPU and pipeline modules)
 - `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (or last supported by your CUDA version)
 - `Visual Studio <https://visualstudio.microsoft.com/pl/vs/community/>`_ >= 16 with C++ support
