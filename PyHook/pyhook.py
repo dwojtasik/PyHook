@@ -8,7 +8,7 @@ Python hook for ReShade processing
 import logging
 import sys
 from logging.handlers import QueueHandler
-from multiprocessing import Queue, Array, Value
+from multiprocessing import Array, Queue, Value
 from threading import Timer
 from typing import Any, Dict
 
@@ -22,8 +22,16 @@ from dll_utils import (
     get_reshade_addon_handler,
 )
 from keys import SettingsKeys
-from mem_utils import FRAME_ARRAY, SIZE_ARRAY, MemoryManager, WaitAddonNotFoundException, WaitProcessNotFoundException
+from mem_utils import (
+    FRAME_ARRAY,
+    SIZE_ARRAY,
+    MemoryManager,
+    SharedData,
+    WaitAddonNotFoundException,
+    WaitProcessNotFoundException,
+)
 from pipeline import (
+    FrameNxNx3,
     FrameProcessingError,
     FrameSizeModificationError,
     PipelinesDirNotFoundError,
@@ -86,14 +94,14 @@ def _exit(running: Value, code: int) -> None:
     sys.exit(code)
 
 
-def _decode_frame(data) -> np.array:
+def _decode_frame(data: SharedData) -> FrameNxNx3:
     """Decodes frame from shared data as image in numpy array format.
 
     Args:
         data (SharedData): The shared data to read frame C array.
 
     Returns:
-        numpy.array: The frame image as numpy array.
+        FrameNxNx3: The frame image as numpy array.
             Array has to be 3-D with height, width, channels as dimensions.
             Array has to contains uint8 values.
     """
@@ -101,12 +109,12 @@ def _decode_frame(data) -> np.array:
     return arr.reshape((data.height, data.width, 3))
 
 
-def _encode_frame(data, frame) -> None:
+def _encode_frame(data: SharedData, frame: FrameNxNx3) -> None:
     """Encodes numpy image array as C array and stores it in shared data.
 
     Args:
         data (SharedData): The shared data to store frame C array.
-        frame (numpy.array): The frame image as numpy array.
+        frame (FrameNxNx3): The frame image as numpy array.
             Array has to be 3-D with height, width, channels as dimensions.
             Array has to contains uint8 values.
     """

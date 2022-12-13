@@ -27,7 +27,7 @@ _DEFAULT_FORMATTER = logging.Formatter()
 _UNKNOWN_PROCESS = "Unknown"
 # Name for automatic detection process.
 _AUTO_NAME = "AUTO"
-# Session button icon for automatic process
+# Session button icon for automatic process.
 _AUTOMATIC_ICON = get_as_buffer(get_button_image(get_button_image_template(), "AUTO...", None))
 
 

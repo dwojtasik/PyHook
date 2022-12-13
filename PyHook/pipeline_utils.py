@@ -14,7 +14,7 @@ from os.path import abspath, dirname
 from subprocess import check_output
 from typing import Any, Dict, List, Union
 
-# Runtime info
+# Runtime info.
 # Path to local Python executable.
 _LOCAL_PYTHON_EXE = None
 # Output of sys.path from local Python.

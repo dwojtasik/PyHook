@@ -6,5 +6,5 @@ Stores version string for PyHook.
 :license: MIT, see LICENSE for more details.
 """
 
-# PyHook version
+# PyHook version.
 __version__ = "0.9.0"

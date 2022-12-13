@@ -18,9 +18,9 @@ from gui.style import FONT_SMALL_DEFAULT
 from gui.utils import show_popup_exception, show_popup_text
 from utils.downloader import download_file
 
-# Text format for pipeline verify title.
+# Text format for pipeline verification.
 _VERIFY_TEXT_FORMAT = "Pipeline (%d/%d): %s"
-# Text format for pipeline file downloading.
+# Text format for pipeline file verification.
 _FILE_VERIFY_TEXT_FORMAT = "File (%d/%d): %s"
 # Maximum number of characters to display for URLs.
 _MAX_URL_LENGTH = 60
@@ -39,7 +39,7 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
     """
 
     def _progress_callback(progress: int) -> None:
-        """Progress bar callback to display.
+        """Progress bar callback to display downloading progress.
 
         Args:
             progress (int): Downloading progress percentage.
@@ -76,7 +76,7 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
 
 def verify_download(forced: bool = False) -> None:
     """Verifies if all pipeline files were downloaded.
-    If any file is missing it will be downloaded.
+    If any file is missing or it's size differ with URL ones it will be downloaded.
 
     Args:
         forced (bool, optional): Forces all files download. Defaults to False.

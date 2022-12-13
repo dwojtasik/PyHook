@@ -14,10 +14,13 @@ import re
 import sys
 from dataclasses import dataclass
 from os.path import abspath, basename, exists, isdir
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Annotated, Any, Callable, Dict, List, Literal, Tuple
 
 import numpy as np
+import numpy.typing as npt
 
+# Frame array type.
+FrameNxNx3 = Annotated[npt.NDArray[np.uint8], Literal["N", "N", 3]]
 
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
@@ -56,9 +59,9 @@ class PipelineCallbacks:
     If multistage == 1: on_frame_process callback is required.
     If multistage > 1: on_frame_process_stage callback is required.
 
-    on_frame_process (Callable[[numpy.array, int, int, int], numpy.array]): Callback for frame
+    on_frame_process (Callable[[FrameNxNx3, int, int, int], FrameNxNx3]): Callback for frame
         processing function. Array shape must remain unchanged after processing.
-    on_frame_process_stage (Callable[[numpy.array, int, int, int, int], numpy.array]): Callback for frame
+    on_frame_process_stage (Callable[[FrameNxNx3, int, int, int, int], FrameNxNx3]): Callback for frame
         processing function. Array shape can be changed during processing. Must implement multiple stages.
         The last stage must restore array shape.
     on_load (Callable[[], None], optional): Callback for pipeline loading. Should create all
@@ -73,8 +76,8 @@ class PipelineCallbacks:
 
     def __init__(
         self,
-        on_frame_process: Callable[[np.array, int, int, int], np.array] = None,
-        on_frame_process_stage: Callable[[np.array, int, int, int, int], np.array] = None,
+        on_frame_process: Callable[[FrameNxNx3, int, int, int], FrameNxNx3] = None,
+        on_frame_process_stage: Callable[[FrameNxNx3, int, int, int, int], FrameNxNx3] = None,
         on_load: Callable[[], None] = None,
         on_unload: Callable[[], None] = None,
         before_change_settings: Callable[[str, float], None] = None,
@@ -205,13 +208,15 @@ class Pipeline:
         if self.callbacks.on_load is not None:
             self.callbacks.on_load()
 
-    def process_frame(self, frame: np.array, width: int, height: int, frame_num: int, stage: int = None) -> np.array:
+    def process_frame(
+        self, frame: FrameNxNx3, width: int, height: int, frame_num: int, stage: int = None
+    ) -> FrameNxNx3:
         """Frame processing function.
 
-        Calls on_frame_process(np.array, int, int, int) -> np.array callback from external file.
+        Calls on_frame_process(FrameNxNx3, int, int, int) -> FrameNxNx3 callback from external file.
 
         Args:
-            frame (numpy.array): The frame image as numpy array.
+            frame (FrameNxNx3): The frame image as numpy array.
                 Array has to be 3-D with height, width, channels as dimensions.
                 Array has to contains uint8 values.
             width (int): The frame width in pixels.
@@ -220,7 +225,7 @@ class Pipeline:
             stage (int, optional): The pipeline stage (pass) number.
 
         Returns:
-            numpy.array: The processed frame image as numpy array.
+            FrameNxNx3: The processed frame image as numpy array.
 
         Raises:
             FrameProcessingError: When any error was raised during frame processing.

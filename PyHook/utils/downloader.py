@@ -26,6 +26,7 @@ def download_file(url: str, directory: str, callback: Callable[[int], None] = No
         url (str): The url to given file.
         directory (str): The directory to save downloaded file.
         callback (Callable[[int], None], optional): Optional callback for progress.
+            Defaults to None.
     """
     response_stream = requests.get(url, stream=True, timeout=10)
     response_stream.raise_for_status()

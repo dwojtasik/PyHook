@@ -18,10 +18,10 @@ from gui.style import FONT_SMALL_DEFAULT
 from gui.utils import show_popup_text
 from keys import SettingsKeys
 
-# Settings file path
+# Settings file path.
 _SETTINGS_PATH = "settings.json"
 
-# PyHook settings
+# PyHook settings.
 _SETTINGS = {
     SettingsKeys.KEY_AUTOSAVE: 5,
     SettingsKeys.KEY_AUTODOWNLOAD: True,

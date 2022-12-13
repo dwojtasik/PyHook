@@ -18,7 +18,7 @@ class EventCallback:
     """Callback for UI event.
 
     callback (Callable[[], None]): Callback to execute.
-    close_window (bool, optional): Flag if windows should be closed after event.
+    close_window (bool, optional): Flag if window should be closed after event.
         Defaults to False.
     """
 
@@ -32,8 +32,9 @@ def with_border(elem: sg.Element, color: str, visible: bool = True) -> sg.Column
 
     Args:
         elem (sg.Element): GUI element to decorate.
-        color (str): Border color.
+        color (str): Border color. Can be color name e.g. 'white' or hex value e.g. '#FFFFFF'.
         visible (bool): Flag if element with border should be visible.
+            Defaults to True.
 
     Returns:
         sg.Column: Decorated UI element.
@@ -136,7 +137,7 @@ def show_popup_exception(
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
 ) -> bool:
-    """Displays customized popup window.
+    """Displays customized popup window for exception.
 
     Args:
         title (str): Popup title.

@@ -47,6 +47,7 @@ def _get_sessions_layout() -> List[List[sg.Column]]:
     """Returns session list layout.
 
     Each session is displayed as button. Maximum of 3 sessions displayed per row.
+    First 6 sessions has to be initialized as visible to calculate valid scroll view size.
 
     Returns:
         List[List[sg.Column]]: Session list layout.
@@ -102,6 +103,7 @@ def _update_sessions_active_view(window: sg.Window, sessions: List[Session], sel
     """Updates sessions list view after dynamic change from subprocess.
 
     For running session border color is set to green. Otherwise red.
+    Session button image is updated with app built-in icon, pid and executable name.
     Tooltip for session button is updated with it's name and status.
     Restart button in session overview is enabled only if session is exited.
 
@@ -187,7 +189,7 @@ def _to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -
         filter_string (str, optional): Filter to be applied. Defaults to None.
 
     Returns:
-        List[str]: List of combo strings.
+        List[str]: List of combo box options.
     """
     if filter_string is None:
         return [process.get_combo_string() for process in process_list]
@@ -204,14 +206,14 @@ def _to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -
     ]
 
 
-# Application menu layout
+# Application menu layout.
 _MENU_LAYOUT = [
     ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.EXIT]],
     ["Pipeline", [SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION]],
     ["Help", [SGKeys.MENU_ABOUT_OPTION]],
 ]
 
-# Application UI layout
+# Application UI layout.
 _APP_LAYOUT = [
     [sg.Menu(_MENU_LAYOUT, font=FONT_SMALL_DEFAULT, text_color="black", background_color="white")],
     [
@@ -341,29 +343,29 @@ _APP_LAYOUT = [
 
 
 def open_github() -> None:
-    """Opens PyHook GitHub page."""
+    """Opens PyHook GitHub page in default OS web browser."""
     webbrowser.open("https://github.com/dwojtasik/PyHook")
 
 
 def gui_main() -> None:
     """App GUI entrypoint."""
 
-    # Flag if GUI is running
+    # Flag if GUI is running.
     running = True
-    # Last read process list
+    # Last read process list.
     process_list = get_process_list()
-    # Last process filter string
+    # Last process filter string.
     last_process_filter = ""
-    # Last selected PID
+    # Last selected PID.
     last_pid: int = None
-    # List of active sessions
+    # List of active sessions.
     sessions: List[Session] = []
-    # Dictionary of session uuid to it's killing thread
+    # Dictionary of session uuid to it's killing thread.
     killed_sessions: Dict[str, Thread] = {}
-    # Selected session to display overview
+    # Selected session to display overview.
     selected_session: Session = None
 
-    # Application window
+    # Application window.
     window = sg.Window(
         f"PyHook v{__version__} (c) 2022 by Dominik Wojtasik",
         _APP_LAYOUT,
@@ -410,7 +412,7 @@ def gui_main() -> None:
             try:
                 _, values = window.read(timeout=0)
             except Exception:
-                # Window not available
+                # Window not available.
                 return
             process_filter_value = values[SGKeys.PROCESS_LIST]
             if last_process_filter != process_filter_value:

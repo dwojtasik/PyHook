@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
 
-# Default image resampling.
+# Default image resampling type.
 _RESAMPLING = Image.Resampling.LANCZOS
 
 
