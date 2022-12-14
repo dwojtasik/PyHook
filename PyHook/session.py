@@ -77,7 +77,10 @@ class Session:
 
     If process_info is not supplied automatic injection will be used.
 
-    process_info (ProcessInfo, optional): Basic process info.
+    process_info (ProcessInfo | None): Basic process info. If not supplied automatic
+        injection will be selected.
+    pids_to_skip (List[int] | None, optional): Optional list of process IDs to skip in automatic
+        injection. Defaults to None.
     uuid (str): Session unique identifier.
     pid (Value[int]): Shared integer process id.
     name (Array[bytes]): Shared string bytes process name.
@@ -94,7 +97,8 @@ class Session:
     _worker (Thread): Thread worker for local tasks: updating logs, watching value changes.
     """
 
-    def __init__(self, process_info: ProcessInfo | None = None):
+    def __init__(self, process_info: ProcessInfo | None, pids_to_skip: List[int] | None = None):
+        self.pids_to_skip = [] if pids_to_skip is None else pids_to_skip
         self.uuid = str(uuid.uuid4())
         self.pid = Value("i", -1 if process_info is None else process_info.pid)
         self.name = Array("c", 150 if process_info is None else str.encode(process_info.name))
@@ -109,7 +113,7 @@ class Session:
         self._log = ""
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings()),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings(), self.pids_to_skip),
         )
         self._worker = Thread(target=self._update_self)
         self._set_button_image()
@@ -154,7 +158,7 @@ class Session:
         self._running.value = True
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings()),
+            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings(), self.pids_to_skip),
         )
         self._worker = Thread(target=self._update_self)
         self._process.start()

@@ -10,11 +10,12 @@ import glob
 import os
 from ctypes import c_char_p, cdll
 from os.path import abspath, basename, dirname, exists
+from typing import List
 
 import psutil
 from pyinjector import inject
 
-from win.api import get_dll_extern_variable, FreeLibrary
+from win.api import FreeLibrary, get_dll_extern_variable
 from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
@@ -190,12 +191,13 @@ class AddonHandler:
                 os.remove(new_log)
 
 
-def get_reshade_addon_handler(pid: int = None) -> AddonHandler:
+def get_reshade_addon_handler(pid: int = None, pids_to_skip: List[int] = None) -> AddonHandler:
     """Returns addon handler with required process information.
 
     Args:
         pid (int, optional): PID of ReShade owner process.
             If supplied PyHook will skip tests for ReShade!
+        pids_to_skip (List[int], optional): List of PIDs to skip in process iteration.
 
     Returns:
         AddonHandler: The handler for PyHook addon management.
@@ -210,6 +212,8 @@ def get_reshade_addon_handler(pid: int = None) -> AddonHandler:
         return AddonHandler(psutil.Process(pid), False)
     for process in psutil.process_iter():
         try:
+            if pids_to_skip is not None and process.pid in pids_to_skip:
+                continue
             return AddonHandler(process)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, NotAReShadeProcessException):
             pass

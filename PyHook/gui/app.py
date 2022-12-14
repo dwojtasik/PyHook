@@ -489,7 +489,7 @@ def gui_main() -> None:
                 if len(sessions) == _MAX_SESSIONS:
                     show_popup_text("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
                     continue
-                selected_session = Session()
+                selected_session = Session(None, [int(session.pid.value) for session in sessions])
                 sessions.append(selected_session)
                 _update_sessions_view(window, sessions)
             _update_session_overview(window, selected_session)
@@ -507,6 +507,9 @@ def gui_main() -> None:
                 sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
                 _kill_session(selected_session)
                 _update_sessions_view(window, sessions)
+                for session in sessions:
+                    if session._is_auto:
+                        session.pids_to_skip.remove(int(selected_session.pid.value))
                 selected_session = None
                 _update_session_overview(window, selected_session)
         elif event == SGKeys.SESSION_RESTART_BUTTON:

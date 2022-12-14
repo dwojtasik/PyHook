@@ -10,7 +10,7 @@ import sys
 from logging.handlers import QueueHandler
 from multiprocessing import Array, Queue, Value
 from threading import Timer
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -124,7 +124,13 @@ def _encode_frame(data: SharedData, frame: FrameNxNx3) -> None:
 
 
 def pyhook_main(
-    running: Value, pid: Value, name: Array, path: Array, log_queue: Queue, settings: Dict[str, Any]
+    running: Value,
+    pid: Value,
+    name: Array,
+    path: Array,
+    log_queue: Queue,
+    settings: Dict[str, Any],
+    pids_to_skip: List[int],
 ) -> None:
     """PyHook entrypoint.
 
@@ -135,6 +141,7 @@ def pyhook_main(
         path (Array[bytes]): Shared string bytes process executable path.
         log_queue (Queue): Log queue from parent process.
         settings (Dict[Str, Any]): PyHook actual settings.
+        pids_to_skip (List[int]): List of process IDs to skip in automatic injection.
     """
     try:
         if not running.value:
@@ -151,7 +158,7 @@ def pyhook_main(
         if pid.value < 0:
             try:
                 _LOGGER.info("- Searching for process with ReShade...")
-                addon_handler = get_reshade_addon_handler()
+                addon_handler = get_reshade_addon_handler(pids_to_skip=pids_to_skip)
                 name.value = str.encode(addon_handler.process_name)
                 path.value = str.encode(addon_handler.exe)
                 pid.value = addon_handler.pid
@@ -162,7 +169,7 @@ def pyhook_main(
                 _exit(running, 1)
         else:
             _LOGGER.info("- Creating handler for PID: %d...", pid.value)
-            addon_handler = get_reshade_addon_handler(pid.value)
+            addon_handler = get_reshade_addon_handler(pid=pid.value)
         memory_manager = MemoryManager(addon_handler.pid)
         _LOGGER.info("-- Selected process: %s", addon_handler.get_info())
         _LOGGER.info("- Started addon injection for %s...", addon_handler.addon_path)
