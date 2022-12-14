@@ -11,7 +11,7 @@ with use_local_python():
     from torchvision import transforms
 
 name = "[AI] Cartoon-GAN"
-version = "0.8.1"
+version = "1.1.2"
 desc = """Torch pipeline for AI cartoon stylization.
 Based on "Cartoon-GAN" from:
 https://github.com/FilipAndersson245/cartoon-gan"""

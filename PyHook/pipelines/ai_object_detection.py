@@ -16,7 +16,7 @@ with use_local_python():
     import torchvision
 
 name = "[AI] Object Detection (YOLOv5)"
-version = "0.9.0"
+version = "1.1.2"
 desc = """Torch pipeline for object detection.
 Based on "YOLOv5" from:
 https://github.com/ultralytics/yolov5"""

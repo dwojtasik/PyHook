@@ -351,7 +351,29 @@ As shown in the flowchart super-resolution consists of following steps:
 User interface
 ==============
 
-``PyHook`` uses ``ReShade ImGui UI`` to display list of available pipelines and their respective settings.
+PyHook
+------
+
+``PyHook`` uses ``PySimpleGUI`` to create graphical interface on Windows OS using ``Tkinter``.
+
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gui.jpg" alt="Go to /docs/images/gui.jpg">
+   </p>
+
+GUI consists of few elements:
+
+- Menu bar, where user can change app settings, verify pipeline files and show information about app.
+- Injection bar, where user can find given process automatically or by search bar using process name or id.
+- | Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API)
+  | executable name and process id. Active sessions have green border, dead are using red color.
+- Session overview, where user can see live logs from given session, kill it or restart (if was stopped by some reason).
+
+PyHook addon
+------------
+
+``PyHook`` addon uses ``ReShade ImGui UI`` to display list of available pipelines and their respective settings.
 
 To display pipeline list, open ``ReShade`` UI and go to ``Add-ons`` tab:
 
@@ -580,6 +602,11 @@ GPU support allows to achieve over ``4x better performance`` for best quality (2
 Breaking changes
 ================
 
+0.9.0 → 1.1.2
+-------------
+| Pipelines started in ``1.1.2`` version has refactored name of pipeline ``utils`` to ``pipeline_utils``.
+| Old pipelines can be rewritten to ``1.1.2`` by simply changing import from ``utils`` to ``pipeline_utils``.
+
 0.8.1 → 0.9.0
 -------------
 | Pipelines created in ``0.9.0`` with use of ``use_fake_modules`` utils method will not work in ``0.8.1``.
@@ -588,8 +615,12 @@ Breaking changes
 History
 =======
 
-NEXT / DEV
-----------
+1.1.2 (2022-12-14)
+------------------
+- Added downloading window.
+- Added settings window.
+- Added about window.
+- Added images to GUI.
 - Added GUI with multiple PyHook sessions support.
 - Improved error handling for pipeline processing.
 - Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
