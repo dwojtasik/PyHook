@@ -34,6 +34,8 @@ _LOCAL_PYTHON_ENV_64 = "LOCAL_PYTHON_64"
 _RUNTIME_DLL = "vcruntime140_1.dll"
 # Name of temporary directory that PyInstaller will create with bundled Python.
 _MEIPASS = "_MEIPASS"
+# Startup flags for subprocess to avoid showing shell window.
+_CREATE_NO_WINDOW = 0x08000000
 
 
 def _is_frozen_bundle() -> bool:
@@ -170,19 +172,25 @@ def _set_local_python() -> None:
         path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
         try:
-            _LOCAL_PYTHON_EXE = check_output("python3 -c \"import sys;print(sys.executable,end='')\"").decode("utf-8")
+            _LOCAL_PYTHON_EXE = check_output(
+                "python3 -c \"import sys;print(sys.executable,end='')\"", shell=False, creationflags=_CREATE_NO_WINDOW
+            ).decode("utf-8")
         except FileNotFoundError as ex:
             raise ValueError(
                 "Local Python3 executable not found. Please update system path or set LOCAL_PYTHON env."
             ) from ex
     else:
         try:
-            check_output(f'{path_from_env} -c "1"')
+            check_output(f'{path_from_env} -c "1"', shell=False, creationflags=_CREATE_NO_WINDOW)
             _LOCAL_PYTHON_EXE = path_from_env
         except FileNotFoundError as ex:
             raise ValueError(f"{used_env} is pointing to invalid Python3 executable.") from ex
     _LOCAL_PATHS = (
-        check_output(f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"")
+        check_output(
+            f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"",
+            shell=False,
+            creationflags=_CREATE_NO_WINDOW,
+        )
         .decode("utf-8")
         .split(";")
     )

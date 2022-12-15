@@ -16,8 +16,8 @@ hiddenimports = stdlib_list("3.9") # Update to 3.10 when possible
 tmp_ret = collect_all('pyinjector')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
-# Add pipeline utils to frozen bundle
-hiddenimports += ['pipeline_utils']
+# Add pipeline utils and PIL.ImageEnhance to frozen bundle
+hiddenimports += ['pipeline_utils', 'PIL.ImageEnhance']
 
 # Pack DLLs from conda environment
 conda_env_path = os.path.dirname(sys.executable)

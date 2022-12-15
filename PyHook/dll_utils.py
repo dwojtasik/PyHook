@@ -8,14 +8,14 @@ Utils for DLL management
 
 import glob
 import os
-from ctypes import c_char_p, cdll
+from ctypes import c_char_p
 from os.path import abspath, basename, dirname, exists
 from typing import List
 
 import psutil
 from pyinjector import inject
 
-from win.api import FreeLibrary, get_dll_extern_variable
+from win.api import DONT_RESOLVE_DLL_REFERENCES, FreeLibrary, GetProcAddress, LoadLibrary
 from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
@@ -165,24 +165,25 @@ class AddonHandler:
         """
         logs_before = glob.glob(f"{self.dir_path}/*.log")
         try:
+            reshade_version_p = _RESHADE_VERSION_EXTERN.encode("utf-8")
             for test_dll_path in self._matching_dlls:
-                test_dll_handle = None
+                test_dll_hmod = None
                 try:
-                    test_dll_handle = cdll[test_dll_path]
-                    if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
-                        self.reshade_version = get_dll_extern_variable(
-                            test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
-                        ).decode("utf-8")
-                        if self.reshade_version >= _RESHADE_MIN_VERSION:
-                            self.reshade_path = test_dll_path
-                            return True
-                        return False
+                    test_dll_hmod = LoadLibrary(test_dll_path, 0, DONT_RESOLVE_DLL_REFERENCES)
+                    if test_dll_hmod is not None:
+                        version_str_p = GetProcAddress(test_dll_hmod, reshade_version_p)
+                        if version_str_p is not None:
+                            self.reshade_version = c_char_p.from_address(version_str_p).value.decode("utf-8")
+                            if self.reshade_version >= _RESHADE_MIN_VERSION:
+                                self.reshade_path = test_dll_path
+                                return True
+                            return False
                 except Exception:
                     pass
                 finally:
-                    if test_dll_handle is not None:
-                        FreeLibrary(test_dll_handle._handle)
-                        del test_dll_handle
+                    if test_dll_hmod is not None:
+                        FreeLibrary(test_dll_hmod)
+                        del test_dll_hmod
             return False
         finally:
             logs_after = glob.glob(f"{self.dir_path}/*.log")

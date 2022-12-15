@@ -617,6 +617,7 @@ History
 
 1.1.2 (2022-12-14)
 ------------------
+- Fixed frozen bundle issues.
 - Added downloading window.
 - Added settings window.
 - Added about window.

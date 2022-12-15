@@ -10,7 +10,7 @@ Windows API in ctypes
 
 import ctypes
 from ctypes import c_int, c_int32, c_ubyte
-from ctypes.wintypes import BOOL, DWORD, HANDLE, HGLOBAL, HMODULE, HRSRC, LPCWSTR, LPVOID, PBOOL
+from ctypes.wintypes import BOOL, DWORD, HANDLE, HGLOBAL, HMODULE, HRSRC, LPCSTR, LPCWSTR, LPVOID, PBOOL
 from typing import List, TypeVar
 
 T = TypeVar("T")
@@ -22,6 +22,12 @@ PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 WAIT_OBJECT_0 = 0x00000000
 
 # The action to be taken when loading the module.
+# If this value is used, and the executable module is a DLL, the system does not call DllMain
+# for process and thread initialization and termination. Also, the system does not load
+# additional executable modules that are referenced by the specified module.
+DONT_RESOLVE_DLL_REFERENCES = 1
+
+# The action to be taken when loading the module.
 # If this value is used, the system maps the file into the calling process's virtual address
 # space as if it were a data file.
 LOAD_LIBRARY_AS_DATAFILE = 2
@@ -31,7 +37,7 @@ LOAD_LIBRARY_AS_DATAFILE = 2
 RT_ICON = 3
 
 # Handle for kernel32 DLL.
-KERNEL32 = ctypes.windll.kernel32
+KERNEL32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
 # Tests whether the current user is a member of the Administrator's group.
 # BOOL IsUserAnAdmin();
@@ -170,6 +176,16 @@ LockResource = KERNEL32.LockResource
 LockResource.argtypes = [HGLOBAL]
 LockResource.restype = LPVOID
 
+# Retrieves the address of an exported function (also known as a procedure)
+# or variable from the specified dynamic-link library (DLL).
+# FARPROC GetProcAddress(
+#   [in] HMODULE hModule,
+#   [in] LPCSTR  lpProcName
+# );
+GetProcAddress = KERNEL32.GetProcAddress
+GetProcAddress.argtypes = [HMODULE, LPCSTR]
+GetProcAddress.restype = LPVOID
+
 
 def is_started_as_admin() -> bool:
     """Checks if program was started with administrator rights.
@@ -205,26 +221,6 @@ def is_wow_process_64_bit(pid: int) -> bool:
         finally:
             CloseHandle(handle)
     raise ValueError(f"Cannot determine architecture for given PID={pid}")
-
-
-def get_dll_extern_variable(dll_handle: ctypes.CDLL, variable_name: str, out_type: T) -> T:
-    """Returns extern value of given output type from DLL.
-
-    Args:
-        dll_handle (ctypes.CDLL): Loaded dll handle.
-        variable_name (str): The name of extern C variable to get.
-        out_type (T): The type of C variable from ctypes.
-
-    Returns:
-        T: The DLL's extern C variable casted to valid Python type using ctypes.
-
-    Raises:
-        ValueError: When variable cannot be read.
-    """
-    try:
-        return out_type.in_dll(dll_handle, variable_name).value
-    except Exception as ex:
-        raise ValueError(f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}') from ex
 
 
 def get_icon_resources(hmodule: HMODULE) -> List[c_int]:
