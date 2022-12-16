@@ -366,8 +366,7 @@ GUI consists of few elements:
 
 - Menu bar, where user can change app settings, verify pipeline files and show information about app.
 - Injection bar, where user can find given process automatically or by search bar using process name or id.
-- | Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API)
-  | executable name and process id. Active sessions have green border, dead are using red color.
+- Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API), executable name and process id. Active sessions have green border, dead are using red color.
 - Session overview, where user can see live logs from given session, kill it or restart (if was stopped by some reason).
 
 PyHook addon
