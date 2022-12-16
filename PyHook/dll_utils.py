@@ -80,6 +80,8 @@ class AddonHandler:
     process (psutil.Process): The process to validate and addon injection.
     verify (bool, optional): Flag if PyHook should verify if required version of ReShade is loaded.
         Defaults to True.
+    dlls_to_skip (List[str], optional): Optional list of DLLs to skip during DLL verification process.
+        Defaults to None.
     process_name (str): The process name.
     pid (int): The process ID.
     is_64_bit (bool): Flag if given process is 64 bit.
@@ -92,14 +94,14 @@ class AddonHandler:
         AddonNotFoundException: When addon DLL file cannot be found.
     """
 
-    def __init__(self, process: psutil.Process, verify: bool = True):
+    def __init__(self, process: psutil.Process, verify: bool = True, dlls_to_skip: List[str] = None):
         self.verify = verify
         self._matching_dlls = (
             []
             if not verify
             else list(
                 filter(
-                    lambda path: basename(path).lower() in _RESHADE_VALID_DLL_NAMES,
+                    lambda path: path not in dlls_to_skip and basename(path).lower() in _RESHADE_VALID_DLL_NAMES,
                     [dll_info.path for dll_info in process.memory_maps()],
                 )
             )
@@ -110,7 +112,7 @@ class AddonHandler:
             self.is_64_bit = is_process_64_bit(self.pid)
             self.exe = process.exe()
             self.dir_path = dirname(self.exe)
-            if not verify or self._has_loaded_reshade():
+            if not verify or self._has_loaded_reshade(dlls_to_skip):
                 self.addon_path = self._find_addon_path()
                 return
         raise NotAReShadeProcessException()
@@ -154,11 +156,15 @@ class AddonHandler:
                 return abspath(path)
         raise AddonNotFoundException()
 
-    def _has_loaded_reshade(self) -> bool:
+    def _has_loaded_reshade(self, dlls_to_skip: List[str] = None) -> bool:
         """Validates if given process has loaded required ReShade version.
 
         ReShade version is verified via DLL extern variable.
         All logs created during DLL loading will be removed.
+
+        Args:
+            dlls_to_skip (List[str], optional): Optional list of DLLs to extend if new DLLs dont pass verification.
+                Defaults to None.
 
         Returns:
             bool: True if process has valid ReShade version loaded.
@@ -177,6 +183,7 @@ class AddonHandler:
                             if self.reshade_version >= _RESHADE_MIN_VERSION:
                                 self.reshade_path = test_dll_path
                                 return True
+                            dlls_to_skip.append(test_dll_path)
                             return False
                 except Exception:
                     pass
@@ -184,6 +191,7 @@ class AddonHandler:
                     if test_dll_hmod is not None:
                         FreeLibrary(test_dll_hmod)
                         del test_dll_hmod
+                dlls_to_skip.append(test_dll_path)
             return False
         finally:
             logs_after = glob.glob(f"{self.dir_path}/*.log")
@@ -210,12 +218,13 @@ def get_reshade_addon_handler(pid: int = None, pids_to_skip: List[int] = None) -
     if pid is not None:
         if not psutil.pid_exists(pid):
             raise ProcessNotFoundException()
-        return AddonHandler(psutil.Process(pid), False)
+        return AddonHandler(psutil.Process(pid), verify=False)
+    checked_dlls = []
     for process in psutil.process_iter():
         try:
             if pids_to_skip is not None and process.pid in pids_to_skip:
                 continue
-            return AddonHandler(process)
+            return AddonHandler(process, dlls_to_skip=checked_dlls)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, NotAReShadeProcessException):
             pass
     raise ReShadeNotFoundException()

@@ -614,6 +614,10 @@ Breaking changes
 History
 =======
 
+NEXT / DEV
+----------
+- Increased speed of automatic injection.
+
 1.1.2 (2022-12-14)
 ------------------
 - Fixed frozen bundle issues.
