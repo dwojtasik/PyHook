@@ -16,6 +16,9 @@ hiddenimports = stdlib_list("3.9") # Update to 3.10 when possible
 tmp_ret = collect_all('pyinjector')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
+# Add pipeline utils and PIL.ImageEnhance to frozen bundle
+hiddenimports += ['pipeline_utils', 'PIL.ImageEnhance']
+
 # Pack DLLs from conda environment
 conda_env_path = os.path.dirname(sys.executable)
 binaries += [(f"{conda_env_path}\\python3.dll", ".")]
@@ -25,7 +28,7 @@ if is_64_bit:
 block_cipher = None
 
 a = Analysis(
-    ['PyHook\\pyhook.py'],
+    ['PyHook\\main.py'],
     pathex=[],
     binaries=binaries,
     datas=datas,
@@ -39,6 +42,14 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+
+# Avoid duplicates
+for b in a.binaries.copy():
+    for d in a.datas:
+        if b[1].endswith(d[0]):
+            a.binaries.remove(b)
+            break
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -55,7 +66,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

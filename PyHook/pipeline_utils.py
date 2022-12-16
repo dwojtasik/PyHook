@@ -1,6 +1,6 @@
 """
-utils for PyHook
-~~~~~~~~~~~~~~~~~~~
+pipeline_utils for PyHook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Utils for pipeline creation
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
@@ -14,7 +14,7 @@ from os.path import abspath, dirname
 from subprocess import check_output
 from typing import Any, Dict, List, Union
 
-# Runtime info
+# Runtime info.
 # Path to local Python executable.
 _LOCAL_PYTHON_EXE = None
 # Output of sys.path from local Python.
@@ -32,8 +32,10 @@ _LOCAL_PYTHON_ENV_32 = "LOCAL_PYTHON_32"
 _LOCAL_PYTHON_ENV_64 = "LOCAL_PYTHON_64"
 # Name of runtime DLL needed for 64-bit PyHook.
 _RUNTIME_DLL = "vcruntime140_1.dll"
-# Name of temporary directory that Pyinstaller will create with bundled Python.
+# Name of temporary directory that PyInstaller will create with bundled Python.
 _MEIPASS = "_MEIPASS"
+# Startup flags for subprocess to avoid showing shell window.
+_CREATE_NO_WINDOW = 0x08000000
 
 
 def _is_frozen_bundle() -> bool:
@@ -162,8 +164,7 @@ def _set_local_python() -> None:
     If not set it will try to read executable path from python3 binary that is set in path.
     When executable is found it will try to read local Python sys.path.
     """
-    # pylint: disable=global-statement
-    global _LOCAL_PYTHON_EXE, _LOCAL_PATHS
+    global _LOCAL_PYTHON_EXE, _LOCAL_PATHS  # pylint: disable=global-statement
     used_env = _LOCAL_PYTHON_ENV_64 if _IS_64_BIT else _LOCAL_PYTHON_ENV_32
     path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
@@ -171,19 +172,25 @@ def _set_local_python() -> None:
         path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
         try:
-            _LOCAL_PYTHON_EXE = check_output("python3 -c \"import sys;print(sys.executable,end='')\"").decode("utf-8")
+            _LOCAL_PYTHON_EXE = check_output(
+                "python3 -c \"import sys;print(sys.executable,end='')\"", shell=False, creationflags=_CREATE_NO_WINDOW
+            ).decode("utf-8")
         except FileNotFoundError as ex:
             raise ValueError(
                 "Local Python3 executable not found. Please update system path or set LOCAL_PYTHON env."
             ) from ex
     else:
         try:
-            check_output(f'{path_from_env} -c "1"')
+            check_output(f'{path_from_env} -c "1"', shell=False, creationflags=_CREATE_NO_WINDOW)
             _LOCAL_PYTHON_EXE = path_from_env
         except FileNotFoundError as ex:
             raise ValueError(f"{used_env} is pointing to invalid Python3 executable.") from ex
     _LOCAL_PATHS = (
-        check_output(f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"")
+        check_output(
+            f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"",
+            shell=False,
+            creationflags=_CREATE_NO_WINDOW,
+        )
         .decode("utf-8")
         .split(";")
     )
@@ -201,9 +208,8 @@ def use_local_python() -> _LocalPython:
     Returns:
         _LocalPython: Local Python handle. When not closed it allows to load modules from local setup.
     """
-    # pylint: disable=global-statement
-    global _RUNTIME_HANDLE
-    # For 64-bit vcruntime needs additional library to be loaded
+    global _RUNTIME_HANDLE  # pylint: disable=global-statement
+    # For 64-bit vcruntime needs additional library to be loaded.
     if _IS_64_BIT and _RUNTIME_HANDLE is None and _is_frozen_bundle():
         _RUNTIME_HANDLE = ctypes.cdll[f"{getattr(sys, _MEIPASS)}\\{_RUNTIME_DLL}"]
     if _LOCAL_PYTHON_EXE is None:
@@ -239,7 +245,7 @@ def resolve_path(file_path: str) -> str:
     """Returns absolute path to pipeline resource file.
 
     Args:
-        file_path (str): Realtive path to resource file.
+        file_path (str): Relative path to resource file.
 
     Returns:
         str: Absolute path to resource file.

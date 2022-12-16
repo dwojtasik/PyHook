@@ -44,7 +44,7 @@ struct SharedData
 
     /// <summary>
     /// Frame array with pixel data.
-    /// Each pixel is enocded as R,G,B component
+    /// Each pixel is encoded as R,G,B component
     /// Array structure: [R,G,B,R,G,B,...] from upper left screen corner, row by row.
     /// </summary>
     uint8_t frame[MAX_WIDTH * MAX_HEIGHT * 3];

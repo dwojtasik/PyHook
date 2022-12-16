@@ -5,7 +5,7 @@ import types
 
 import numpy as np
 
-from utils import *
+from pipeline_utils import *
 
 with use_local_python():
     import cv2
@@ -20,7 +20,7 @@ with use_local_python():
     torch.backends.cudnn.enabled = True
 
 name = "[AI] Depth Estimation"
-version = "0.8.1"
+version = "1.1.2"
 desc = """Torch pipeline for depth estimation.
 Based on "Towards Robust Monocular Depth Estimation: Mixing Datasets for Zero-shot Cross-dataset Transfer" from:
 https://github.com/isl-org/MiDaS"""

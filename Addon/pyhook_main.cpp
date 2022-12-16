@@ -13,8 +13,8 @@
 #include <sstream>
 
  // Export special variables for ReShade addon.
-extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v0.9.0
-extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes proccessed back buffer to Python pipeline.";
+extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v1.1.2
+extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes processed back buffer to Python pipeline.";
 
 // ReShade version
 char* ReShadeVersion = ((char**)GetProcAddress(reshade::internal::get_reshade_module_handle(), "ReShadeVersion"))[0];
@@ -41,7 +41,7 @@ using namespace reshade::api;
 bool pyhook_active = true;
 // Cached PyHook app handle.
 HANDLE pyhook_handle = 0;
-// Timeout in millis to check if event is in signaled state.
+// Timeout in milliseconds to check if event is in signaled state.
 const DWORD timeout_ms = 2000;
 
 // Flag if staging resource was initialized.
@@ -501,7 +501,7 @@ static void process_frame(device* const device, resource back_buffer, command_qu
 
     read_rgb(mapped);
 
-    // Enable Python processiong
+    // Enable Python processing
     SetEvent(lock_event);
     // Process in Python pipeline
     if (wait_for_data(device))

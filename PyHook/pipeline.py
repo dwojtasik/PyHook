@@ -14,12 +14,13 @@ import re
 import sys
 from dataclasses import dataclass
 from os.path import abspath, basename, exists, isdir
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Annotated, Any, Callable, Dict, List, Literal, Tuple
 
 import numpy as np
+import numpy.typing as npt
 
-from downloader import download_file
-from keys import SettingsKeys
+# Frame array type.
+FrameNxNx3 = Annotated[npt.NDArray[np.uint8], Literal["N", "N", 3]]
 
 # Name of settings file.
 _SETTINGS_FILE = "pyhook.json"
@@ -58,9 +59,9 @@ class PipelineCallbacks:
     If multistage == 1: on_frame_process callback is required.
     If multistage > 1: on_frame_process_stage callback is required.
 
-    on_frame_process (Callable[[numpy.array, int, int, int], numpy.array]): Callback for frame
+    on_frame_process (Callable[[FrameNxNx3, int, int, int], FrameNxNx3]): Callback for frame
         processing function. Array shape must remain unchanged after processing.
-    on_frame_process_stage (Callable[[numpy.array, int, int, int, int], numpy.array]): Callback for frame
+    on_frame_process_stage (Callable[[FrameNxNx3, int, int, int, int], FrameNxNx3]): Callback for frame
         processing function. Array shape can be changed during processing. Must implement multiple stages.
         The last stage must restore array shape.
     on_load (Callable[[], None], optional): Callback for pipeline loading. Should create all
@@ -75,8 +76,8 @@ class PipelineCallbacks:
 
     def __init__(
         self,
-        on_frame_process: Callable[[np.array, int, int, int], np.array] = None,
-        on_frame_process_stage: Callable[[np.array, int, int, int, int], np.array] = None,
+        on_frame_process: Callable[[FrameNxNx3, int, int, int], FrameNxNx3] = None,
+        on_frame_process_stage: Callable[[FrameNxNx3, int, int, int, int], FrameNxNx3] = None,
         on_load: Callable[[], None] = None,
         on_unload: Callable[[], None] = None,
         before_change_settings: Callable[[str, float], None] = None,
@@ -207,13 +208,15 @@ class Pipeline:
         if self.callbacks.on_load is not None:
             self.callbacks.on_load()
 
-    def process_frame(self, frame: np.array, width: int, height: int, frame_num: int, stage: int = None) -> np.array:
+    def process_frame(
+        self, frame: FrameNxNx3, width: int, height: int, frame_num: int, stage: int = None
+    ) -> FrameNxNx3:
         """Frame processing function.
 
-        Calls on_frame_process(np.array, int, int, int) -> np.array callback from external file.
+        Calls on_frame_process(FrameNxNx3, int, int, int) -> FrameNxNx3 callback from external file.
 
         Args:
-            frame (numpy.array): The frame image as numpy array.
+            frame (FrameNxNx3): The frame image as numpy array.
                 Array has to be 3-D with height, width, channels as dimensions.
                 Array has to contains uint8 values.
             width (int): The frame width in pixels.
@@ -222,7 +225,7 @@ class Pipeline:
             stage (int, optional): The pipeline stage (pass) number.
 
         Returns:
-            numpy.array: The processed frame image as numpy array.
+            FrameNxNx3: The processed frame image as numpy array.
 
         Raises:
             FrameProcessingError: When any error was raised during frame processing.
@@ -320,51 +323,49 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
     )
 
 
-def _download_files(pipeline_dir: str, pipeline_file: str, logger: logging.Logger = None) -> None:
-    """Downloads files if download.txt file exists in pipeline data directory.
-
-    Args:
-        pipeline_dir (str): The pipelines directory.
-        pipeline_file (str): The pipeline filename.
-        logger (logging.Logger, optional): Logger to display informations. Defaults to None.
-    """
-    pipeline_data_dir = f"{pipeline_dir}\\{pipeline_file[:-3]}"
-    download_list_file = f"{pipeline_data_dir}\\download.txt"
-    if exists(download_list_file):
-        try:
-            with open(download_list_file, encoding="utf-8") as d_file:
-                urls = [url for url in d_file.read().split("\n") if len(url) > 1 and not url.startswith("#")]
-                for url in urls:
-                    download_file(url, pipeline_data_dir)
-        except Exception as ex:
-            if logger is not None:
-                logger.info('--- Cannot read / download pipeline files: "%s"', ex)
-
-
-def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> Tuple[Dict[str, Pipeline], bool]:
-    """Loads pipelines for frame processing.
-
-    Args:
-        settings (Dict[str, Any]): PyHook settings json.
-        logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
-            Defaults to None.
+def get_pipeline_directory() -> str:
+    """Returns pipeline directory.
 
     Returns:
-        Tuple[Dict[str, Pipeline], bool]: File to pipeline map and flag if settings were changed.
+        str: Pipeline directory.
 
     Raises:
         PipelinesDirNotFoundError: When pipelines directory does not exists.
     """
-    has_settings_change = False
-    pipeline_dir = None
     for path in _PIPELINE_DIRS:
         if isdir(path):
-            pipeline_dir = abspath(path)
-    if pipeline_dir is None:
-        raise PipelinesDirNotFoundError()
+            return abspath(path)
+    raise PipelinesDirNotFoundError()
 
+
+def get_pipeline_file_list(pipeline_dir: str) -> List[str]:
+    """Returns list of pipeline files.
+
+    Args:
+        pipeline_dir (str): Pipeline directory.
+
+    Returns:
+        List[str]: List of pipeline files.
+    """
+    return glob.glob(f"{pipeline_dir}/*.py")
+
+
+def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
+    """Loads pipelines for frame processing.
+
+    Args:
+        logger (logging.Logger, optional): Logger to display errors while loading pipeline files.
+            Defaults to None.
+
+    Returns:
+        Dict[str, Pipeline]: File to pipeline map.
+
+    Raises:
+        PipelinesDirNotFoundError: When pipelines directory does not exists.
+    """
     pipelines = {}
-    pipeline_files = glob.glob(f"{pipeline_dir}/*.py")
+    pipeline_dir = get_pipeline_directory()
+    pipeline_files = get_pipeline_file_list(pipeline_dir)
 
     for path in pipeline_files:
         module_name = basename(path)[:-3]
@@ -377,15 +378,11 @@ def load_pipelines(settings: Dict[str, Any], logger: logging.Logger = None) -> T
             spec.loader.exec_module(module)
             pipeline = _build_pipeline(module, module_name, path)
             pipelines[pipeline.file] = pipeline
-            if settings[SettingsKeys.KEY_AUTODOWNLOAD] and pipeline.file not in settings[SettingsKeys.KEY_DOWNLOADED]:
-                _download_files(pipeline_dir, pipeline.file, logger)
-                settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline.file)
-                has_settings_change = True
         except Exception as ex:
             if logger is not None:
                 logger.error('-- Cannot load pipeline file "%s".', path)
                 logger.error("--- Error: %s", ex)
-    return pipelines, has_settings_change
+    return pipelines
 
 
 def save_settings(
@@ -416,7 +413,7 @@ def save_settings(
             logger.info("-- Error: Cannot save %s. Permission denied. Try to run PyHook as admin.", _SETTINGS_FILE)
     except Exception as ex:
         if logger is not None:
-            logger.error("-- Error: Cannot save %s. Unhandled exception occurres.", _SETTINGS_FILE, exc_info=ex)
+            logger.error("-- Error: Cannot save %s. Unhandled exception occurred.", _SETTINGS_FILE, exc_info=ex)
 
 
 def load_settings(pipelines: Dict[str, Pipeline], dir_path: str) -> Tuple[PipelineRuntimeData, bool]:

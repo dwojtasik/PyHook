@@ -1,11 +1,11 @@
-from utils import *
+from pipeline_utils import *
 import numpy as np
 
 with use_local_python():
     import cv2
 
 name = "[CV2] Sharpen"
-version = "0.8.1"
+version = "1.1.2"
 desc = "OpenCV sharpen filter"
 
 settings = {"Amount": build_variable(1.0, 0.0, 5.0, 0.1, "Amount of sharpening to apply.")}

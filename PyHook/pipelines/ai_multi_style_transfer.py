@@ -1,7 +1,7 @@
 import gc
 import numpy as np
 
-from utils import *
+from pipeline_utils import *
 
 with use_local_python():
     import cv2
@@ -11,7 +11,7 @@ with use_local_python():
     from torch.autograd import Variable
 
 name = "[AI] Multi Style Transfer"
-version = "0.8.1"
+version = "1.1.2"
 desc = """Torch pipeline for fast multi style transfer.
 Based on "PyTorch-Style-Transfer" from:
 https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer"""

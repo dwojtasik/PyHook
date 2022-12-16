@@ -8,7 +8,7 @@ Contains keys enums
 
 
 class SettingsKeys:
-    """Settings keys
+    """Settings keys.
 
     KEY_AUTOSAVE (str): Key for: Time in seconds after last settings change to wait until autosave.
     KEY_AUTODOWNLOAD (str): Key for: Flag if pipeline files should be automatically downloaded.

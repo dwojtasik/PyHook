@@ -1,8 +1,8 @@
-from utils import build_variable, read_value
+from pipeline_utils import build_variable, read_value
 import numpy as np
 
 name = "[Test] RGB"
-version = "1.0.0"
+version = "1.1.2"
 desc = "Dummy pipeline for testing. Tests RGB manipulation and multiple UI settings."
 
 settings = {

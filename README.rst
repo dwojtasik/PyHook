@@ -17,13 +17,14 @@ PyHook consists of two elements:
 Features
 ========
 
+- Graphical user interface that allows to manage multiple PyHook sessions
 - Automatic ReShade detection and DLL validation
 - Automatic addon DLL injection
 - Shared memory as storage
 - Dynamic pipelines ordering and settings in ReShade UI via addon
 - Pipeline lifecycle support (load/process/unload)
 - Pipeline settings callbacks (before and after change)
-- Pipeline multipass - process frame multiple times in single pipeline
+- Pipeline multi-pass - process frame multiple times in single pipeline
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
@@ -350,7 +351,29 @@ As shown in the flowchart super-resolution consists of following steps:
 User interface
 ==============
 
-``PyHook`` uses ``ReShade ImGui UI`` to display list of available pipelines and their respective settings.
+PyHook
+------
+
+``PyHook`` uses ``PySimpleGUI`` to create graphical interface on Windows OS using ``Tkinter``.
+
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/gui.jpg" alt="Go to /docs/images/gui.jpg">
+   </p>
+
+GUI consists of few elements:
+
+- Menu bar, where user can change app settings, verify pipeline files and show information about app.
+- Injection bar, where user can find given process automatically or by search bar using process name or id.
+- | Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API)
+  | executable name and process id. Active sessions have green border, dead are using red color.
+- Session overview, where user can see live logs from given session, kill it or restart (if was stopped by some reason).
+
+PyHook addon
+------------
+
+``PyHook`` addon uses ``ReShade ImGui UI`` to display list of available pipelines and their respective settings.
 
 To display pipeline list, open ``ReShade`` UI and go to ``Add-ons`` tab:
 
@@ -395,8 +418,10 @@ Build
 - `Boost <https://www.boost.org/>`_ == 1.80.0 (used for Boost.Interprocess shared memory)
 - `Dear ImGui <https://github.com/ocornut/imgui>`_ == 1.86
 - `NumPy <https://pypi.org/project/numpy/>`_ == 1.23.2
+- `Pillow <https://pypi.org/project/Pillow/>`_ == 9.2.0
 - `psutil <https://pypi.org/project/psutil/>`_ == 5.9.2
 - `Pyinjector <https://pypi.org/project/pyinjector/>`_ == 1.1.0
+- `PySimpleGUI <https://pypi.org/project/PySimpleGUI/>`_ == 4.60.3
 - `Requests <https://pypi.org/project/requests/>`_ == 2.28.1
 
 EXE Build
@@ -426,7 +451,7 @@ Available ENV variables:
 
 Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
 
-If antyvirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
+If antivirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 
 Build
 =====
@@ -481,7 +506,7 @@ OpenCV with CUDA support
 | OpenCV Python module is not shipped with CUDA support by default so you have to build it from the source.
 | To do this install all requirements listed below:
 
-- `Anaconda <https://www.anaconda.com/>`_ for virual environment
+- `Anaconda <https://www.anaconda.com/>`_ for virtual environment
 - `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3 (or last supported by your GPU and pipeline modules)
 - `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (or last supported by your CUDA version)
 - `Visual Studio <https://visualstudio.microsoft.com/pl/vs/community/>`_ >= 16 with C++ support
@@ -523,7 +548,7 @@ After build new environment variables have to be set:
       <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg" alt="Go to /docs/images/cv2_cuda.jpg">
    </p>
 
-| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virual environment.
+| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virtual environment.
 | Executable path can be read from python itself:
 
 .. code-block:: python
@@ -577,6 +602,11 @@ GPU support allows to achieve over ``4x better performance`` for best quality (2
 Breaking changes
 ================
 
+0.9.0 → 1.1.2
+-------------
+| Pipelines started in ``1.1.2`` version has refactored name of pipeline ``utils`` to ``pipeline_utils``.
+| Old pipelines can be rewritten to ``1.1.2`` by simply changing import from ``utils`` to ``pipeline_utils``.
+
 0.8.1 → 0.9.0
 -------------
 | Pipelines created in ``0.9.0`` with use of ``use_fake_modules`` utils method will not work in ``0.8.1``.
@@ -585,8 +615,14 @@ Breaking changes
 History
 =======
 
-NEXT / DEV
-----------
+1.1.2 (2022-12-14)
+------------------
+- Fixed frozen bundle issues.
+- Added downloading window.
+- Added settings window.
+- Added about window.
+- Added images to GUI.
+- Added GUI with multiple PyHook sessions support.
 - Improved error handling for pipeline processing.
 - Replaced old depth estimation pipeline with new implementation using https://github.com/isl-org/MiDaS
 - Fixed initial pipeline values loaded from file.
@@ -596,9 +632,9 @@ NEXT / DEV
 0.9.0 (2022-09-23)
 ------------------
 - Added PyHook settings file.
-- Fixed ImGui beeing affected for ReShade version up to 5.4.2.
+- Fixed ImGui being affected for ReShade version up to 5.4.2.
 - Added AI depth estimation pipeline example using https://github.com/wolverinn/Depth-Estimation-PyTorch
-- Added AI semantic segmantation pipeline example using https://github.com/XuJiacong/PIDNet
+- Added AI semantic segmentation pipeline example using https://github.com/XuJiacong/PIDNet
 - Fixed float inaccuracy in pipeline settings.
 - Added AI object detection pipeline example using https://github.com/ultralytics/yolov5
 - Added AI style transfer pipeline example using https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer

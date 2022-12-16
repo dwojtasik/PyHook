@@ -7,21 +7,17 @@ Utils for shared memory management
 """
 
 import mmap
-
-# pylint: disable=wildcard-import,unused-wildcard-import
-from ctypes import *
+from ctypes import *  # pylint: disable=wildcard-import,unused-wildcard-import
 from os import getpid
 from typing import List, Tuple
 
 from psutil import pid_exists
 
-from pipeline import Pipeline, PipelineRuntimeData
 from dll_utils import AddonHandler
+from pipeline import Pipeline, PipelineRuntimeData
+from win.api import WAIT_OBJECT_0, CreateEvent, SetEvent, WaitForSingleObject
 
-# Handle for kernel32 DLL.
-_KERNEL32 = windll.kernel32
-
-# Timeout in millis for event singnaling.
+# Timeout in milliseconds for event signaling.
 # If timeout occurs PyHook will check if connected process does still exists.
 _WAIT_TIME_MS = 2000
 
@@ -52,11 +48,11 @@ class WaitProcessNotFoundException(Exception):
 
 
 class WaitAddonNotFoundException(Exception):
-    """Raised when process with given PID does not have addon loadad anymore and cannot set signaled state."""
+    """Raised when process with given PID does not have addon loaded anymore and cannot set signaled state."""
 
 
 class SharedData(Structure):
-    """Sturcture for shared memory data.
+    """Structure for shared memory data.
 
     frame_count (c_longlong): Actual frame count calculated since addon initialization.
     width (c_uint32): Frame width in pixels.
@@ -79,7 +75,7 @@ class SharedData(Structure):
 
 
 class PipelineVar(Structure):
-    """Sturcture for active pipeline variables.
+    """Structure for active pipeline variables.
 
     modified (c_bool): Flag if given variable was modified.
     key (PIPELINE_KEY_STRING): Name of the variable.
@@ -109,7 +105,7 @@ PIPELINE_SETTINGS = PIPELINE_VAR_LIMIT * PipelineVar
 
 
 class ActivePipeline(Structure):
-    """Sturcture for active pipeline data.
+    """Structure for active pipeline data.
 
     enabled (c_bool): Flag if given pipeline is enabled.
     modified (c_bool): Flag if given pipeline had it settings modified.
@@ -128,7 +124,7 @@ class ActivePipeline(Structure):
 
 
 class PipelineData(ActivePipeline):
-    """Sturcture for shared pipeline data.
+    """Structure for shared pipeline data.
 
     name (PIPELINE_STRING): Pipeline name.
     version (PIPELINE_SHORT_STRING): Pipeline version.
@@ -198,8 +194,8 @@ class MemoryManager:
     def __init__(self, pid: int):
         self.pid = pid
         spid = str(pid)
-        self._lock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_LOCK_NAME + spid)
-        self._unlock_event = _KERNEL32.CreateEventW(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
+        self._lock_event = CreateEvent(0, 0, 0, self._EVENT_LOCK_NAME + spid)
+        self._unlock_event = CreateEvent(0, 0, 0, self._EVENT_UNLOCK_NAME + spid)
         self._shmem = mmap.mmap(-1, sizeof(SharedData), self._SHMEM_NAME + spid)
         self._shcfg = mmap.mmap(-1, sizeof(SharedConfigData), self._SHCFG_NAME + spid)
         self._pipeline_order = []
@@ -343,8 +339,8 @@ class MemoryManager:
             WaitAddonNotFoundException: When process with given PID does not have addon loaded anymore.
         """
         while True:
-            wait_result = _KERNEL32.WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
-            if wait_result == 0x00000000:
+            wait_result = WaitForSingleObject(self._lock_event, c_ulong(_WAIT_TIME_MS))
+            if wait_result == WAIT_OBJECT_0:
                 return
             if not pid_exists(self.pid):
                 raise WaitProcessNotFoundException()
@@ -355,4 +351,4 @@ class MemoryManager:
         """Sends signal to unlock event handle.
         After finish it allows ReShade to process frame from Python.
         """
-        _KERNEL32.SetEvent(self._unlock_event)
+        SetEvent(self._unlock_event)

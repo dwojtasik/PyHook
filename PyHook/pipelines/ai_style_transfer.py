@@ -1,7 +1,7 @@
 import gc
 import numpy as np
 
-from utils import *
+from pipeline_utils import *
 
 with use_local_python():
     import cv2
@@ -11,7 +11,7 @@ with use_local_python():
     from torchvision import transforms
 
 name = "[AI] Style Transfer"
-version = "0.8.1"
+version = "1.1.2"
 desc = """Torch pipeline for fast style transfer.
 Based on "Fast neural style with MobileNetV2 bottleneck blocks" from:
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2"""

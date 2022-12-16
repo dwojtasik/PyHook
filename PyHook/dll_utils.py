@@ -8,16 +8,15 @@ Utils for DLL management
 
 import glob
 import os
-from ctypes import CDLL, c_char_p, c_void_p, cdll, windll
+from ctypes import c_char_p
 from os.path import abspath, basename, dirname, exists
-from typing import TypeVar
+from typing import List
 
 import psutil
 from pyinjector import inject
 
-from win_utils import is_process_64_bit, to_arch_string
-
-T = TypeVar("T")
+from win.api import DONT_RESOLVE_DLL_REFERENCES, FreeLibrary, GetProcAddress, LoadLibrary
+from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
 _ADDON_PATHS_32BIT = [
@@ -166,24 +165,25 @@ class AddonHandler:
         """
         logs_before = glob.glob(f"{self.dir_path}/*.log")
         try:
+            reshade_version_p = _RESHADE_VERSION_EXTERN.encode("utf-8")
             for test_dll_path in self._matching_dlls:
-                test_dll_handle = None
+                test_dll_hmod = None
                 try:
-                    test_dll_handle = cdll[test_dll_path]
-                    if hasattr(test_dll_handle, _RESHADE_VERSION_EXTERN):
-                        self.reshade_version = _get_dll_extern_variable(
-                            test_dll_handle, _RESHADE_VERSION_EXTERN, c_char_p
-                        ).decode("utf-8")
-                        if self.reshade_version >= _RESHADE_MIN_VERSION:
-                            self.reshade_path = test_dll_path
-                            return True
-                        return False
+                    test_dll_hmod = LoadLibrary(test_dll_path, 0, DONT_RESOLVE_DLL_REFERENCES)
+                    if test_dll_hmod is not None:
+                        version_str_p = GetProcAddress(test_dll_hmod, reshade_version_p)
+                        if version_str_p is not None:
+                            self.reshade_version = c_char_p.from_address(version_str_p).value.decode("utf-8")
+                            if self.reshade_version >= _RESHADE_MIN_VERSION:
+                                self.reshade_path = test_dll_path
+                                return True
+                            return False
                 except Exception:
                     pass
                 finally:
-                    if test_dll_handle is not None:
-                        _unload_dll(test_dll_handle, self.is_64_bit)
-                        del test_dll_handle
+                    if test_dll_hmod is not None:
+                        FreeLibrary(test_dll_hmod)
+                        del test_dll_hmod
             return False
         finally:
             logs_after = glob.glob(f"{self.dir_path}/*.log")
@@ -192,47 +192,13 @@ class AddonHandler:
                 os.remove(new_log)
 
 
-def _unload_dll(dll_handle: CDLL, is_64_bit: bool) -> None:
-    """Unloads given dll from PyHook process.
-
-    NOTE: After this 'del variable' should be called to remove it from memory.
-
-    Args:
-        dll_handle (ctypes.CDLL): Loaded dll handle.
-        is_64_bit (bool): Flag if true owner process is 64 bit.
-    """
-    if is_64_bit:
-        windll.kernel32.FreeLibrary(c_void_p(dll_handle._handle))
-    else:
-        windll.kernel32.FreeLibrary(dll_handle._handle)
-
-
-def _get_dll_extern_variable(dll_handle: CDLL, variable_name: str, out_type: T) -> T:
-    """Returns extern value of given output type from DLL.
-
-    Args:
-        dll_handle (ctypes.CDLL): Loaded dll handle.
-        variable_name (str): The name of extern C variable to get.
-        out_type (T): The type of C variable from ctypes.
-
-    Returns:
-        T: The DLL's extern C variable casted to valid Python type using ctypes.
-
-    Raises:
-        ValueError: When variable cannot be read.
-    """
-    try:
-        return out_type.in_dll(dll_handle, variable_name).value
-    except Exception as ex:
-        raise ValueError(f'Cannot read variable "{variable_name}" of type "{out_type}" from DLL@{dll_handle}') from ex
-
-
-def get_reshade_addon_handler(pid: int = None) -> AddonHandler:
+def get_reshade_addon_handler(pid: int = None, pids_to_skip: List[int] = None) -> AddonHandler:
     """Returns addon handler with required process information.
 
     Args:
         pid (int, optional): PID of ReShade owner process.
             If supplied PyHook will skip tests for ReShade!
+        pids_to_skip (List[int], optional): List of PIDs to skip in process iteration.
 
     Returns:
         AddonHandler: The handler for PyHook addon management.
@@ -247,6 +213,8 @@ def get_reshade_addon_handler(pid: int = None) -> AddonHandler:
         return AddonHandler(psutil.Process(pid), False)
     for process in psutil.process_iter():
         try:
+            if pids_to_skip is not None and process.pid in pids_to_skip:
+                continue
             return AddonHandler(process)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess, NotAReShadeProcessException):
             pass
