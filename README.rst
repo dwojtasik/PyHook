@@ -616,6 +616,8 @@ History
 
 NEXT / DEV
 ----------
+- Fixed window flickering on move.
+- Added confirmation popup on application exit if any PyHook session is active.
 - Increased speed of automatic injection.
 
 1.1.2 (2022-12-14)

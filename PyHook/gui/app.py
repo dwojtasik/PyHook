@@ -370,6 +370,7 @@ def gui_main() -> None:
         f"PyHook v{__version__} (c) 2022 by Dominik Wojtasik",
         _APP_LAYOUT,
         font=FONT_DEFAULT,
+        enable_close_attempted_event=True,
         finalize=True,
     )
 
@@ -409,12 +410,7 @@ def gui_main() -> None:
         """Updates UI window."""
         nonlocal last_process_filter, last_pid
         while running:
-            try:
-                _, values = window.read(timeout=0)
-            except Exception:
-                # Window not available.
-                return
-            process_filter_value = values[SGKeys.PROCESS_LIST]
+            process_filter_value = window[SGKeys.PROCESS_LIST].TKCombo.get()  # pylint: disable=no-member
             if last_process_filter != process_filter_value:
                 last_process_filter = process_filter_value
                 _update_process_list(window, process_list, last_process_filter)
@@ -437,8 +433,20 @@ def gui_main() -> None:
 
     while running:
         event, values = window.read()
-        if event in (sg.WIN_CLOSED, SGKeys.EXIT):
+        if event == sg.WIN_CLOSED:
             break
+        if event in (sg.WINDOW_CLOSE_ATTEMPTED_EVENT, SGKeys.EXIT):
+            if any(session.is_running() for session in sessions):
+                if show_popup_text(
+                    "Confirm exit",
+                    "Are you sure to exit? There are some running PyHook sessions.",
+                    ok_label="Yes",
+                    cancel_button=True,
+                    cancel_label="No",
+                ):
+                    break
+            else:
+                break
         if event == SGKeys.PROCESS_LIST:
             last_process_filter = values[event]
             pid_string = str(last_process_filter).split("|", maxsplit=1)[0].strip()
