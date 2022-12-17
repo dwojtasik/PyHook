@@ -616,6 +616,7 @@ History
 
 NEXT / DEV
 ----------
+- Fixed invalid icon readout.
 - Updated app runtime icon.
 - Fixed window flickering on move.
 - Added confirmation popup on application exit if any PyHook session is active.

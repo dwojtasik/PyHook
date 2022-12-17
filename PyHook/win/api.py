@@ -247,7 +247,7 @@ def get_icon_resources(hmodule: HMODULE) -> List[c_int]:
 def get_hq_icon_raw(path: str) -> bytes | None:
     """Returns high quality icon from given executable path if possible.
 
-    Image will be returned as raw BGRA pixel data.
+    Image will be returned as raw PNG or ICO data.
 
     Args:
         path (str): Path to executable.
@@ -255,19 +255,22 @@ def get_hq_icon_raw(path: str) -> bytes | None:
     Returns:
         bytes | None: Icon resource bytes.
     """
-    header_shift = 40
     hlib = None
     try:
         hlib = LoadLibrary(path, 0, LOAD_LIBRARY_AS_DATAFILE)
         if hlib:
             icons = get_icon_resources(hlib)
             if len(icons) > 0:
-                hres = FindResource(hlib, icons[-1], RT_ICON)
-                size = SizeofResource(hlib, hres)
+                hres, size = max(
+                    [
+                        (hres, SizeofResource(hlib, hres))
+                        for hres in [FindResource(hlib, icon, RT_ICON) for icon in icons]
+                    ],
+                    key=lambda data: data[1],
+                )
                 res = LoadResource(hlib, hres)
                 mem_pointer = LockResource(res)
-                px_res = int((size // 4) ** 0.5) // 8 * 8
-                return bytes((c_ubyte * (px_res * px_res * 4)).from_address(mem_pointer + header_shift))
+                return bytes((c_ubyte * size).from_address(mem_pointer))
         return None
     except Exception:
         return None

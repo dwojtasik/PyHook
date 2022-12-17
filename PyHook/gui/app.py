@@ -411,23 +411,26 @@ def gui_main() -> None:
         """Updates UI window."""
         nonlocal last_process_filter, last_pid
         while running:
-            process_filter_value = window[SGKeys.PROCESS_LIST].TKCombo.get()  # pylint: disable=no-member
-            if last_process_filter != process_filter_value:
-                last_process_filter = process_filter_value
-                _update_process_list(window, process_list, last_process_filter)
-                last_pid = None
+            try:
+                process_filter_value = window[SGKeys.PROCESS_LIST].TKCombo.get()  # pylint: disable=no-member
+                if last_process_filter != process_filter_value:
+                    last_process_filter = process_filter_value
+                    _update_process_list(window, process_list, last_process_filter)
+                    last_pid = None
 
-            if selected_session is not None:
-                if selected_session.should_update_logs():
-                    scroll_state = window[SGKeys.SESSION_LOGS].Widget.yview()
-                    window[SGKeys.SESSION_LOGS].update(
-                        value=selected_session.get_logs(), autoscroll=scroll_state[1] == 1
-                    )
+                if selected_session is not None:
+                    if selected_session.should_update_logs():
+                        scroll_state = window[SGKeys.SESSION_LOGS].Widget.yview()
+                        window[SGKeys.SESSION_LOGS].update(
+                            value=selected_session.get_logs(), autoscroll=scroll_state[1] == 1
+                        )
 
-            if any([session.should_update_ui() for session in sessions[:]]):
-                _update_sessions_active_view(window, sessions, selected_session)
+                if any([session.should_update_ui() for session in sessions[:]]):
+                    _update_sessions_active_view(window, sessions, selected_session)
 
-            sleep(1 / 60)
+                sleep(1 / 60)
+            except Exception:
+                pass
 
     ui_worker = Thread(target=_update_ui)
     ui_worker.start()

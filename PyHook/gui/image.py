@@ -16,6 +16,8 @@ from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-impo
 
 # Default image resampling type.
 _RESAMPLING = Image.Resampling.LANCZOS
+# Number of bytes before raw RGBA ICO data
+_ICO_HEADER_SHIFT = 40
 
 
 def get_as_buffer(img: Image.Image) -> bytes:
@@ -50,19 +52,25 @@ def get_img(path: str, thumb_size: Tuple[int, int] = None) -> bytes:
 
 
 def format_raw_data(raw_data: bytes, thumb_size: Tuple[int, int] = None) -> Image.Image:
-    """Formats image data into RGBA PNG format.
+    """Formats raw image data into RGBA PNG format.
 
     Args:
-        raw_data (bytes): Raw bytes read from memory in BGRA pixel bytes.
+        raw_data (bytes): Raw bytes read from memory in PNG or ICO format.
         thumb_size (Tuple[int, int], optional): Size of additional thumbnail in format (width, height).
             Defaults to None.
 
     Returns:
         Image.Image: Formatted image.
     """
-    px_res = int((len(raw_data) // 4) ** 0.5) // 8 * 8
-    img = Image.frombuffer("RGBA", (px_res, px_res), raw_data, "raw", "BGRA", 0, 1)
-    img = ImageOps.flip(img)
+    if raw_data[1:4] == b"PNG":
+        img = Image.open(BytesIO(raw_data))
+    else:
+        px_res = int((len(raw_data) // 4) ** 0.5) // 8 * 8
+        size = px_res * px_res * 4
+        img = Image.frombuffer(
+            "RGBA", (px_res, px_res), raw_data[_ICO_HEADER_SHIFT : _ICO_HEADER_SHIFT + size], "raw", "BGRA", 0, 1
+        )
+        img = ImageOps.flip(img)
     if thumb_size is not None:
         img.thumbnail(thumb_size, _RESAMPLING)
     return img
