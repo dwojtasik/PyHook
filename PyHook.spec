@@ -25,6 +25,12 @@ binaries += [(f"{conda_env_path}\\python3.dll", ".")]
 if is_64_bit:
     binaries += [(f"{conda_env_path}\\vcruntime140_1.dll", ".")]
 
+# Pack PyHook addon DLLs
+if is_64_bit:
+    datas += [("Addon\\x64\\Release\\PyHook.addon", ".")]
+else:
+    datas += [("Addon\\Release\\PyHook.addon", ".")]
+
 block_cipher = None
 
 a = Analysis(

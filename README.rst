@@ -616,6 +616,7 @@ History
 
 NEXT / DEV
 ----------
+- Added built-in addon DLL inside executable.
 - Fixed invalid icon readout.
 - Updated app runtime icon.
 - Fixed window flickering on move.

@@ -15,25 +15,26 @@ from typing import List
 import psutil
 from pyinjector import inject
 
+from utils.common import get_frozen_path, is_frozen_bundle
 from win.api import DONT_RESOLVE_DLL_REFERENCES, FreeLibrary, GetProcAddress, LoadLibrary
 from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
 _ADDON_PATHS_32BIT = [
-    "./Addons/PyHook32.addon",
     "./Addon/Release/PyHook.addon",
-    "./Addon/Debug/PyHook.addon",
-    "./PyHook32.addon",
     "./PyHook.addon",
+    "./PyHook32.addon",
+    "./Addons/PyHook32.addon",
+    "./Addon/Debug/PyHook.addon",
 ]
 
 # Search paths (in priority order) for 64-bit addon file.
 _ADDON_PATHS_64BIT = [
-    "./Addons/PyHook64.addon",
     "./Addon/x64/Release/PyHook.addon",
-    "./Addon/x64/Debug/PyHook.addon",
-    "./PyHook64.addon",
     "./PyHook.addon",
+    "./PyHook64.addon",
+    "./Addons/PyHook64.addon",
+    "./Addon/x64/Debug/PyHook.addon",
 ]
 
 # ReShade extern variable to read version.
@@ -150,6 +151,10 @@ class AddonHandler:
         Raises:
             AddonNotFoundException: When addon DLL file cannot be found.
         """
+        if is_frozen_bundle():
+            frozen_path = get_frozen_path("PyHook.addon")
+            if exists(frozen_path):
+                return frozen_path
         paths = _ADDON_PATHS_64BIT if self.is_64_bit else _ADDON_PATHS_32BIT
         for path in paths:
             if exists(path):
