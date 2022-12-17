@@ -371,6 +371,7 @@ def gui_main() -> None:
         _APP_LAYOUT,
         font=FONT_DEFAULT,
         enable_close_attempted_event=True,
+        icon=_APP_ICON,
         finalize=True,
     )
 
