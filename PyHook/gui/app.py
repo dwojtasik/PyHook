@@ -8,6 +8,7 @@ GUI for PyHook
 
 import atexit
 import os
+import string
 import sys
 import webbrowser
 from threading import Thread
@@ -85,18 +86,25 @@ def _get_sessions_layout() -> List[List[sg.Column]]:
     ]
 
 
-def _update_process_list(window: sg.Window, process_list: List[ProcessInfo], filter_string: str) -> None:
+def _update_process_list(
+    window: sg.Window, process_list: List[ProcessInfo], filter_string: str, open_dropdown: bool = False
+) -> None:
     """Updates process list combo box.
 
     Args:
         window (sg.Window): Parent window.
         process_list (List[ProcessInfo]): List of new process info.
         filter_string (str): Filter to be applied. For empty string filtering will be omitted.
+        open_dropdown (bool, optional): Flag if combo box should be opened after updating it's state.
+            Defaults to False.
     """
-    window[SGKeys.PROCESS_LIST].update(
+    combo: sg.Combo = window[SGKeys.PROCESS_LIST]
+    combo.update(
         value=filter_string,
         values=_to_combo_list(process_list, filter_string if filter_string else None),
     )
+    if open_dropdown:
+        combo.TKCombo.event_generate("<Button-1>")
 
 
 def _update_sessions_active_view(window: sg.Window, sessions: List[Session], selected_session: Session | None) -> None:
@@ -206,6 +214,67 @@ def _to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -
     ]
 
 
+def _bind_combo_popdown_event(window: sg.Window) -> None:
+    """Binds KeyPress and KeyRelease events to TTK combobox popdown window.
+
+    Args:
+        window (sg.Window): Parent window.
+    """
+    combo: sg.Combo = window[SGKeys.PROCESS_LIST]
+    popdown_ref = combo.TKCombo.tk.call("ttk::combobox::PopdownWindow", combo.TKCombo) + ".f.l"
+
+    pressed = []
+    allowed_chars = string.ascii_lowercase + string.ascii_uppercase + string.digits + " "
+
+    def _on_key_press(event) -> None:
+        """Callback for KeyPress event.
+
+        Args:
+            event (tkinter.Event): KeyPress event.
+        """
+        if event.char in pressed or event.keysym in pressed:
+            return
+        if event.char in allowed_chars:
+            if event.char not in pressed:
+                pressed.append(event.char)
+            idx = combo.TKCombo.index("insert")
+            filter_string = combo.TKCombo.get()
+            combo.TKCombo.event_generate("<Button-1>")
+            combo.TKCombo.set(filter_string[:idx] + event.char + filter_string[idx:])
+            combo.TKCombo.icursor(idx + 1)
+        elif event.keysym == "BackSpace":
+            if event.keysym not in pressed:
+                pressed.append(event.keysym)
+            idx = combo.TKCombo.index("insert")
+            if idx > 0:
+                filter_string = combo.TKCombo.get()
+                combo.TKCombo.event_generate("<Button-1>")
+                combo.TKCombo.set(filter_string[: idx - 1] + filter_string[idx:])
+                combo.TKCombo.icursor(idx - 1)
+        elif event.keysym == "Delete":
+            if event.keysym not in pressed:
+                pressed.append(event.keysym)
+            idx = combo.TKCombo.index("insert")
+            filter_string = combo.TKCombo.get()
+            if idx < len(filter_string):
+                combo.TKCombo.event_generate("<Button-1>")
+                combo.TKCombo.set(filter_string[:idx] + filter_string[idx + 1 :])
+
+    def _on_key_release(event) -> None:
+        """Callback for KeyRelease event.
+
+        Args:
+            event (tkinter.Event): KeyRelease event.
+        """
+        if event.char in pressed:
+            pressed.remove(event.char)
+        if event.keysym in pressed:
+            pressed.remove(event.keysym)
+
+    combo.TKCombo._bind(("bind", popdown_ref), "<KeyPress>", _on_key_press, None)
+    combo.TKCombo._bind(("bind", popdown_ref), "<KeyRelease>", _on_key_release, None)
+
+
 # Application menu layout.
 _MENU_LAYOUT = [
     ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.EXIT]],
@@ -219,7 +288,7 @@ _APP_LAYOUT = [
     [
         sg.Text("Process"),
         sg.Combo(
-            [],
+            values=[],
             key=SGKeys.PROCESS_LIST,
             enable_events=True,
             font=FONT_MONO_DEFAULT,
@@ -378,6 +447,7 @@ def gui_main() -> None:
     _update_sessions_view(window, sessions)
     _update_session_overview(window, selected_session)
     _update_process_list(window, process_list, "")
+    _bind_combo_popdown_event(window)
 
     load_settings()
     verify_download()
@@ -415,7 +485,7 @@ def gui_main() -> None:
                 process_filter_value = window[SGKeys.PROCESS_LIST].TKCombo.get()  # pylint: disable=no-member
                 if last_process_filter != process_filter_value:
                     last_process_filter = process_filter_value
-                    _update_process_list(window, process_list, last_process_filter)
+                    _update_process_list(window, process_list, last_process_filter, True)
                     last_pid = None
 
                 if selected_session is not None:

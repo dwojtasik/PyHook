@@ -617,6 +617,7 @@ History
 
 NEXT / DEV
 ----------
+- Process combo box now displays dropdown options during writing.
 - Added pipeline files downloading cancel confirmation popup.
 - Added built-in addon DLL inside executable.
 - Fixed invalid icon readout.
