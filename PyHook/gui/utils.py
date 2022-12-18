@@ -52,7 +52,8 @@ def show_popup(
     cancel_label: str = "Cancel",
     events: Dict[str, EventCallback] = None,
     min_width: int = None,
-) -> bool:
+    return_window: bool = False,
+) -> sg.Window | bool:
     """Displays customized popup window.
 
     Args:
@@ -63,9 +64,11 @@ def show_popup(
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
         events (Dict[str, EventCallback], optional): Map of event keys with callbacks. Defaults to None.
         min_width (int, optional): Minimum width of popup window in pixels. Defaults to None.
+        return_window (bool, optional): Flag if popup window should be returned for custom event loop.
+            Defaults to False.
 
     Returns:
-        bool: Flag if OK button was pressed.
+        sg.Window | bool: Popup window if return_window==True, otherwise flag if OK button was pressed.
     """
     buttons = [sg.Button(ok_label, size=(8, 1), pad=((5, 5), (10, 5)), key=SGKeys.POPUP_KEY_OK_BUTTON)]
     if cancel_button:
@@ -84,6 +87,8 @@ def show_popup(
         finalize=True,
         location=(None, None),
     )
+    if return_window:
+        return popup
     if events is None:
         event, _ = popup.read(close=True)
         return event == SGKeys.POPUP_KEY_OK_BUTTON
@@ -112,7 +117,8 @@ def show_popup_text(
     ok_label: str = "OK",
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
-) -> bool:
+    return_window: bool = False,
+) -> sg.Window | bool:
     """Displays customized popup window.
 
     Args:
@@ -121,12 +127,14 @@ def show_popup_text(
         ok_label (str, optional): Label for OK button. Defaults to "OK".
         cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
+        return_window (bool, optional): Flag if popup window should be returned for custom event loop.
+            Defaults to False.
 
     Returns:
-        bool: Flag if OK button was pressed.
+        sg.Window | bool: Popup window if return_window==True, otherwise flag if OK button was pressed.
     """
     layout = [[sg.Text(text, justification="center")]]
-    return show_popup(title, layout, ok_label, cancel_button, cancel_label)
+    return show_popup(title, layout, ok_label, cancel_button, cancel_label, return_window=return_window)
 
 
 def show_popup_exception(
@@ -136,7 +144,8 @@ def show_popup_exception(
     ok_label: str = "OK",
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
-) -> bool:
+    return_window: bool = False,
+) -> sg.Window | bool:
     """Displays customized popup window for exception.
 
     Args:
@@ -146,13 +155,15 @@ def show_popup_exception(
         ok_label (str, optional): Label for OK button. Defaults to "OK".
         cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
+        return_window (bool, optional): Flag if popup window should be returned for custom event loop.
+            Defaults to False.
 
     Returns:
-        bool: Flag if OK button was pressed.
+        sg.Window | bool: Popup window if return_window==True, otherwise flag if OK button was pressed.
     """
     ex_lines = "\n".join(textwrap.wrap(f"Error: {ex}", width=50, break_on_hyphens=False))
     layout = [
         [sg.Text(text, justification="center")],
         [sg.Text(ex_lines, justification="left", font=FONT_CONSOLE)],
     ]
-    return show_popup(title, layout, ok_label, cancel_button, cancel_label)
+    return show_popup(title, layout, ok_label, cancel_button, cancel_label, return_window=return_window)

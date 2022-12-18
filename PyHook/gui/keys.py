@@ -43,6 +43,7 @@ class SGKeys:
     DOWNLOAD_FILE_VERIFY_TEXT (str): Key for: Download file verify text.
     DOWNLOAD_PROGRESS_BAR (str): Key for: Download progress bar.
     DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT (str): Key for: Download progress placeholder text.
+    DOWNLOAD_CANCEL_EVENT (str): Key for: Download cancel event.
     EXIT (str): Key for: Application exit.
     """
 
@@ -77,6 +78,7 @@ class SGKeys:
     DOWNLOAD_FILE_VERIFY_TEXT = "-DOWNLOAD_FILE_VERIFY_TEXT-"
     DOWNLOAD_PROGRESS_BAR = "-DOWNLOAD_PROGRESS_BAR-"
     DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT = "-DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT-"
+    DOWNLOAD_CANCEL_EVENT = "-DOWNLOAD_CANCEL_EVENT-"
     EXIT = "Exit"
 
     @staticmethod

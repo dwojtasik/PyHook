@@ -6,6 +6,7 @@ Simple file downloader
 :license: MIT, see LICENSE for more details.
 """
 
+import os
 import re
 from os.path import basename, exists, getsize
 from typing import Callable
@@ -19,14 +20,18 @@ _CHUNK_SIZE = 4096
 _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
 
 
-def download_file(url: str, directory: str, callback: Callable[[int], None] = None) -> None:
+def download_file(url: str, directory: str, callback: Callable[[int], bool] = None) -> bool:
     """Download file from given url and save it into directory.
 
     Args:
         url (str): The url to given file.
         directory (str): The directory to save downloaded file.
-        callback (Callable[[int], None], optional): Optional callback for progress.
+        callback (Callable[[int], bool], optional): Optional downloading callback.
+            Args: downloading progress in percent. Result: flag if downloading should be continued.
             Defaults to None.
+
+    Returns:
+        bool: Flag if download was cancelled.
     """
     response_stream = requests.get(url, stream=True, timeout=10)
     response_stream.raise_for_status()
@@ -37,7 +42,7 @@ def download_file(url: str, directory: str, callback: Callable[[int], None] = No
     filepath = f"{directory}\\{filename}"
     filesize = int(response_stream.headers["Content-Length"])
     byte_count = 0
-    last_percent = 0
+    cancelled = False
     if not exists(filepath) or getsize(filepath) != filesize:
         with open(filepath, "wb") as d_file:
             for chunk in response_stream.iter_content(_CHUNK_SIZE):
@@ -47,6 +52,11 @@ def download_file(url: str, directory: str, callback: Callable[[int], None] = No
                     byte_count = filesize
                 percent = byte_count / filesize * 100
                 if callback is not None:
-                    if percent > last_percent:
-                        callback(percent)
-                        last_percent = percent
+                    if not callback(percent):
+                        if byte_count != filesize:
+                            cancelled = True
+                            break
+        response_stream.close()
+        if cancelled:
+            os.remove(filepath)
+    return cancelled

@@ -38,15 +38,47 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
         bool: Flag if all files were successfully verified.
     """
 
-    def _progress_callback(progress: int) -> None:
-        """Progress bar callback to display downloading progress.
+    last_progress = 0
+    cancel_popup: sg.Window = None
+
+    def _download_callback(progress: int) -> bool:
+        """Download callback to manage download process and display progress bar.
 
         Args:
             progress (int): Downloading progress percentage.
+
+        Returns:
+            bool: Flag if downloading should be continued.
         """
-        window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(current_count=max(progress, 0), visible=progress > -1)
-        window[SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT].update(visible=progress < 0)
-        window.refresh()
+        nonlocal last_progress, cancel_popup
+        if progress > last_progress:
+            window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(current_count=max(progress, 0), visible=progress > -1)
+            window[SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT].update(visible=progress < 0)
+            last_progress = progress
+        event, _ = window.read(0)
+        if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
+            if cancel_popup is None:
+                cancel_popup = show_popup_text(
+                    "Confirm cancel",
+                    "Are you sure to cancel download?",
+                    ok_label="Yes",
+                    cancel_button=True,
+                    cancel_label="No",
+                    return_window=True,
+                )
+        if cancel_popup is not None:
+            popup_event, _ = cancel_popup.read(0)
+            if popup_event in (
+                sg.WIN_CLOSED,
+                SGKeys.EXIT,
+                SGKeys.POPUP_KEY_OK_BUTTON,
+                SGKeys.POPUP_KEY_CANCEL_BUTTON,
+            ):
+                should_continue = popup_event != SGKeys.POPUP_KEY_OK_BUTTON
+                cancel_popup.close()
+                cancel_popup = None
+                return should_continue
+        return True
 
     pipeline_data_dir = f"{pipeline_dir}\\{pipeline_file[:-3]}"
     download_list_file = f"{pipeline_data_dir}\\download.txt"
@@ -66,8 +98,11 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
                             else f"{url[: _MAX_URL_LENGTH // 2]}...{url[-_MAX_URL_LENGTH // 2 :]}",
                         )
                     )
-                    _progress_callback(-1)
-                    download_file(url, pipeline_data_dir, _progress_callback)
+                    _download_callback(-1)
+                    was_cancelled = download_file(url, pipeline_data_dir, _download_callback)
+                    if was_cancelled:
+                        window.write_event_value(SGKeys.DOWNLOAD_CANCEL_EVENT, ())
+                        return False
             return True
         except Exception as ex:
             show_popup_exception("Error", "Cannot read / download pipeline files!", ex)
@@ -145,6 +180,10 @@ def verify_download(forced: bool = False) -> None:
                     if _verify_files(window, pipeline_dir, pipeline):
                         settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline)
                         has_change = True
+                    else:
+                        event, _ = window.read(0)
+                        if event == SGKeys.DOWNLOAD_CANCEL_EVENT:
+                            break
             window.close()
     if has_change:
         save_settings(settings)

@@ -455,16 +455,17 @@ If antivirus detects PyHook as dangerous software add exception for it because i
 Build
 =====
 
-To build PyHook simply run ``build.bat`` in `Anaconda <https://www.anaconda.com/>`_ Prompt.
+To build PyHook addon download `Boost <https://www.boost.org/>`_ and place header files in Addon/include.
+Then open \*.sln project in Visual Studio and build given release.
+
+| To build PyHook simply run ``build.bat`` in `Anaconda <https://www.anaconda.com/>`_ Prompt.
+| NOTE: Addon has to be built at this point because it is included in produced executable.
 
 If any Python package is missing try to update your conda environment and add conda-forge channel:
 
 .. code-block:: powershell
 
     $ conda config --add channels conda-forge
-
-To build PyHook addon download `Boost <https://www.boost.org/>`_ and place header files in Addon/include.
-Then open \*.sln project and build given release.
 
 Virtual environment
 ===================
@@ -616,6 +617,7 @@ History
 
 NEXT / DEV
 ----------
+- Added pipeline files downloading cancel confirmation popup.
 - Added built-in addon DLL inside executable.
 - Fixed invalid icon readout.
 - Updated app runtime icon.
