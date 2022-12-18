@@ -51,7 +51,7 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
             bool: Flag if downloading should be continued.
         """
         nonlocal last_progress, cancel_popup
-        if progress > last_progress:
+        if progress > last_progress or progress == -1:
             window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(current_count=max(progress, 0), visible=progress > -1)
             window[SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT].update(visible=progress < 0)
             last_progress = progress
@@ -60,7 +60,7 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
             if cancel_popup is None:
                 cancel_popup = show_popup_text(
                     "Confirm cancel",
-                    "Are you sure to cancel download?",
+                    "Are you sure to cancel files verifying?",
                     ok_label="Yes",
                     cancel_button=True,
                     cancel_label="No",
