@@ -104,3 +104,28 @@ class SGKeys:
             int: Session index in UI.
         """
         return int(re.findall(r"\d+", session_key)[0])
+
+
+class TKKeys:
+    """Strings used by Tkinter as keys.
+
+    CMD_BIND (str): Key for: Tkinter bind command.
+    EVENT_KEY_PRESS (str): Key for: Tkinter KeyPress event.
+    EVENT_KEY_RELEASE (str): Key for: Tkinter KeyRelease event.
+    EVENT_MOUSE_BUTTON_CLICK (str): Key for: Tkinter Button-1 event.
+    BUTTON_BACKSPACE (str): Key for: Tkinter backspace button code.
+    BUTTON_DELETE (str): Key for: Tkinter delete button code.
+    INSERT (str): Key for: Tkinter writing cursor code.
+    POPDOWN_WINDOW (str): Key for: Tkinter ComboBox PopdownWindow element key.
+    POPDOWN_WINDOW_SUFFIX (str): Key for: Tkinter ComboBox PopdownWindow element suffix key.
+    """
+
+    CMD_BIND = "bind"
+    EVENT_KEY_PRESS = "<KeyPress>"
+    EVENT_KEY_RELEASE = "<KeyRelease>"
+    EVENT_MOUSE_BUTTON_CLICK = "<Button-1>"
+    BUTTON_BACKSPACE = "BackSpace"
+    BUTTON_DELETE = "Delete"
+    INSERT = "insert"
+    POPDOWN_WINDOW = "ttk::combobox::PopdownWindow"
+    POPDOWN_WINDOW_SUFFIX = ".f.l"

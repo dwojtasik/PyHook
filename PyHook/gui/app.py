@@ -21,7 +21,7 @@ from _version import __version__
 from session import ProcessInfo, Session, get_process_list
 from win.api import get_hq_icon_raw
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
-from gui.keys import SGKeys
+from gui.keys import SGKeys, TKKeys
 from gui.pipeline_download import verify_download
 from gui.settings import display_settings_window, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
@@ -104,7 +104,7 @@ def _update_process_list(
         values=_to_combo_list(process_list, filter_string if filter_string else None),
     )
     if open_dropdown:
-        combo.TKCombo.event_generate("<Button-1>")
+        combo.TKCombo.event_generate(TKKeys.EVENT_MOUSE_BUTTON_CLICK)
 
 
 def _update_sessions_active_view(window: sg.Window, sessions: List[Session], selected_session: Session | None) -> None:
@@ -221,7 +221,7 @@ def _bind_combo_popdown_event(window: sg.Window) -> None:
         window (sg.Window): Parent window.
     """
     combo: sg.Combo = window[SGKeys.PROCESS_LIST]
-    popdown_ref = combo.TKCombo.tk.call("ttk::combobox::PopdownWindow", combo.TKCombo) + ".f.l"
+    popdown_ref = combo.TKCombo.tk.call(TKKeys.POPDOWN_WINDOW, combo.TKCombo) + TKKeys.POPDOWN_WINDOW_SUFFIX
 
     pressed = []
     allowed_chars = string.ascii_lowercase + string.ascii_uppercase + string.digits + " "
@@ -235,29 +235,26 @@ def _bind_combo_popdown_event(window: sg.Window) -> None:
         if event.char in pressed or event.keysym in pressed:
             return
         if event.char in allowed_chars:
-            if event.char not in pressed:
-                pressed.append(event.char)
-            idx = combo.TKCombo.index("insert")
+            pressed.append(event.char)
+            idx = combo.TKCombo.index(TKKeys.INSERT)
             filter_string = combo.TKCombo.get()
-            combo.TKCombo.event_generate("<Button-1>")
+            combo.TKCombo.event_generate(TKKeys.EVENT_MOUSE_BUTTON_CLICK)
             combo.TKCombo.set(filter_string[:idx] + event.char + filter_string[idx:])
             combo.TKCombo.icursor(idx + 1)
-        elif event.keysym == "BackSpace":
-            if event.keysym not in pressed:
-                pressed.append(event.keysym)
-            idx = combo.TKCombo.index("insert")
+        elif event.keysym == TKKeys.BUTTON_BACKSPACE:
+            pressed.append(event.keysym)
+            idx = combo.TKCombo.index(TKKeys.INSERT)
             if idx > 0:
                 filter_string = combo.TKCombo.get()
-                combo.TKCombo.event_generate("<Button-1>")
+                combo.TKCombo.event_generate(TKKeys.EVENT_MOUSE_BUTTON_CLICK)
                 combo.TKCombo.set(filter_string[: idx - 1] + filter_string[idx:])
                 combo.TKCombo.icursor(idx - 1)
-        elif event.keysym == "Delete":
-            if event.keysym not in pressed:
-                pressed.append(event.keysym)
-            idx = combo.TKCombo.index("insert")
+        elif event.keysym == TKKeys.BUTTON_DELETE:
+            pressed.append(event.keysym)
+            idx = combo.TKCombo.index(TKKeys.INSERT)
             filter_string = combo.TKCombo.get()
             if idx < len(filter_string):
-                combo.TKCombo.event_generate("<Button-1>")
+                combo.TKCombo.event_generate(TKKeys.EVENT_MOUSE_BUTTON_CLICK)
                 combo.TKCombo.set(filter_string[:idx] + filter_string[idx + 1 :])
 
     def _on_key_release(event) -> None:
@@ -271,8 +268,8 @@ def _bind_combo_popdown_event(window: sg.Window) -> None:
         if event.keysym in pressed:
             pressed.remove(event.keysym)
 
-    combo.TKCombo._bind(("bind", popdown_ref), "<KeyPress>", _on_key_press, None)
-    combo.TKCombo._bind(("bind", popdown_ref), "<KeyRelease>", _on_key_release, None)
+    combo.TKCombo._bind((TKKeys.CMD_BIND, popdown_ref), TKKeys.EVENT_KEY_PRESS, _on_key_press, None)
+    combo.TKCombo._bind((TKKeys.CMD_BIND, popdown_ref), TKKeys.EVENT_KEY_RELEASE, _on_key_release, None)
 
 
 # Application menu layout.
