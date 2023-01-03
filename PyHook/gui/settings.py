@@ -24,6 +24,7 @@ _SETTINGS_PATH = "settings.json"
 # PyHook settings.
 _SETTINGS = {
     SettingsKeys.KEY_AUTOSAVE: 5,
+    SettingsKeys.KEY_AUTOUPDATE: False,
     SettingsKeys.KEY_AUTODOWNLOAD: True,
     SettingsKeys.KEY_DOWNLOADED: [],
 }
@@ -77,7 +78,7 @@ def load_settings() -> None:
                     if int(value) < 1:
                         continue
                     _SETTINGS[key] = int(value)
-                elif key == SettingsKeys.KEY_AUTODOWNLOAD:
+                elif key in (SettingsKeys.KEY_AUTOUPDATE, SettingsKeys.KEY_AUTODOWNLOAD):
                     _SETTINGS[key] = bool(value)
                 elif key == SettingsKeys.KEY_DOWNLOADED:
                     if not isinstance(value, list):
@@ -93,6 +94,14 @@ def display_settings_window():
     window = sg.Window(
         "Settings",
         [
+            [
+                sg.Checkbox(
+                    "Try to update app on start",
+                    default=temp_settings[SettingsKeys.KEY_AUTOUPDATE],
+                    enable_events=True,
+                    key=SGKeys.SETTINGS_AUTOUPDATE_CHECKBOX,
+                )
+            ],
             [
                 sg.Checkbox(
                     "Download pipeline files on start",
@@ -134,7 +143,9 @@ def display_settings_window():
         event, values = window.read()
         if event in (sg.WIN_CLOSED, SGKeys.EXIT, SGKeys.SETTINGS_CANCEL_BUTTON):
             break
-        if event == SGKeys.SETTINGS_AUTODOWNLOAD_CHECKBOX:
+        if event == SGKeys.SETTINGS_AUTOUPDATE_CHECKBOX:
+            temp_settings[SettingsKeys.KEY_AUTOUPDATE] = values[event]
+        elif event == SGKeys.SETTINGS_AUTODOWNLOAD_CHECKBOX:
             temp_settings[SettingsKeys.KEY_AUTODOWNLOAD] = values[event]
         elif event == SGKeys.SETTINGS_AUTOSAVE_SLIDER:
             new_value = int(values[event])

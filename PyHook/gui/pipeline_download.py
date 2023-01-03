@@ -7,6 +7,7 @@ Pipeline download window for PyHook
 """
 
 from os.path import basename, exists
+from typing import Tuple
 
 import PySimpleGUI as sg
 
@@ -26,20 +27,22 @@ _FILE_VERIFY_TEXT_FORMAT = "File (%d/%d): %s"
 _MAX_URL_LENGTH = 60
 
 
-def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> bool:
+def _verify_files(
+    window: sg.Window, cancel_popup: sg.Window | None, pipeline_dir: str, pipeline_file: str
+) -> Tuple[sg.Window, bool]:
     """Verify and download files for given pipeline.
 
     Args:
         window (sg.Window): UI window with progress.
+        cancel_popup: (sg.Window | None): Cancel popup window.
         pipeline_dir (str): Pipeline directory.
         pipeline_file (str): Pipeline file.
 
     Returns:
-        bool: Flag if all files were successfully verified.
+        Tuple[sg.Window, bool]: Cancel popup window and flag if all files were successfully verified.
     """
 
     last_progress = 0
-    cancel_popup: sg.Window = None
 
     def _download_callback(progress: int) -> bool:
         """Download callback to manage download process and display progress bar.
@@ -98,15 +101,13 @@ def _verify_files(window: sg.Window, pipeline_dir: str, pipeline_file: str) -> b
                             else f"{url[: _MAX_URL_LENGTH // 2]}...{url[-_MAX_URL_LENGTH // 2 :]}",
                         )
                     )
-                    _download_callback(-1)
-                    was_cancelled = download_file(url, pipeline_data_dir, _download_callback)
-                    if was_cancelled:
+                    if not _download_callback(-1) or download_file(url, pipeline_data_dir, _download_callback):
                         window.write_event_value(SGKeys.DOWNLOAD_CANCEL_EVENT, ())
-                        return False
-            return True
+                        return cancel_popup, False
+            return cancel_popup, True
         except Exception as ex:
             show_popup_exception("Error", "Cannot read / download pipeline files!", ex)
-            return False
+            return cancel_popup, False
 
 
 def verify_download(forced: bool = False) -> None:
@@ -120,7 +121,7 @@ def verify_download(forced: bool = False) -> None:
     settings = get_settings()
     if forced:
         settings[SettingsKeys.KEY_DOWNLOADED] = []
-    if settings[SettingsKeys.KEY_AUTODOWNLOAD]:
+    if settings[SettingsKeys.KEY_AUTODOWNLOAD] or forced:
         pipeline_dir = None
         try:
             pipeline_dir = get_pipeline_directory()
@@ -134,6 +135,7 @@ def verify_download(forced: bool = False) -> None:
         count = len(pipelines)
         display_ui = forced or any(path not in settings[SettingsKeys.KEY_DOWNLOADED] for path in pipelines)
         if display_ui:
+            cancel_popup: sg.Window = None
             window = sg.Window(
                 "Verifying pipeline files...",
                 [
@@ -176,8 +178,21 @@ def verify_download(forced: bool = False) -> None:
                 window[SGKeys.DOWNLOAD_VERIFY_TEXT].update(value=_VERIFY_TEXT_FORMAT % (i + 1, count, pipeline))
                 window[SGKeys.DOWNLOAD_FILE_VERIFY_TEXT].update(value="")
                 window.refresh()
+                if cancel_popup is not None:
+                    popup_event, _ = cancel_popup.read(0)
+                    if popup_event in (
+                        sg.WIN_CLOSED,
+                        SGKeys.EXIT,
+                        SGKeys.POPUP_KEY_OK_BUTTON,
+                        SGKeys.POPUP_KEY_CANCEL_BUTTON,
+                    ):
+                        cancel_popup.close()
+                        cancel_popup = None
+                        if popup_event == SGKeys.POPUP_KEY_OK_BUTTON:
+                            break
                 if pipeline not in settings[SettingsKeys.KEY_DOWNLOADED]:
-                    if _verify_files(window, pipeline_dir, pipeline):
+                    cancel_popup, success = _verify_files(window, cancel_popup, pipeline_dir, pipeline)
+                    if success:
                         settings[SettingsKeys.KEY_DOWNLOADED].append(pipeline)
                         has_change = True
                     else:

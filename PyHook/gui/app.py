@@ -19,14 +19,15 @@ import PySimpleGUI as sg
 
 from _version import __version__
 from session import ProcessInfo, Session, get_process_list
-from win.api import get_hq_icon_raw
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
 from gui.keys import SGKeys, TKKeys
 from gui.pipeline_download import verify_download
 from gui.settings import display_settings_window, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
+from gui.update import try_update
 from gui.utils import EventCallback, show_popup, show_popup_text, with_border
-from utils.common import is_frozen_bundle
+from utils.common import delete_self_exe, is_frozen_bundle
+from win.api import get_hq_icon_raw
 
 # Maximum amount of sessions.
 _MAX_SESSIONS = 15
@@ -276,7 +277,7 @@ def _bind_combo_popdown_event(window: sg.Window) -> None:
 _MENU_LAYOUT = [
     ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.EXIT]],
     ["Pipeline", [SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION]],
-    ["Help", [SGKeys.MENU_ABOUT_OPTION]],
+    ["Help", [SGKeys.MENU_UPDATE_OPTION, SGKeys.MENU_ABOUT_OPTION]],
 ]
 
 # Application UI layout.
@@ -418,6 +419,8 @@ def gui_main() -> None:
 
     # Flag if GUI is running.
     running = True
+    # UI worker thread.
+    ui_worker: Thread = None
     # Last read process list.
     process_list = get_process_list()
     # Last process filter string.
@@ -430,6 +433,10 @@ def gui_main() -> None:
     killed_sessions: Dict[str, Thread] = {}
     # Selected session to display overview.
     selected_session: Session = None
+    # Name of updated executable.
+    updated_executable: str = None
+    # Flag if app should restart for update.
+    update_restart = False
 
     # Application window.
     window = sg.Window(
@@ -448,6 +455,10 @@ def gui_main() -> None:
 
     load_settings()
     verify_download()
+    updated_executable, update_restart = try_update()
+
+    if update_restart:
+        running = False
 
     def _kill_session(session: Session) -> None:
         """Kills given sessions.
@@ -464,15 +475,17 @@ def gui_main() -> None:
         killed_sessions[session.uuid] = Thread(target=_kill_self)
         killed_sessions[session.uuid].start()
 
-    def _close_all_sessions() -> None:
-        """Closes all PyHook sessions on app exit."""
+    def _close_app() -> None:
+        """Closes all PyHook sessions and threads on app exit."""
         for session in sessions:
             session.close()
         for killing_thread in list(killed_sessions.values()):
             if killing_thread.is_alive():
                 killing_thread.join()
+        if updated_executable is not None:
+            delete_self_exe()
 
-    atexit.register(_close_all_sessions)
+    atexit.register(_close_app)
 
     def _update_ui() -> None:
         """Updates UI window."""
@@ -499,8 +512,9 @@ def gui_main() -> None:
             except Exception:
                 pass
 
-    ui_worker = Thread(target=_update_ui)
-    ui_worker.start()
+    if running:
+        ui_worker = Thread(target=_update_ui)
+        ui_worker.start()
 
     while running:
         event, values = window.read()
@@ -608,6 +622,10 @@ def gui_main() -> None:
             display_settings_window()
         elif event == SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION:
             verify_download(True)
+        elif event == SGKeys.MENU_UPDATE_OPTION:
+            updated_executable, update_restart = try_update(True, updated_executable)
+            if update_restart:
+                break
         elif event == SGKeys.MENU_ABOUT_OPTION:
             show_popup(
                 "About",
@@ -622,7 +640,10 @@ def gui_main() -> None:
             )
 
     running = False
-    ui_worker.join()
+    if ui_worker is not None:
+        ui_worker.join()
     window.close()
-    _close_all_sessions()
+    _close_app()
+    if update_restart:
+        delete_self_exe(updated_executable)
     sys.exit(0)

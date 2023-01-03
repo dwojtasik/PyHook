@@ -29,6 +29,7 @@ Features
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
 - Automatic pipeline files download
+- Automatic update [DEV]
 
 Graphics API support
 ====================
@@ -604,7 +605,7 @@ Breaking changes
 
 0.9.0 → 1.1.2
 -------------
-| Pipelines started in ``1.1.2`` version has refactored name of pipeline ``utils`` to ``pipeline_utils``.
+| Pipelines created in ``1.1.2`` version have refactored name of pipeline ``utils`` to ``pipeline_utils``.
 | Old pipelines can be rewritten to ``1.1.2`` by simply changing import from ``utils`` to ``pipeline_utils``.
 
 0.8.1 → 0.9.0
@@ -617,6 +618,8 @@ History
 
 NEXT / DEV
 ----------
+- Added automatic and manual app update.
+- Fixed re-download issues with autodownload and cancelling.
 - Process combo box now displays dropdown options during writing.
 - Added pipeline files downloading cancel confirmation popup.
 - Added built-in addon DLL inside executable.

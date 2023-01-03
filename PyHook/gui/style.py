@@ -22,6 +22,8 @@ FONT_MONO_DEFAULT = (_FONT_NAME_MONO_DEFAULT, 14)
 FONT_CONSOLE = (_FONT_NAME_MONO_DEFAULT, 10)
 # Default image font name.
 FONT_IMG_NAME_DEFAULT = "arial.ttf"
+# Color for clickable URLs.
+COLOR_TEXT_URL = "yellow"
 # Maximum size of image text button.
 MAX_BUTTON_TEXT_SIZE = 16
 # Session button colors in format (active, inactive).

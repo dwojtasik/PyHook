@@ -32,13 +32,17 @@ class SGKeys:
     BORDER_SUFFIX (str): Key for: Border suffix.
     MENU_SETTINGS_OPTION (str): Key for: Menu settings option.
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION (str): Key for: Menu pipeline force download option.
+    MENU_UPDATE_OPTION (str): Key for: Menu update option.
     MENU_ABOUT_OPTION (str): Key for: Menu about option.
+    SETTINGS_AUTOUPDATE_CHECKBOX (str): Key for: Settings autoupdate checkbox.
     SETTINGS_AUTODOWNLOAD_CHECKBOX (str): Key for: Settings autodownload checkbox.
     SETTINGS_AUTOSAVE_SLIDER (str): Key for: Settings autosave slider.
     SETTINGS_AUTOSAVE_TEXT (str): Key for: Settings autosave text.
     SETTINGS_SAVE_BUTTON (str): Key for: Settings save button.
     SETTINGS_CANCEL_BUTTON (str): Key for: Settings cancel button.
+    UPDATE_RELEASE_LINK (str): Key for: Update release link.
     ABOUT_GITHUB_BUTTON (str): Key for: About GitHub button.
+    DOWNLOAD_TEXT (str): Key for: Download text.
     DOWNLOAD_VERIFY_TEXT (str): Key for: Download verify text.
     DOWNLOAD_FILE_VERIFY_TEXT (str): Key for: Download file verify text.
     DOWNLOAD_PROGRESS_BAR (str): Key for: Download progress bar.
@@ -67,13 +71,17 @@ class SGKeys:
     BORDER_SUFFIX = "-BORDER-"
     MENU_SETTINGS_OPTION = "Settings"
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION = "Force re-download"
+    MENU_UPDATE_OPTION = "Update"
     MENU_ABOUT_OPTION = "About"
+    SETTINGS_AUTOUPDATE_CHECKBOX = "-SETTINGS_AUTOUPDATE_CHECKBOX-"
     SETTINGS_AUTODOWNLOAD_CHECKBOX = "-SETTINGS_AUTODOWNLOAD_CHECKBOX-"
     SETTINGS_AUTOSAVE_SLIDER = "-SETTINGS_AUTOSAVE_SLIDER-"
     SETTINGS_AUTOSAVE_TEXT = "-SETTINGS_AUTOSAVE_TEXT-"
     SETTINGS_SAVE_BUTTON = "-SETTINGS_SAVE_BUTTON-"
     SETTINGS_CANCEL_BUTTON = "-SETTINGS_CANCEL_BUTTON-"
+    UPDATE_RELEASE_LINK = "-UPDATE_RELEASE_LINK-"
     ABOUT_GITHUB_BUTTON = "-GITHUB-"
+    DOWNLOAD_TEXT = "-DOWNLOAD_TEXT-"
     DOWNLOAD_VERIFY_TEXT = "-DOWNLOAD_VERIFY_TEXT-"
     DOWNLOAD_FILE_VERIFY_TEXT = "-DOWNLOAD_FILE_VERIFY_TEXT-"
     DOWNLOAD_PROGRESS_BAR = "-DOWNLOAD_PROGRESS_BAR-"
