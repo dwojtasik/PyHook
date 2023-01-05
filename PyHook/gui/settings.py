@@ -19,7 +19,7 @@ import PySimpleGUI as sg
 
 from gui.keys import SGKeys
 from gui.style import FONT_SMALL_DEFAULT
-from gui.utils import show_popup_text
+from gui.utils import center_in_parent, show_popup_text
 from keys import SettingsKeys
 from win.api import CREATE_NO_WINDOW
 
@@ -55,11 +55,12 @@ def get_settings() -> Dict[str, Any]:
     return copy.deepcopy(_SETTINGS)
 
 
-def save_settings(new_settings: Dict[str, Any] = None) -> None:
+def save_settings(new_settings: Dict[str, Any] = None, parent: sg.Window = None) -> None:
     """Saves PyHook settings to file.
 
     Args:
         new_settings (Dict[str, Any], optional): New settings to save. Defaults to None.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
     """
     if new_settings is not None:
         for key in new_settings:
@@ -69,14 +70,22 @@ def save_settings(new_settings: Dict[str, Any] = None) -> None:
             json.dump(_SETTINGS, settings_file, indent=4)
     except PermissionError:
         show_popup_text(
-            "Error", f"Cannot save settings to file {_SETTINGS_PATH}.\nPermission denied. Try to run PyHook as admin."
+            "Error",
+            f"Cannot save settings to file {_SETTINGS_PATH}.\nPermission denied. Try to run PyHook as admin.",
+            parent=parent,
         )
     except Exception:
-        show_popup_text("Error", f"Cannot save settings to file {_SETTINGS_PATH}.\nUnhandled exception occurred.")
+        show_popup_text(
+            "Error", f"Cannot save settings to file {_SETTINGS_PATH}.\nUnhandled exception occurred.", parent=parent
+        )
 
 
-def load_settings() -> None:
-    """Loads PyHook settings from file."""
+def load_settings(parent: sg.Window = None) -> None:
+    """Loads PyHook settings from file.
+
+    Args:
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
+    """
     if exists(_SETTINGS_PATH):
         with open(_SETTINGS_PATH, encoding="utf-8") as settings_file:
             settings = json.load(settings_file)
@@ -96,7 +105,7 @@ def load_settings() -> None:
                         continue
                     _SETTINGS[key] = list(value)
     else:
-        save_settings()
+        save_settings(parent)
 
 
 def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column]]:
@@ -147,7 +156,7 @@ def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column
     ]
 
 
-def _validate_python_paths(settings: Dict[str, Any]) -> bool:
+def _validate_python_paths(settings: Dict[str, Any], parent: sg.Window = None) -> bool:
     """Validates paths to local Python executables in settings.
 
     Path can be either empty or has to point to valid Python executable.
@@ -155,6 +164,7 @@ def _validate_python_paths(settings: Dict[str, Any]) -> bool:
 
     Args:
         settings (Dict[str, Any]): Actual PyHook settings.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
 
     Returns:
         bool: Flag if paths points to valid Python executables.
@@ -192,13 +202,19 @@ def _validate_python_paths(settings: Dict[str, Any]) -> bool:
                         f"Path to {bit}-bit Python executable points to invalid Python installation."
                     )
     if len(error_messages) > 0:
-        show_popup_text("Error", "Cannot save settings due to following errors:\n" + "\n".join(error_messages))
+        show_popup_text(
+            "Error", "Cannot save settings due to following errors:\n" + "\n".join(error_messages), parent=parent
+        )
         return False
     return True
 
 
-def display_settings_window():
-    """Displays settings window."""
+def display_settings_window(parent: sg.Window = None) -> None:
+    """Displays settings window.
+
+    Args:
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
+    """
     temp_settings = get_settings()
     window = sg.Window(
         "Settings",
@@ -262,9 +278,8 @@ def display_settings_window():
         disable_minimize=True,
         modal=True,
         keep_on_top=True,
-        finalize=True,
-        location=(None, None),
     )
+    center_in_parent(window, parent, 350)
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, SGKeys.EXIT, SGKeys.SETTINGS_CANCEL_BUTTON):
@@ -282,8 +297,8 @@ def display_settings_window():
         elif event == SGKeys.SETTINGS_PYTHON_64_INPUT:
             temp_settings[SettingsKeys.KEY_LOCAL_PYTHON_64] = values[event]
         elif event == SGKeys.SETTINGS_SAVE_BUTTON:
-            if not _validate_python_paths(temp_settings):
+            if not _validate_python_paths(temp_settings, window):
                 continue
-            save_settings(temp_settings)
+            save_settings(temp_settings, window)
             break
     window.close()

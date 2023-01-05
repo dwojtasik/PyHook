@@ -620,6 +620,7 @@ History
 
 NEXT / DEV
 ----------
+- Added child window centering in parent.
 - Added automatic requirements installation.
 - Added settings for local python paths in GUI.
 - Fixed timeout for subprocess communication.

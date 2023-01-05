@@ -17,7 +17,7 @@ from pipeline import PipelinesDirNotFoundError, get_pipeline_directory, get_pipe
 from gui.keys import SGKeys
 from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
-from gui.utils import show_popup_exception, show_popup_text
+from gui.utils import center_in_parent, show_popup_exception, show_popup_text
 from utils.downloader import download_file
 from win.api import CREATE_NO_WINDOW
 
@@ -70,6 +70,7 @@ def _verify_files(
                     cancel_button=True,
                     cancel_label="No",
                     return_window=True,
+                    parent=window,
                 )
         if cancel_popup is not None:
             popup_event, _ = cancel_popup.read(0)
@@ -109,18 +110,23 @@ def _verify_files(
             return cancel_popup, True
         except Exception as ex:
             show_popup_exception(
-                "Error", "Cannot read / download pipeline files with following error:", ex, ex_width=75
+                "Error",
+                "Cannot read / download pipeline files with following error:",
+                ex,
+                ex_width=75,
+                parent=window,
             )
             return cancel_popup, False
     return cancel_popup, True
 
 
-def verify_download(forced: bool = False) -> None:
+def verify_download(forced: bool = False, parent: sg.Window = None) -> None:
     """Verifies if all pipeline files were downloaded.
     If any file is missing or it's size differ with URL ones it will be downloaded.
 
     Args:
         forced (bool, optional): Forces all files download. Defaults to False.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
     """
     has_change = forced
     settings = get_settings()
@@ -175,9 +181,8 @@ def verify_download(forced: bool = False) -> None:
                 disable_minimize=True,
                 modal=True,
                 keep_on_top=True,
-                finalize=True,
-                location=(None, None),
             )
+            center_in_parent(window, parent, 600)
             window.refresh()
             for i, pipeline in enumerate(pipelines):
                 window[SGKeys.DOWNLOAD_VERIFY_TEXT].update(value=_PIPELINE_TEXT_FORMAT % (i + 1, count, pipeline))
@@ -209,11 +214,12 @@ def verify_download(forced: bool = False) -> None:
         save_settings(settings)
 
 
-def install_requirements(local_python_path: str) -> None:
+def install_requirements(local_python_path: str, parent: sg.Window = None) -> None:
     """Installs pipelines requirements for local Python.
 
     Args:
         local_python_path (str): Path to local Python executable.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
     """
     pipeline_dir = None
     try:
@@ -252,9 +258,8 @@ def install_requirements(local_python_path: str) -> None:
         disable_minimize=True,
         modal=True,
         keep_on_top=True,
-        finalize=True,
-        location=(None, None),
     )
+    center_in_parent(window, parent, 450)
     window.refresh()
 
     def is_cancelled() -> bool:
@@ -274,6 +279,7 @@ def install_requirements(local_python_path: str) -> None:
                     cancel_button=True,
                     cancel_label="No",
                     return_window=True,
+                    parent=window,
                 )
         if cancel_popup is not None:
             popup_event, _ = cancel_popup.read(0)
@@ -316,6 +322,7 @@ def install_requirements(local_python_path: str) -> None:
                         cancel_label="No",
                         ex_width=100,
                         text_after="Do you want to continue installation for other pipelines?",
+                        parent=window,
                     ):
                         break
         window[SGKeys.REQUIREMENTS_INSTALL_PROGRESS_BAR].update(current_count=int((i + 1) / count * 100))

@@ -44,6 +44,41 @@ def with_border(elem: sg.Element, color: str, visible: bool = True) -> sg.Column
     )
 
 
+def center_in_parent(child: sg.Window, parent: sg.Window, min_width: int = None) -> None:
+    """Centers child window in parent.
+
+    If parent is not provided it will finalize child if needed.
+    Child window will be hidden (by alpha transparency) while centering.
+
+    Args:
+        child (sg.Window): Child window to center.
+        parent (sg.Window): Parent window.
+        min_width (int, optional): Minimum width of child window in pixels.
+            Used to minimize flashing. Defaults to None.
+    """
+    if parent is None:
+        if not child.finalize_in_progress:
+            child.finalize()
+        return
+    parent_x, parent_y = parent.current_location(True)
+    parent_w, parent_h = parent.current_size_accurate()
+    child_x, child_y = parent_x + parent_w // 2, parent_y + parent_h // 2
+    if min_width is not None:
+        child_x -= min_width // 2
+    if child.finalize_in_progress:
+        child.move(child_x, child_y)
+    else:
+        child.Location = (child_x, child_y)
+        child._AlphaChannel = 0
+        child.finalize()
+    child_w, child_h = child.current_size_accurate()
+    if min_width is not None:
+        child_x += min_width // 2
+    child.move(child_x - child_w // 2, child_y - child_h // 2)
+    child.refresh()
+    child.reappear()
+
+
 def show_popup(
     title: str,
     layout: List[List[sg.Column]],
@@ -52,6 +87,7 @@ def show_popup(
     cancel_label: str = "Cancel",
     events: Dict[str, EventCallback] = None,
     min_width: int = None,
+    parent: sg.Window = None,
     return_window: bool = False,
 ) -> sg.Window | bool:
     """Displays customized popup window.
@@ -64,6 +100,7 @@ def show_popup(
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
         events (Dict[str, EventCallback], optional): Map of event keys with callbacks. Defaults to None.
         min_width (int, optional): Minimum width of popup window in pixels. Defaults to None.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
         return_window (bool, optional): Flag if popup window should be returned for custom event loop.
             Defaults to False.
 
@@ -84,9 +121,8 @@ def show_popup(
         disable_minimize=True,
         modal=True,
         keep_on_top=True,
-        finalize=True,
-        location=(None, None),
     )
+    center_in_parent(popup, parent, min_width)
     if return_window:
         return popup
     if events is None:
@@ -117,6 +153,7 @@ def show_popup_text(
     ok_label: str = "OK",
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
+    parent: sg.Window = None,
     return_window: bool = False,
 ) -> sg.Window | bool:
     """Displays customized popup window.
@@ -127,6 +164,7 @@ def show_popup_text(
         ok_label (str, optional): Label for OK button. Defaults to "OK".
         cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
         return_window (bool, optional): Flag if popup window should be returned for custom event loop.
             Defaults to False.
 
@@ -134,7 +172,7 @@ def show_popup_text(
         sg.Window | bool: Popup window if return_window==True, otherwise flag if OK button was pressed.
     """
     layout = [[sg.Text(text, justification="center")]]
-    return show_popup(title, layout, ok_label, cancel_button, cancel_label, return_window=return_window)
+    return show_popup(title, layout, ok_label, cancel_button, cancel_label, parent=parent, return_window=return_window)
 
 
 def show_popup_exception(
@@ -146,6 +184,7 @@ def show_popup_exception(
     cancel_label: str = "Cancel",
     ex_width: int = 50,
     text_after: str = None,
+    parent: sg.Window = None,
     return_window: bool = False,
 ) -> sg.Window | bool:
     """Displays customized popup window for exception.
@@ -159,6 +198,7 @@ def show_popup_exception(
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
         ex_width (int, optional): Length for wrapping exception stack. Defaults to 50.
         text_after (str, optional): Text to display after exception stack. Defaults to None.
+        parent (sg.Window, optional): Parent window for centering. Defaults to None.
         return_window (bool, optional): Flag if popup window should be returned for custom event loop.
             Defaults to False.
 
@@ -174,4 +214,4 @@ def show_popup_exception(
     ]
     if text_after is not None:
         layout.append([sg.Text(text_after, justification="center")])
-    return show_popup(title, layout, ok_label, cancel_button, cancel_label, return_window=return_window)
+    return show_popup(title, layout, ok_label, cancel_button, cancel_label, parent=parent, return_window=return_window)

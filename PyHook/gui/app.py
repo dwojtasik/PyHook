@@ -457,9 +457,9 @@ def gui_main() -> None:
     _update_process_list(window, process_list, "")
     _bind_combo_popdown_event(window)
 
-    load_settings()
-    verify_download()
-    updated_executable, update_restart = try_update()
+    load_settings(window)
+    verify_download(parent=window)
+    updated_executable, update_restart = try_update(parent=window)
 
     if update_restart:
         running = False
@@ -532,6 +532,7 @@ def gui_main() -> None:
                     ok_label="Yes",
                     cancel_button=True,
                     cancel_label="No",
+                    parent=window,
                 ):
                     break
             else:
@@ -551,20 +552,22 @@ def gui_main() -> None:
             last_pid = None
         elif event == SGKeys.INJECT:
             if last_pid is None:
-                show_popup_text("Error", "First select process to inject PyHook.")
+                show_popup_text("Error", "First select process to inject PyHook.", parent=window)
                 continue
             if any(session.pid.value == last_pid for session in sessions):
-                show_popup_text("Error", "Session with given PID already exists.")
+                show_popup_text("Error", "Session with given PID already exists.", parent=window)
                 continue
             if len(sessions) == _MAX_SESSIONS:
-                show_popup_text("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
+                show_popup_text(
+                    "Error", "Maximum amount of sessions reached.\nKill old session to start new one.", parent=window
+                )
                 continue
             last_process_filter = ""
             process_info = ProcessInfo.from_pid(last_pid)
             if process_info is None:
                 process_list = get_process_list()
                 _update_process_list(window, process_list, last_process_filter)
-                show_popup_text("Error", "Process does not exists anymore.")
+                show_popup_text("Error", "Process does not exists anymore.", parent=window)
                 continue
             _update_process_list(window, process_list, last_process_filter)
             selected_session = Session(process_info)
@@ -574,7 +577,7 @@ def gui_main() -> None:
         elif event == SGKeys.INJECT_AUTO:
             auto_sessions: List[Session] = list(filter(lambda session: session.pid.value == -1, sessions))
             if len(auto_sessions) > 0 and auto_sessions[0].is_running():
-                show_popup_text("Error", "Automatic session is already running.")
+                show_popup_text("Error", "Automatic session is already running.", parent=window)
                 continue
             last_process_filter = ""
             _update_process_list(window, process_list, last_process_filter)
@@ -584,7 +587,11 @@ def gui_main() -> None:
                 selected_session.restart()
             else:
                 if len(sessions) == _MAX_SESSIONS:
-                    show_popup_text("Error", "Maximum amount of sessions reached.\nKill old session to start new one.")
+                    show_popup_text(
+                        "Error",
+                        "Maximum amount of sessions reached.\nKill old session to start new one.",
+                        parent=window,
+                    )
                     continue
                 selected_session = Session(None, [int(session.pid.value) for session in sessions])
                 sessions.append(selected_session)
@@ -600,6 +607,7 @@ def gui_main() -> None:
                 ok_label="Yes",
                 cancel_button=True,
                 cancel_label="No",
+                parent=window,
             ):
                 sessions = [session for session in sessions if session.pid.value != selected_session.pid.value]
                 _kill_session(selected_session)
@@ -623,9 +631,9 @@ def gui_main() -> None:
             selected_session.clear_logs()
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
         elif event == SGKeys.MENU_SETTINGS_OPTION:
-            display_settings_window()
+            display_settings_window(window)
         elif event == SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION:
-            verify_download(True)
+            verify_download(True, parent=window)
         elif event == SGKeys.MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION:
             settings = get_settings()
             local_path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if _IS_64_BIT else SettingsKeys.KEY_LOCAL_PYTHON_32]
@@ -639,12 +647,13 @@ def gui_main() -> None:
                     ok_label="Yes",
                     cancel_button=True,
                     cancel_label="No",
+                    parent=window,
                 ):
-                    display_settings_window()
+                    display_settings_window(window)
                 continue
-            install_requirements(local_path)
+            install_requirements(local_path, window)
         elif event == SGKeys.MENU_UPDATE_OPTION:
-            updated_executable, update_restart = try_update(True, updated_executable)
+            updated_executable, update_restart = try_update(True, updated_executable, parent=window)
             if update_restart:
                 break
         elif event == SGKeys.MENU_ABOUT_OPTION:
@@ -658,6 +667,7 @@ def gui_main() -> None:
                 ],
                 events={SGKeys.ABOUT_GITHUB_BUTTON: EventCallback(open_github, False)},
                 min_width=275,
+                parent=window,
             )
 
     running = False
