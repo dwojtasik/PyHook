@@ -449,8 +449,8 @@ Available ENV variables (required up to 1.1.2, can be set in settings in newer v
 - ``LOCAL_PYTHON_64`` (path to 64-bit Python)
 - ``LOCAL_PYTHON`` (fallback path if none of above is set)
 
-| Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
-| You can also download them automatically from PyHook Pipeline menu.
+Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
+You can also download them automatically from PyHook Pipeline menu.
 
 If antivirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 

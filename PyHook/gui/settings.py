@@ -114,10 +114,20 @@ def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column
     initial_folder = os.getcwd() if len(path) == 0 or not exists(path) else dirname(path)
     return [
         [
-            sg.Text(f"Python {64 if is_64_bit else 32}-bit executable path:"),
+            sg.Text(
+                f"Python {64 if is_64_bit else 32}-bit executable path:",
+                tooltip=(
+                    "Path to Python executable that will be used in pipelines as local Python.\n"
+                    "Value set in here will override LOCAL_PYTHON environment variables."
+                ),
+            ),
             sg.FileBrowse(
                 size=(10, 1),
                 initial_folder=initial_folder,
+                tooltip=(
+                    "Path to Python executable that will be used in pipelines as local Python.\n"
+                    "Value set in here will override LOCAL_PYTHON environment variables."
+                ),
                 file_types=[("EXE Files", "*.exe")],
                 key=SGKeys.SETTINGS_PYTHON_64_BROWSE if is_64_bit else SGKeys.SETTINGS_PYTHON_32_BROWSE,
                 target=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
@@ -126,6 +136,10 @@ def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column
         [
             sg.Input(
                 default_text=path,
+                tooltip=(
+                    "Path to Python executable that will be used in pipelines as local Python.\n"
+                    "Value set in here will override LOCAL_PYTHON environment variables."
+                ),
                 size=(45, 1),
                 enable_events=True,
                 key=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
@@ -194,6 +208,7 @@ def display_settings_window():
                 sg.Checkbox(
                     "Try to update app on start",
                     default=temp_settings[SettingsKeys.KEY_AUTOUPDATE],
+                    tooltip="On application start checks if new PyHook version is available and asks for update.",
                     enable_events=True,
                     key=SGKeys.SETTINGS_AUTOUPDATE_CHECKBOX,
                 )
@@ -202,13 +217,24 @@ def display_settings_window():
                 sg.Checkbox(
                     "Download pipeline files on start",
                     default=temp_settings[SettingsKeys.KEY_AUTODOWNLOAD],
+                    tooltip=(
+                        "On application start verifies pipelines files to download.\n"
+                        'Files to download are read from "download.txt" files in pipeline directories.\n'
+                        "If any file is missing or incomplete it will be re-downloaded."
+                    ),
                     enable_events=True,
                     key=SGKeys.SETTINGS_AUTODOWNLOAD_CHECKBOX,
                 )
             ],
             [
                 sg.Text(
-                    _SLIDER_TEXT_FORMAT % temp_settings[SettingsKeys.KEY_AUTOSAVE], key=SGKeys.SETTINGS_AUTOSAVE_TEXT
+                    _SLIDER_TEXT_FORMAT % temp_settings[SettingsKeys.KEY_AUTOSAVE],
+                    tooltip=(
+                        "Describes how ofter pipeline's config should be saved.\n"
+                        'Files to download are read from "download.txt" files in pipeline directories.\n'
+                        "This is configuration used by PyHook addon and displayed in ImGui."
+                    ),
+                    key=SGKeys.SETTINGS_AUTOSAVE_TEXT,
                 )
             ],
             [
@@ -216,6 +242,10 @@ def display_settings_window():
                     orientation="horizontal",
                     range=(_AUTOSAVE_SEC_MIN, _AUTOSAVE_SEC_MAX),
                     default_value=temp_settings[SettingsKeys.KEY_AUTOSAVE],
+                    tooltip=(
+                        "Describes how ofter pipeline's config should be saved.\n"
+                        "This is configuration used by PyHook addon and displayed in ImGui."
+                    ),
                     disable_number_display=True,
                     enable_events=True,
                     key=SGKeys.SETTINGS_AUTOSAVE_SLIDER,
