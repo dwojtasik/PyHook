@@ -18,6 +18,8 @@ import requests
 _CHUNK_SIZE = 4096
 # Regex filename for Google Drive URLs.
 _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
+# Timeout for stream response in seconds.
+_STREAM_TIMEOUT_SEC = 5
 
 
 def download_file(url: str, directory: str, callback: Callable[[int], bool] = None) -> bool:
@@ -33,7 +35,7 @@ def download_file(url: str, directory: str, callback: Callable[[int], bool] = No
     Returns:
         bool: Flag if download was cancelled.
     """
-    response_stream = requests.get(url, stream=True, timeout=10)
+    response_stream = requests.get(url, stream=True, timeout=_STREAM_TIMEOUT_SEC)
     response_stream.raise_for_status()
     if url.startswith("https://drive.google.com"):
         filename = _FILENAME_REGEX.match(response_stream.headers["Content-Disposition"]).group(1)
