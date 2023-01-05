@@ -32,6 +32,7 @@ class SGKeys:
     BORDER_SUFFIX (str): Key for: Border suffix.
     MENU_SETTINGS_OPTION (str): Key for: Menu settings option.
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION (str): Key for: Menu pipeline force download option.
+    MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION (str): Key for: Menu pipeline install requirements option.
     MENU_UPDATE_OPTION (str): Key for: Menu update option.
     MENU_ABOUT_OPTION (str): Key for: Menu about option.
     SETTINGS_AUTOUPDATE_CHECKBOX (str): Key for: Settings autoupdate checkbox.
@@ -52,6 +53,8 @@ class SGKeys:
     DOWNLOAD_PROGRESS_BAR (str): Key for: Download progress bar.
     DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT (str): Key for: Download progress placeholder text.
     DOWNLOAD_CANCEL_EVENT (str): Key for: Download cancel event.
+    REQUIREMENTS_INSTALL_TEXT (str): Key for: Requirements install text.
+    REQUIREMENTS_INSTALL_PROGRESS_BAR (str): Key for: Requirements install progress bar.
     EXIT (str): Key for: Application exit.
     """
 
@@ -75,6 +78,7 @@ class SGKeys:
     BORDER_SUFFIX = "-BORDER-"
     MENU_SETTINGS_OPTION = "Settings"
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION = "Force re-download"
+    MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION = "Install requirements"
     MENU_UPDATE_OPTION = "Update"
     MENU_ABOUT_OPTION = "About"
     SETTINGS_AUTOUPDATE_CHECKBOX = "-SETTINGS_AUTOUPDATE_CHECKBOX-"
@@ -95,6 +99,8 @@ class SGKeys:
     DOWNLOAD_PROGRESS_BAR = "-DOWNLOAD_PROGRESS_BAR-"
     DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT = "-DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT-"
     DOWNLOAD_CANCEL_EVENT = "-DOWNLOAD_CANCEL_EVENT-"
+    REQUIREMENTS_INSTALL_TEXT = "-REQUIREMENTS_INSTALL_TEXT-"
+    REQUIREMENTS_INSTALL_PROGRESS_BAR = "-REQUIREMENTS_INSTALL_PROGRESS_BAR-"
     EXIT = "Exit"
 
     @staticmethod

@@ -144,6 +144,8 @@ def show_popup_exception(
     ok_label: str = "OK",
     cancel_button: bool = False,
     cancel_label: str = "Cancel",
+    ex_width: int = 50,
+    text_after: str = None,
     return_window: bool = False,
 ) -> sg.Window | bool:
     """Displays customized popup window for exception.
@@ -155,15 +157,21 @@ def show_popup_exception(
         ok_label (str, optional): Label for OK button. Defaults to "OK".
         cancel_button (bool, optional): Flag if cancel button should be displayed. Defaults to False.
         cancel_label (str, optional): Label for cancel button. Defaults to "Cancel".
+        ex_width (int, optional): Length for wrapping exception stack. Defaults to 50.
+        text_after (str, optional): Text to display after exception stack. Defaults to None.
         return_window (bool, optional): Flag if popup window should be returned for custom event loop.
             Defaults to False.
 
     Returns:
         sg.Window | bool: Popup window if return_window==True, otherwise flag if OK button was pressed.
     """
-    ex_lines = "\n".join(textwrap.wrap(f"Error: {ex}", width=50, break_on_hyphens=False))
+    ex_lines = "\n".join(
+        ["\n".join(textwrap.wrap(line, width=ex_width, break_on_hyphens=False)) for line in f"{ex}".split("\n")]
+    ).rstrip()
     layout = [
         [sg.Text(text, justification="center")],
         [sg.Text(ex_lines, justification="left", font=FONT_CONSOLE)],
     ]
+    if text_after is not None:
+        layout.append([sg.Text(text_after, justification="center")])
     return show_popup(title, layout, ok_label, cancel_button, cancel_label, return_window=return_window)

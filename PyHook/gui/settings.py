@@ -21,6 +21,7 @@ from gui.keys import SGKeys
 from gui.style import FONT_SMALL_DEFAULT
 from gui.utils import show_popup_text
 from keys import SettingsKeys
+from win.api import CREATE_NO_WINDOW
 
 # Settings file path.
 _SETTINGS_PATH = "settings.json"
@@ -41,8 +42,6 @@ _AUTOSAVE_SEC_MIN = 3
 _AUTOSAVE_SEC_MAX = 60
 # Text format for slider label.
 _SLIDER_TEXT_FORMAT = "Save PyHook config every < %d > seconds"
-# Startup flags for subprocess to avoid showing shell window.
-_CREATE_NO_WINDOW = 0x08000000
 # Timeout in seconds for process to communicate.
 _PROCESS_TIMEOUT_SEC = 2
 
@@ -173,7 +172,7 @@ def _validate_python_paths(settings: Dict[str, Any]) -> bool:
                         f"{test_path} -c \"print('{test_uuid}',end='')\"",
                         stdout=PIPE,
                         shell=False,
-                        creationflags=_CREATE_NO_WINDOW,
+                        creationflags=CREATE_NO_WINDOW,
                         start_new_session=True,
                     ) as process:
                         try:
@@ -185,7 +184,7 @@ def _validate_python_paths(settings: Dict[str, Any]) -> bool:
                             call(
                                 ["taskkill", "/F", "/T", "/PID", str(process.pid)],
                                 shell=False,
-                                creationflags=_CREATE_NO_WINDOW,
+                                creationflags=CREATE_NO_WINDOW,
                             )
                             raise ex
                 except Exception:

@@ -15,6 +15,9 @@ from typing import List, TypeVar
 
 T = TypeVar("T")
 
+# Startup flags for subprocess to avoid showing shell window.
+CREATE_NO_WINDOW = 0x08000000
+
 # Predefined process-specific access rights.
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 

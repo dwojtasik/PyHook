@@ -7,6 +7,7 @@ Pipeline download window for PyHook
 """
 
 from os.path import basename, exists
+from subprocess import PIPE, Popen
 from typing import Tuple
 
 import PySimpleGUI as sg
@@ -18,11 +19,12 @@ from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
 from gui.utils import show_popup_exception, show_popup_text
 from utils.downloader import download_file
+from win.api import CREATE_NO_WINDOW
 
-# Text format for pipeline verification.
-_VERIFY_TEXT_FORMAT = "Pipeline (%d/%d): %s"
-# Text format for pipeline file verification.
-_FILE_VERIFY_TEXT_FORMAT = "File (%d/%d): %s"
+# Text format for pipeline.
+_PIPELINE_TEXT_FORMAT = "Pipeline (%d/%d): %s"
+# Text format for pipeline file.
+_FILE_TEXT_FORMAT = "File (%d/%d): %s"
 # Maximum number of characters to display for URLs.
 _MAX_URL_LENGTH = 60
 
@@ -92,7 +94,7 @@ def _verify_files(
                 count = len(urls)
                 for i, url in enumerate(urls):
                     window[SGKeys.DOWNLOAD_FILE_VERIFY_TEXT].update(
-                        value=_FILE_VERIFY_TEXT_FORMAT
+                        value=_FILE_TEXT_FORMAT
                         % (
                             i + 1,
                             count,
@@ -106,8 +108,11 @@ def _verify_files(
                         return cancel_popup, False
             return cancel_popup, True
         except Exception as ex:
-            show_popup_exception("Error", "Cannot read / download pipeline files!", ex)
+            show_popup_exception(
+                "Error", "Cannot read / download pipeline files with following error:", ex, ex_width=75
+            )
             return cancel_popup, False
+    return cancel_popup, True
 
 
 def verify_download(forced: bool = False) -> None:
@@ -141,7 +146,7 @@ def verify_download(forced: bool = False) -> None:
                 [
                     [
                         sg.Text(
-                            _VERIFY_TEXT_FORMAT % (1, count, ""),
+                            _PIPELINE_TEXT_FORMAT % (1, count, ""),
                             key=SGKeys.DOWNLOAD_VERIFY_TEXT,
                         )
                     ],
@@ -175,7 +180,7 @@ def verify_download(forced: bool = False) -> None:
             )
             window.refresh()
             for i, pipeline in enumerate(pipelines):
-                window[SGKeys.DOWNLOAD_VERIFY_TEXT].update(value=_VERIFY_TEXT_FORMAT % (i + 1, count, pipeline))
+                window[SGKeys.DOWNLOAD_VERIFY_TEXT].update(value=_PIPELINE_TEXT_FORMAT % (i + 1, count, pipeline))
                 window[SGKeys.DOWNLOAD_FILE_VERIFY_TEXT].update(value="")
                 window.refresh()
                 if cancel_popup is not None:
@@ -202,3 +207,120 @@ def verify_download(forced: bool = False) -> None:
             window.close()
     if has_change:
         save_settings(settings)
+
+
+def install_requirements(local_python_path: str) -> None:
+    """Installs pipelines requirements for local Python.
+
+    Args:
+        local_python_path (str): Path to local Python executable.
+    """
+    pipeline_dir = None
+    try:
+        pipeline_dir = get_pipeline_directory()
+    except PipelinesDirNotFoundError:
+        show_popup_text(
+            "Error", "Cannot find pipelines directory!\nMake sure pipelines directory exists in PyHook directory."
+        )
+        return
+    pipeline_files = get_pipeline_file_list(pipeline_dir)
+    pipelines = [basename(path) for path in pipeline_files]
+    count = len(pipelines)
+    cancel_popup: sg.Window = None
+    window = sg.Window(
+        "Installing requirements...",
+        [
+            [
+                sg.Text(
+                    _PIPELINE_TEXT_FORMAT % (1, count, ""),
+                    key=SGKeys.REQUIREMENTS_INSTALL_TEXT,
+                )
+            ],
+            [
+                sg.ProgressBar(
+                    100,
+                    size_px=(450, 14),
+                    visible=True,
+                    key=SGKeys.REQUIREMENTS_INSTALL_PROGRESS_BAR,
+                )
+            ],
+            [sg.Image(size=(450, 0), pad=(0, 0))],
+        ],
+        font=FONT_SMALL_DEFAULT,
+        element_justification="center",
+        enable_close_attempted_event=True,
+        disable_minimize=True,
+        modal=True,
+        keep_on_top=True,
+        finalize=True,
+        location=(None, None),
+    )
+    window.refresh()
+
+    def is_cancelled() -> bool:
+        """Checks if user confirmed cancellation.
+
+        Returns:
+            bool: Flag if user confirmed cancellation.
+        """
+        nonlocal cancel_popup
+        event, _ = window.read(0)
+        if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
+            if cancel_popup is None:
+                cancel_popup = show_popup_text(
+                    "Confirm cancel",
+                    "Are you sure to cancel requirements installation?",
+                    ok_label="Yes",
+                    cancel_button=True,
+                    cancel_label="No",
+                    return_window=True,
+                )
+        if cancel_popup is not None:
+            popup_event, _ = cancel_popup.read(0)
+            if popup_event in (
+                sg.WIN_CLOSED,
+                SGKeys.EXIT,
+                SGKeys.POPUP_KEY_OK_BUTTON,
+                SGKeys.POPUP_KEY_CANCEL_BUTTON,
+            ):
+                cancel_popup.close()
+                cancel_popup = None
+                return popup_event == SGKeys.POPUP_KEY_OK_BUTTON
+        return False
+
+    for i, pipeline in enumerate(pipelines):
+        window[SGKeys.REQUIREMENTS_INSTALL_TEXT].update(value=_PIPELINE_TEXT_FORMAT % (i + 1, count, pipeline))
+        window.refresh()
+        if is_cancelled():
+            break
+        pipeline_requirements = f"{pipeline_dir}\\{pipeline[:-3]}.requirements.txt"
+        if exists(pipeline_requirements):
+            with Popen(
+                f"{local_python_path} -m pip install -r {pipeline_requirements} --quiet --disable-pip-version-check",
+                stderr=PIPE,
+                shell=False,
+                creationflags=CREATE_NO_WINDOW,
+                start_new_session=True,
+            ) as process:
+                try:
+                    _, err = process.communicate()
+                    if process.returncode != 0:
+                        raise RuntimeError(err.decode("utf-8"))
+                except Exception as ex:
+                    print(ex)
+                    if not show_popup_exception(
+                        title="Error",
+                        text=f'Error occurred while installing requirements for pipeline "{pipeline}".',
+                        ex=ex,
+                        ok_label="Yes",
+                        cancel_button=True,
+                        cancel_label="No",
+                        ex_width=100,
+                        text_after="Do you want to continue installation for other pipelines?",
+                    ):
+                        break
+        window[SGKeys.REQUIREMENTS_INSTALL_PROGRESS_BAR].update(current_count=int((i + 1) / count * 100))
+        window.refresh()
+        if is_cancelled():
+            break
+    window.close()

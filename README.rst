@@ -28,8 +28,9 @@ Features
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
-- Automatic pipeline files download
 - Automatic update [DEV]
+- Automatic pipeline files download
+- Automatic requirements installation [DEV]
 
 Graphics API support
 ====================
@@ -550,7 +551,7 @@ After build new environment variables have to be set:
       <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/cv2_cuda.jpg" alt="Go to /docs/images/cv2_cuda.jpg">
    </p>
 
-| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` to executable file from OpenCV virtual environment.
+| The last step is to connect ``OpenCV`` to ``PyHook``. To do this setup ``LOCAL_PYTHON_64`` env or setting to executable file from OpenCV virtual environment.
 | Executable path can be read from python itself:
 
 .. code-block:: python
@@ -619,6 +620,7 @@ History
 
 NEXT / DEV
 ----------
+- Added automatic requirements installation.
 - Added settings for local python paths in GUI.
 - Fixed timeout for subprocess communication.
 - Added automatic and manual app update.

@@ -21,13 +21,17 @@ from _version import __version__
 from session import ProcessInfo, Session, get_process_list
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
 from gui.keys import SGKeys, TKKeys
-from gui.pipeline_download import verify_download
-from gui.settings import display_settings_window, load_settings
+from gui.pipeline_download import install_requirements, verify_download
+from gui.settings import display_settings_window, get_settings, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from gui.update import try_update
 from gui.utils import EventCallback, show_popup, show_popup_text, with_border
+from keys import SettingsKeys
 from utils.common import delete_self_exe, is_frozen_bundle
 from win.api import get_hq_icon_raw
+
+# Flag if PyHook is started as 64-bit app.
+_IS_64_BIT = sys.maxsize > 2**32
 
 # Maximum amount of sessions.
 _MAX_SESSIONS = 15
@@ -276,7 +280,7 @@ def _bind_combo_popdown_event(window: sg.Window) -> None:
 # Application menu layout.
 _MENU_LAYOUT = [
     ["App", [SGKeys.MENU_SETTINGS_OPTION, SGKeys.EXIT]],
-    ["Pipeline", [SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION]],
+    ["Pipeline", [SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION, SGKeys.MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION]],
     ["Help", [SGKeys.MENU_UPDATE_OPTION, SGKeys.MENU_ABOUT_OPTION]],
 ]
 
@@ -622,6 +626,23 @@ def gui_main() -> None:
             display_settings_window()
         elif event == SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION:
             verify_download(True)
+        elif event == SGKeys.MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION:
+            settings = get_settings()
+            local_path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if _IS_64_BIT else SettingsKeys.KEY_LOCAL_PYTHON_32]
+            if len(local_path) == 0:
+                if show_popup_text(
+                    "Error",
+                    (
+                        "Cannot install requirements due to empty local Python executable path.\n"
+                        "Do you want to open settings and configure it now?"
+                    ),
+                    ok_label="Yes",
+                    cancel_button=True,
+                    cancel_label="No",
+                ):
+                    display_settings_window()
+                continue
+            install_requirements(local_path)
         elif event == SGKeys.MENU_UPDATE_OPTION:
             updated_executable, update_restart = try_update(True, updated_executable)
             if update_restart:
