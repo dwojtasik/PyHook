@@ -38,6 +38,10 @@ class SGKeys:
     SETTINGS_AUTODOWNLOAD_CHECKBOX (str): Key for: Settings autodownload checkbox.
     SETTINGS_AUTOSAVE_SLIDER (str): Key for: Settings autosave slider.
     SETTINGS_AUTOSAVE_TEXT (str): Key for: Settings autosave text.
+    SETTINGS_PYTHON_32_INPUT (str): Key for: Settings Python 32-bit path input.
+    SETTINGS_PYTHON_32_BROWSE (str): Key for: Settings Python 32-bit path browse.
+    SETTINGS_PYTHON_64_INPUT (str): Key for: Settings Python 64-bit path input.
+    SETTINGS_PYTHON_64_BROWSE (str): Key for: Settings Python 64-bit path browse.
     SETTINGS_SAVE_BUTTON (str): Key for: Settings save button.
     SETTINGS_CANCEL_BUTTON (str): Key for: Settings cancel button.
     UPDATE_RELEASE_LINK (str): Key for: Update release link.
@@ -77,6 +81,10 @@ class SGKeys:
     SETTINGS_AUTODOWNLOAD_CHECKBOX = "-SETTINGS_AUTODOWNLOAD_CHECKBOX-"
     SETTINGS_AUTOSAVE_SLIDER = "-SETTINGS_AUTOSAVE_SLIDER-"
     SETTINGS_AUTOSAVE_TEXT = "-SETTINGS_AUTOSAVE_TEXT-"
+    SETTINGS_PYTHON_32_INPUT = "-SETTINGS_PYTHON_32_INPUT-"
+    SETTINGS_PYTHON_32_BROWSE = "-SETTINGS_PYTHON_32_BROWSE-"
+    SETTINGS_PYTHON_64_INPUT = "-SETTINGS_PYTHON_64_INPUT-"
+    SETTINGS_PYTHON_64_BROWSE = "-SETTINGS_PYTHON_64_BROWSE-"
     SETTINGS_SAVE_BUTTON = "-SETTINGS_SAVE_BUTTON-"
     SETTINGS_CANCEL_BUTTON = "-SETTINGS_CANCEL_BUTTON-"
     UPDATE_RELEASE_LINK = "-UPDATE_RELEASE_LINK-"

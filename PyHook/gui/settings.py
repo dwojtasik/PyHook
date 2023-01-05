@@ -8,8 +8,12 @@ Settings window for PyHook
 
 import copy
 import json
-from os.path import exists
-from typing import Any, Dict
+import os
+import sys
+import uuid
+from os.path import exists, dirname
+from subprocess import PIPE, Popen, call
+from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
@@ -27,6 +31,8 @@ _SETTINGS = {
     SettingsKeys.KEY_AUTOUPDATE: False,
     SettingsKeys.KEY_AUTODOWNLOAD: True,
     SettingsKeys.KEY_DOWNLOADED: [],
+    SettingsKeys.KEY_LOCAL_PYTHON_32: "",
+    SettingsKeys.KEY_LOCAL_PYTHON_64: "",
 }
 
 # Minimum value in seconds for autosave interval.
@@ -35,6 +41,10 @@ _AUTOSAVE_SEC_MIN = 3
 _AUTOSAVE_SEC_MAX = 60
 # Text format for slider label.
 _SLIDER_TEXT_FORMAT = "Save PyHook config every < %d > seconds"
+# Startup flags for subprocess to avoid showing shell window.
+_CREATE_NO_WINDOW = 0x08000000
+# Timeout in seconds for process to communicate.
+_PROCESS_TIMEOUT_SEC = 2
 
 
 def get_settings() -> Dict[str, Any]:
@@ -78,6 +88,8 @@ def load_settings() -> None:
                     if int(value) < 1:
                         continue
                     _SETTINGS[key] = int(value)
+                elif key in (SettingsKeys.KEY_LOCAL_PYTHON_32, SettingsKeys.KEY_LOCAL_PYTHON_64):
+                    _SETTINGS[key] = str(value)
                 elif key in (SettingsKeys.KEY_AUTOUPDATE, SettingsKeys.KEY_AUTODOWNLOAD):
                     _SETTINGS[key] = bool(value)
                 elif key == SettingsKeys.KEY_DOWNLOADED:
@@ -86,6 +98,90 @@ def load_settings() -> None:
                     _SETTINGS[key] = list(value)
     else:
         save_settings()
+
+
+def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column]]:
+    """Returns settings fragment layout with Python executable paths.
+
+    Args:
+        settings (Dict[str, Any]): Actual PyHook settings.
+
+    Returns:
+        List[List[sg.Column]]: Layout for settings fragment with Python executable paths.
+    """
+    is_64_bit = sys.maxsize > 2**32
+    path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if is_64_bit else SettingsKeys.KEY_LOCAL_PYTHON_32]
+    initial_folder = os.getcwd() if len(path) == 0 or not exists(path) else dirname(path)
+    return [
+        [
+            sg.Text(f"Python {64 if is_64_bit else 32}-bit executable path:"),
+            sg.FileBrowse(
+                size=(10, 1),
+                initial_folder=initial_folder,
+                file_types=[("EXE Files", "*.exe")],
+                key=SGKeys.SETTINGS_PYTHON_64_BROWSE if is_64_bit else SGKeys.SETTINGS_PYTHON_32_BROWSE,
+                target=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
+            ),
+        ],
+        [
+            sg.Input(
+                default_text=path,
+                size=(45, 1),
+                enable_events=True,
+                key=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
+            )
+        ],
+    ]
+
+
+def _validate_python_paths(settings: Dict[str, Any]) -> bool:
+    """Validates paths to local Python executables in settings.
+
+    Path can be either empty or has to point to valid Python executable.
+    If any error occurs it will be displayed as popup message.
+
+    Args:
+        settings (Dict[str, Any]): Actual PyHook settings.
+
+    Returns:
+        bool: Flag if paths points to valid Python executables.
+    """
+    error_messages = []
+    for bit, key in {32: SettingsKeys.KEY_LOCAL_PYTHON_32, 64: SettingsKeys.KEY_LOCAL_PYTHON_64}.items():
+        test_path = settings[key]
+        if len(test_path) > 0:
+            if not exists(test_path):
+                error_messages.append(f"Path to {bit}-bit Python executable does not exists.")
+            else:
+                try:
+                    test_uuid = str(uuid.uuid4())
+                    with Popen(
+                        f"{test_path} -c \"print('{test_uuid}',end='')\"",
+                        stdout=PIPE,
+                        shell=False,
+                        creationflags=_CREATE_NO_WINDOW,
+                        start_new_session=True,
+                    ) as process:
+                        try:
+                            out, _ = process.communicate(timeout=_PROCESS_TIMEOUT_SEC)
+                            resp_uuid = out.decode("utf-8")
+                            if test_uuid != resp_uuid:
+                                raise ValueError("Invalid response token")
+                        except Exception as ex:
+                            call(
+                                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                                shell=False,
+                                creationflags=_CREATE_NO_WINDOW,
+                            )
+                            raise ex
+                except Exception:
+                    error_messages.append(
+                        f"Path to {bit}-bit Python executable points to invalid Python installation."
+                    )
+    if len(error_messages) > 0:
+        show_popup_text("Error", "Cannot save settings due to following errors:\n" + "\n".join(error_messages))
+        return False
+    return True
 
 
 def display_settings_window():
@@ -125,6 +221,7 @@ def display_settings_window():
                     key=SGKeys.SETTINGS_AUTOSAVE_SLIDER,
                 )
             ],
+            *_get_python_settings_layout(temp_settings),
             [
                 sg.Button("Save", size=(10, 1), pad=((5, 5), (10, 5)), key=SGKeys.SETTINGS_SAVE_BUTTON),
                 sg.Button("Cancel", size=(10, 1), pad=((5, 5), (10, 5)), key=SGKeys.SETTINGS_CANCEL_BUTTON),
@@ -151,7 +248,13 @@ def display_settings_window():
             new_value = int(values[event])
             window[SGKeys.SETTINGS_AUTOSAVE_TEXT].update(value=_SLIDER_TEXT_FORMAT % new_value)
             temp_settings[SettingsKeys.KEY_AUTOSAVE] = new_value
+        elif event == SGKeys.SETTINGS_PYTHON_32_INPUT:
+            temp_settings[SettingsKeys.KEY_LOCAL_PYTHON_32] = values[event]
+        elif event == SGKeys.SETTINGS_PYTHON_64_INPUT:
+            temp_settings[SettingsKeys.KEY_LOCAL_PYTHON_64] = values[event]
         elif event == SGKeys.SETTINGS_SAVE_BUTTON:
+            if not _validate_python_paths(temp_settings):
+                continue
             save_settings(temp_settings)
             break
     window.close()

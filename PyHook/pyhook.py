@@ -6,6 +6,7 @@ Python hook for ReShade processing
 :license: MIT, see LICENSE for more details.
 """
 import logging
+import os
 import sys
 from logging.handlers import QueueHandler
 from multiprocessing import Array, Queue, Value
@@ -150,6 +151,22 @@ def pyhook_main(
         _init_logger(log_queue)
         sys.stdout = LogWriter(_LOGGER)
         _LOGGER.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
+        if sys.maxsize > 2**32:
+            if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_64, "")) > 0:
+                os.environ[SettingsKeys.KEY_LOCAL_PYTHON_64.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_64]
+                _LOGGER.info(
+                    '- Overriding %s to "%s"',
+                    SettingsKeys.KEY_LOCAL_PYTHON_64.upper(),
+                    settings[SettingsKeys.KEY_LOCAL_PYTHON_64],
+                )
+        else:
+            if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_32, "")) > 0:
+                os.environ[SettingsKeys.KEY_LOCAL_PYTHON_32.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_32]
+                _LOGGER.info(
+                    '- Overriding %s to "%s"',
+                    SettingsKeys.KEY_LOCAL_PYTHON_32.upper(),
+                    settings[SettingsKeys.KEY_LOCAL_PYTHON_32],
+                )
         _LOGGER.info("- Loading pipelines...")
         pipelines = load_pipelines(_LOGGER)
         if len(pipelines) == 0:

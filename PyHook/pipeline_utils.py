@@ -10,8 +10,9 @@ import ctypes
 import os
 import sys
 import types
+import uuid
 from os.path import abspath, dirname
-from subprocess import check_output
+from subprocess import PIPE, Popen, call
 from typing import Any, Dict, List, Union
 
 # Runtime info.
@@ -36,6 +37,8 @@ _RUNTIME_DLL = "vcruntime140_1.dll"
 _MEIPASS = "_MEIPASS"
 # Startup flags for subprocess to avoid showing shell window.
 _CREATE_NO_WINDOW = 0x08000000
+# Timeout in seconds for process to communicate.
+_PROCESS_TIMEOUT_SEC = 2
 
 
 def _is_frozen_bundle() -> bool:
@@ -157,6 +160,39 @@ class _FakeModules:
         self.close()
 
 
+def _communicate_with_timeout(cmd: str, timeout: int = _PROCESS_TIMEOUT_SEC) -> str:
+    """Tries to read stdout from subprocess with given timeout.
+
+    Args:
+        cmd (str): Command to execute.
+        timeout (int, optional): Timeout in seconds for communication.
+            Defaults to value of _PROCESS_TIMEOUT_SEC (2).
+
+    Raises:
+        Exception: When cannot communicate with subprocess.
+
+    Returns:
+        str: Output from subprocess pipe.
+    """
+    with Popen(
+        cmd,
+        stdout=PIPE,
+        shell=False,
+        creationflags=_CREATE_NO_WINDOW,
+        start_new_session=True,
+    ) as process:
+        try:
+            out, _ = process.communicate(timeout=timeout)
+            return out.decode("utf-8")
+        except Exception as ex:
+            call(
+                ["taskkill", "/F", "/T", "/PID", str(process.pid)],
+                shell=False,
+                creationflags=_CREATE_NO_WINDOW,
+            )
+            raise ex
+
+
 def _set_local_python() -> None:
     """Reads and stores local Python executable path and local Python sys.path.
 
@@ -172,28 +208,23 @@ def _set_local_python() -> None:
         path_from_env = os.getenv(used_env, None)
     if path_from_env is None:
         try:
-            _LOCAL_PYTHON_EXE = check_output(
-                "python3 -c \"import sys;print(sys.executable,end='')\"", shell=False, creationflags=_CREATE_NO_WINDOW
-            ).decode("utf-8")
-        except FileNotFoundError as ex:
+            _LOCAL_PYTHON_EXE = _communicate_with_timeout("python3 -c \"import sys;print(sys.executable,end='')\"")
+        except Exception as ex:
             raise ValueError(
                 "Local Python3 executable not found. Please update system path or set LOCAL_PYTHON env."
             ) from ex
     else:
         try:
-            check_output(f'{path_from_env} -c "1"', shell=False, creationflags=_CREATE_NO_WINDOW)
+            test_uuid = str(uuid.uuid4())
+            resp_uuid = _communicate_with_timeout(f"{path_from_env} -c \"print('{test_uuid}',end='')\"")
+            if test_uuid != resp_uuid:
+                raise ValueError("Invalid response token")
             _LOCAL_PYTHON_EXE = path_from_env
-        except FileNotFoundError as ex:
+        except Exception as ex:
             raise ValueError(f"{used_env} is pointing to invalid Python3 executable.") from ex
-    _LOCAL_PATHS = (
-        check_output(
-            f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\"",
-            shell=False,
-            creationflags=_CREATE_NO_WINDOW,
-        )
-        .decode("utf-8")
-        .split(";")
-    )
+    _LOCAL_PATHS = _communicate_with_timeout(
+        f"{_LOCAL_PYTHON_EXE} -c \"import sys;print(';'.join(sys.path),end='')\""
+    ).split(";")
 
 
 def use_local_python() -> _LocalPython:

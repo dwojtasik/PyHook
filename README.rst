@@ -435,7 +435,7 @@ Installation
 
 You can download selected PyHook archives from `Releases <https://github.com/dwojtasik/pyhook/releases/latest>`_.
 
-1. Download and unpack zip catalog with PyHook executable, addon and pipelines.
+1. Download and unpack zip catalog with PyHook executable and pipelines. Releases up to 1.1.2 contains also ``*.addon`` file.
 2. | Prepare Python local environment (read more in `Virtual environment <#virtual-environment>`_) and download pipelines files if needed.
    | Pipelines has own directories with ``download.txt`` file that has list of files to download.
 3. Start game with `ReShade <https://reshade.me/>`_ installed.
@@ -443,13 +443,14 @@ You can download selected PyHook archives from `Releases <https://github.com/dwo
 
 For custom pipelines (e.g. AI ones) install requirements and setup ENV variables that points to Python3 binary in required version.
 
-Available ENV variables:
+Available ENV variables (required up to 1.1.2, can be set in settings in newer versions):
 
 - ``LOCAL_PYTHON_32`` (path to 32-bit Python)
 - ``LOCAL_PYTHON_64`` (path to 64-bit Python)
 - ``LOCAL_PYTHON`` (fallback path if none of above is set)
 
-Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
+| Models for pipelines can be downloaded by links from ``download.txt`` that are supplied in their respective directory.
+| You can also download them automatically from PyHook Pipeline menu.
 
 If antivirus detects PyHook as dangerous software add exception for it because it is due to DLL injection capabilities.
 
@@ -618,6 +619,8 @@ History
 
 NEXT / DEV
 ----------
+- Added settings for local python paths in GUI.
+- Fixed timeout for subprocess communication.
 - Added automatic and manual app update.
 - Fixed re-download issues with autodownload and cancelling.
 - Process combo box now displays dropdown options during writing.
