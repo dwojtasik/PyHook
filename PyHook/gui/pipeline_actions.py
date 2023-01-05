@@ -1,7 +1,7 @@
 """
-gui.download for PyHook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Pipeline download window for PyHook
+gui.pipeline_actions for PyHook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pipeline actions windows for PyHook
 :copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
@@ -307,7 +307,6 @@ def install_requirements(local_python_path: str) -> None:
                     if process.returncode != 0:
                         raise RuntimeError(err.decode("utf-8"))
                 except Exception as ex:
-                    print(ex)
                     if not show_popup_exception(
                         title="Error",
                         text=f'Error occurred while installing requirements for pipeline "{pipeline}".',

@@ -21,7 +21,7 @@ from _version import __version__
 from session import ProcessInfo, Session, get_process_list
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
 from gui.keys import SGKeys, TKKeys
-from gui.pipeline_download import install_requirements, verify_download
+from gui.pipeline_actions import install_requirements, verify_download
 from gui.settings import display_settings_window, get_settings, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from gui.update import try_update
