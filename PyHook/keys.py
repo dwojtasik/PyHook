@@ -6,6 +6,8 @@ Contains keys enums
 :license: MIT, see LICENSE for more details.
 """
 
+from typing import Tuple
+
 
 class SettingsKeys:
     """Settings keys.
@@ -24,3 +26,62 @@ class SettingsKeys:
     KEY_DOWNLOADED = "downloaded"
     KEY_LOCAL_PYTHON_32 = "local_python_32"
     KEY_LOCAL_PYTHON_64 = "local_python_64"
+
+
+class TimingsKeys:
+    """Timings keys.
+
+    TIMINGS_TIMESTAMP (str): Key for: Last timings timestamp.
+    RESHADE_PROCESSING (str): Key for: Reshade processing process.
+    DATA_SYNC (str): Key for: Data synchronization process.
+    FRAME_DECODING (str): Key for: Frame decoding process.
+    FRAME_ENCODING (str): Key for: Frame encoding process.
+    """
+
+    TIMINGS_TIMESTAMP = "Timings timestamp"
+    RESHADE_PROCESSING = "Reshade processing"
+    DATA_SYNC = "Data synchronization"
+    FRAME_DECODING = "Frame decoding"
+    FRAME_ENCODING = "Frame encoding"
+
+    @staticmethod
+    def with_idx(key: str, idx: int) -> str:
+        """Returns key with index to keep ordering.
+
+        Args:
+            key (str): Timings key.
+            idx (int): Timings index.
+
+        Returns:
+            str: Key with index.
+        """
+        return f"{idx};{key}"
+
+    @staticmethod
+    def to_idx_and_key(key_with_idx: str) -> Tuple[int, str]:
+        """Returns index and key from connected key.
+
+        Args:
+            key_with_idx (str): Key with index.
+
+        Returns:
+            Tuple[int, str]: Index and key.
+        """
+        idx, key = key_with_idx.split(";", maxsplit=1)
+        return int(idx), key
+
+    @staticmethod
+    def to_timings_key(name: str, stage: int | None, stages: int) -> str:
+        """Builds timings key for pipeline data.
+
+        Args:
+            name (str): Pipeline name.
+            stage (int | None): Actual stage of processing.
+            stages (int): Count of stages for given pipeline.
+
+        Returns:
+            str: Timings key for pipeline data.
+        """
+        if stage is None:
+            return name
+        return f"{name} [pass {stage}/{stages}]"

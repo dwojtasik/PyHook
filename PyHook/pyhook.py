@@ -10,6 +10,9 @@ import os
 import sys
 from logging.handlers import QueueHandler
 from multiprocessing import Array, Queue, Value
+from multiprocessing.managers import DictProxy
+from time import time
+from timeit import default_timer as timer
 from threading import Timer
 from typing import Any, Dict, List
 
@@ -22,7 +25,7 @@ from dll_utils import (
     ReShadeNotFoundException,
     get_reshade_addon_handler,
 )
-from keys import SettingsKeys
+from keys import SettingsKeys, TimingsKeys
 from mem_utils import (
     FRAME_ARRAY,
     SIZE_ARRAY,
@@ -129,6 +132,8 @@ def pyhook_main(
     pid: Value,
     name: Array,
     path: Array,
+    timings_on: Value,
+    timings: DictProxy,
     log_queue: Queue,
     settings: Dict[str, Any],
     pids_to_skip: List[int],
@@ -140,11 +145,14 @@ def pyhook_main(
         pid (Value[int]): Shared integer process id.
         name (Array[bytes]): Shared string bytes process name.
         path (Array[bytes]): Shared string bytes process executable path.
+        timings_on (Value[bool]): Shared flag if timings are enabled.
+        timings (DictProxy): Shared processing timings dictionary.
         log_queue (Queue): Log queue from parent process.
         settings (Dict[Str, Any]): PyHook actual settings.
         pids_to_skip (List[int]): List of process IDs to skip in automatic injection.
     """
     try:
+        timings[TimingsKeys.TIMINGS_TIMESTAMP] = time() - 1
         if not running.value:
             sys.exit(0)
         displayed_ms_error = False
@@ -205,9 +213,21 @@ def pyhook_main(
             )
         _LOGGER.info("- Writing configuration to addon...")
         memory_manager.write_shared_pipelines(list(pipelines.values()), runtime_data)
+        timings_data = {}
+        timings_dict = {}
         _LOGGER.info("- Started processing...")
         while running.value:
+            timings_enabled = bool(timings_on.value)
+            if timings_enabled:
+                timings_data.clear()
+                timings_dict.clear()
+                timings_data[TimingsKeys.RESHADE_PROCESSING] = timer()
             memory_manager.wait(addon_handler)
+            if timings_enabled:
+                timings_dict[TimingsKeys.with_idx(TimingsKeys.RESHADE_PROCESSING, len(timings_dict))] = (
+                    timer() - timings_data[TimingsKeys.RESHADE_PROCESSING]
+                )
+                timings_data[TimingsKeys.DATA_SYNC] = timer()
             data = memory_manager.read_shared_data()
             # Multisampled buffer cannot be processed.
             if data.multisampled:
@@ -263,12 +283,22 @@ def pyhook_main(
                     [pipelines, runtime_data.pipeline_order, runtime_data.active_pipelines, addon_handler.dir_path],
                 )
                 save_later.start()
+            if timings_enabled:
+                timings_dict[TimingsKeys.with_idx(TimingsKeys.DATA_SYNC, len(timings_dict))] = (
+                    timer() - timings_data[TimingsKeys.DATA_SYNC]
+                )
             # Skip frame processing if user didn't select any pipeline.
             if len(runtime_data.active_pipelines) == 0:
                 memory_manager.unlock()
                 continue
             # Process all selected pipelines in order.
+            if timings_enabled:
+                timings_data[TimingsKeys.FRAME_DECODING] = timer()
             frame = _decode_frame(data)
+            if timings_enabled:
+                timings_dict[TimingsKeys.with_idx(TimingsKeys.FRAME_DECODING, len(timings_dict))] = (
+                    timer() - timings_data[TimingsKeys.FRAME_DECODING]
+                )
             try:
                 passes = {}
                 f_width = data.width
@@ -278,13 +308,20 @@ def pyhook_main(
                 runtime_order = [p for p in runtime_data.pipeline_order if p in runtime_data.active_pipelines]
                 for active_pipeline in runtime_order:
                     pipeline = pipelines[active_pipeline]
-                    stage = None
+                    stage: int = None
                     if pipeline.multistage > 1:
                         if active_pipeline not in passes:
                             passes[active_pipeline] = 0
                         passes[active_pipeline] += 1
                         stage = passes[active_pipeline]
+                    pipeline_timings_key = TimingsKeys.to_timings_key(pipeline.name, stage, pipeline.multistage)
+                    if timings_enabled:
+                        timings_data[pipeline_timings_key] = timer()
                     frame = pipeline.process_frame(frame, f_width, f_height, f_count, stage)
+                    if timings_enabled:
+                        timings_dict[TimingsKeys.with_idx(pipeline_timings_key, len(timings_dict))] = (
+                            timer() - timings_data[pipeline_timings_key]
+                        )
                     if stage is not None:
                         f_width = frame.shape[1]
                         f_height = frame.shape[0]
@@ -292,7 +329,16 @@ def pyhook_main(
                     raise FrameSizeModificationError(
                         f"multistage processing in frame={f_count}",
                     )
+                if timings_enabled:
+                    timings_data[TimingsKeys.FRAME_ENCODING] = timer()
                 _encode_frame(data, frame)
+                if timings_enabled:
+                    timings_dict[TimingsKeys.with_idx(TimingsKeys.FRAME_ENCODING, len(timings_dict))] = (
+                        timer() - timings_data[TimingsKeys.FRAME_ENCODING]
+                    )
+                    timings.clear()
+                    timings[TimingsKeys.TIMINGS_TIMESTAMP] = time()
+                    timings.update(timings_dict)
             except FrameSizeModificationError as ex:
                 _LOGGER.info("-- ERROR: Frame modification detected for %s! Frame skipped...", ex)
             except FrameProcessingError as ex:

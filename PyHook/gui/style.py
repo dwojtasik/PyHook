@@ -26,7 +26,11 @@ FONT_IMG_NAME_DEFAULT = "arial.ttf"
 COLOR_TEXT_URL = "yellow"
 # Maximum size of image text button.
 MAX_BUTTON_TEXT_SIZE = 16
-# Session button colors in format (active, inactive).
+# Session tabs button colors in format (foreground, background).
+SESSION_TABS_BUTTON_COLORS = ("#ffffff", "#335267")
+# Session tabs selected button colors in format (foreground, background).
+SESSION_TABS_BUTTON_SELECTED_COLORS = ("#000000", "#fafaf8")
+# Session button colors in format (foreground, background).
 SESSION_BUTTON_COLORS = ("#43649C", "#283B5B")
 # Session button size in pixels (width, height).
 SESSION_BUTTON_SIZE = (116, 160)
@@ -38,3 +42,5 @@ SESSION_BUTTON_ICON_CENTER_OFFSET_Y = -20
 SESSION_BUTTON_TEXT_CENTER_OFFSET_Y = 50
 # Session button text color.
 SESSION_BUTTON_TEXT_COLOR = "#FFFFFF"
+# Transparent color.
+TRANSPARENT_COLOR = "#00000000"

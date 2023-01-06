@@ -12,7 +12,7 @@ import string
 import sys
 import webbrowser
 from threading import Thread
-from time import sleep
+from time import sleep, time
 from typing import Dict, List
 
 import PySimpleGUI as sg
@@ -26,7 +26,7 @@ from gui.settings import display_settings_window, get_settings, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from gui.update import try_update
 from gui.utils import EventCallback, show_popup, show_popup_text, with_border
-from keys import SettingsKeys
+from keys import SettingsKeys, TimingsKeys
 from utils.common import delete_self_exe, is_frozen_bundle
 from win.api import get_hq_icon_raw
 
@@ -44,6 +44,12 @@ else:
 
 # Default clear button image.
 _BUTTON_IMAGE_NONE = get_as_buffer(get_button_image_template())
+
+# Session tabs.
+_SESSION_TABS = [SGKeys.SESSION_TAB_LOGS_BUTTON, SGKeys.SESSION_TAB_TIMINGS_BUTTON]
+
+# Time in seconds to wait for new timings.
+_TIMINGS_TIMEOUT_SEC = 1
 
 # Set default theme.
 sg.theme("DarkBlue")
@@ -171,6 +177,64 @@ def _update_sessions_view(window: sg.Window, sessions: List[Session]) -> None:
     window[SGKeys.SESSION_LIST].contents_changed()
 
 
+def _select_session_tab(window: sg.Window, key: str) -> None:
+    """Selects session tab.
+
+    Args:
+        window (sg.Window): Parent window.
+        key (str): SGKeys key for given tab.
+    """
+    window[SGKeys.SESSION_TABS].Widget.select(_SESSION_TABS.index(key))
+    for tab_key in _SESSION_TABS:
+        color = SESSION_TABS_BUTTON_SELECTED_COLORS if key == tab_key else SESSION_TABS_BUTTON_COLORS
+        window[tab_key].Widget.config(
+            foreground=color[0],
+            activeforeground=SESSION_TABS_BUTTON_COLORS[1],
+            background=color[1],
+            activebackground=SESSION_TABS_BUTTON_COLORS[0],
+        )
+
+
+def _format_timings(window: sg.Window, selected_session: Session, forced: bool = False) -> None:
+    """Format timings into string to be displayed in multiline text box.
+
+    Args:
+        window (sg.Window): Parent window.
+        selected_session (Session): Selected PyHook session.
+        forced (bool, optional): Flag if timings refresh is forced, e.g. by selecting
+            new session.
+
+    Returns:
+        str: Timings string to be displayed.
+    """
+    actual = selected_session.timings.copy()
+    enabled = selected_session.has_enabled_timings()
+    new_value = "Waiting for timings..." if enabled else "Timings are disabled for this session!"
+    # Do not refresh view until timings are filled.
+    if len(actual) == 0:
+        if forced or not selected_session.is_running():
+            new_value = new_value.rjust(41 + len(new_value) // 2)
+            window[SGKeys.SESSION_TIMINGS].update(value=new_value)
+        return
+    timestamp = actual.pop(TimingsKeys.TIMINGS_TIMESTAMP)
+    if enabled and time() - timestamp < _TIMINGS_TIMEOUT_SEC:
+        if not forced and selected_session.timings_freeze:
+            if new_value not in window[SGKeys.SESSION_TIMINGS].get():
+                return
+        data = [[*TimingsKeys.to_idx_and_key(k), v] for k, v in actual.items()]
+        data.sort(key=lambda d: d[0])
+        lines: List[str] = []
+        for _, key, val in data:
+            f_val = f"{val*1000:.2f}".rjust(6, " ")
+            lines.append(f"{key}: {f_val}ms")
+        lengths = [len(line) for line in lines]
+        center_just = 1 + max(40 + int(sum(lengths) / len(lengths) / 2), max(lengths))
+        new_value = "\n".join([line.rjust(center_just) for line in lines])
+    else:
+        new_value = new_value.rjust(41 + len(new_value) // 2)
+    window[SGKeys.SESSION_TIMINGS].update(value=new_value)
+
+
 def _update_session_overview(window: sg.Window, selected_session: Session | None) -> None:
     """Updates session overview view.
 
@@ -183,15 +247,20 @@ def _update_session_overview(window: sg.Window, selected_session: Session | None
     """
     visible = selected_session is not None
     window[SGKeys.SESSION_TITLE].update(value="Select session..." if not visible else selected_session.get_name())
+    window[SGKeys.SESSION_TAB_LOGS_BUTTON].update(visible=visible)
+    window[SGKeys.SESSION_TAB_TIMINGS_BUTTON].update(visible=visible)
     window[SGKeys.SESSION_KILL_BUTTON].update(visible=visible)
     window[SGKeys.SESSION_RESTART_BUTTON].update(visible=visible, disabled=visible and selected_session.is_running())
     window[SGKeys.SESSION_CLOSE_OVERVIEW_BUTTON].update(visible=visible)
-    window[SGKeys.SESSION_LOGS].update(
-        value="" if not visible else selected_session.get_logs(), visible=visible, autoscroll=True
+    window[SGKeys.SESSION_TABS_VIEW].update(visible=visible)
+    window[SGKeys.SESSION_LOGS].update(value="" if not visible else selected_session.get_logs(), autoscroll=True)
+    window[SGKeys.SESSION_TIMINGS_ENABLE].update(value=True if not visible else selected_session.has_enabled_timings())
+    window[SGKeys.SESSION_TIMINGS_FREEZE].update(
+        value=False if not visible else selected_session.timings_freeze,
+        disabled=False if not visible else not selected_session.has_enabled_timings(),
     )
-    window[SGKeys.SESSION_LOGS_SCROLL_TOP_BUTTON].update(visible=visible)
-    window[SGKeys.SESSION_LOGS_CLEAR_BUTTON].update(visible=visible)
-    window[SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON].update(visible=visible)
+    if selected_session is not None:
+        _format_timings(window, selected_session, True)
 
 
 def _to_combo_list(process_list: List[ProcessInfo], filter_string: str = None) -> List[str]:
@@ -337,6 +406,26 @@ _APP_LAYOUT = [
                     ),
                     sg.Push(),
                     sg.Button(
+                        "Logs",
+                        size=(7, 1),
+                        pad=((0, 2), (30, 0)),
+                        font=FONT_CONSOLE,
+                        button_color=SESSION_TABS_BUTTON_SELECTED_COLORS,
+                        key=SGKeys.SESSION_TAB_LOGS_BUTTON,
+                        tooltip="Opens session logs tab",
+                        visible=True,
+                    ),
+                    sg.Button(
+                        "Timings",
+                        size=(7, 1),
+                        pad=((2, 77), (30, 0)),
+                        font=FONT_CONSOLE,
+                        button_color=SESSION_TABS_BUTTON_COLORS,
+                        key=SGKeys.SESSION_TAB_TIMINGS_BUTTON,
+                        tooltip="Opens session timings tab",
+                        visible=True,
+                    ),
+                    sg.Button(
                         "Kill",
                         size=(6, 1),
                         key=SGKeys.SESSION_KILL_BUTTON,
@@ -362,49 +451,120 @@ _APP_LAYOUT = [
                     ),
                 ],
                 [
-                    sg.Multiline(
-                        "",
-                        font=FONT_CONSOLE,
-                        size=(80, 16),
-                        key=SGKeys.SESSION_LOGS,
-                        enable_events=True,
-                        autoscroll=True,
-                        disabled=True,
-                        expand_x=True,
-                        expand_y=True,
-                        visible=True,
-                    )
-                ],
-                [
                     sg.Column(
                         [
                             [
-                                sg.Button(
-                                    "\u2191",
-                                    key=SGKeys.SESSION_LOGS_SCROLL_TOP_BUTTON,
-                                    font=FONT_MONO_DEFAULT,
-                                    size=(2, 1),
-                                    tooltip="Scroll to top",
-                                    visible=True,
-                                ),
-                                sg.Button(
-                                    "Clear logs",
-                                    size=(10, 1),
-                                    key=SGKeys.SESSION_LOGS_CLEAR_BUTTON,
-                                    tooltip="Clear session logs",
-                                    visible=True,
-                                ),
-                                sg.Button(
-                                    "\u2193",
-                                    key=SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON,
-                                    font=FONT_MONO_DEFAULT,
-                                    size=(2, 1),
-                                    tooltip="Scroll to bottom",
-                                    visible=True,
-                                ),
+                                sg.TabGroup(
+                                    [
+                                        [
+                                            sg.Tab(
+                                                "",
+                                                [
+                                                    [
+                                                        sg.Multiline(
+                                                            "",
+                                                            font=FONT_CONSOLE,
+                                                            size=(80, 16),
+                                                            key=SGKeys.SESSION_LOGS,
+                                                            enable_events=True,
+                                                            autoscroll=True,
+                                                            disabled=True,
+                                                            expand_x=True,
+                                                            expand_y=True,
+                                                        )
+                                                    ],
+                                                    [
+                                                        sg.Column(
+                                                            [
+                                                                [
+                                                                    sg.Button(
+                                                                        "\u2191",
+                                                                        key=SGKeys.SESSION_LOGS_SCROLL_TOP_BUTTON,
+                                                                        font=FONT_CONSOLE,
+                                                                        size=(2, 1),
+                                                                        tooltip="Scroll to top",
+                                                                    ),
+                                                                    sg.Button(
+                                                                        "Clear logs",
+                                                                        size=(10, 1),
+                                                                        font=FONT_CONSOLE,
+                                                                        key=SGKeys.SESSION_LOGS_CLEAR_BUTTON,
+                                                                        tooltip="Clear session logs",
+                                                                    ),
+                                                                    sg.Button(
+                                                                        "\u2193",
+                                                                        key=SGKeys.SESSION_LOGS_SCROLL_BOT_BUTTON,
+                                                                        font=FONT_CONSOLE,
+                                                                        size=(2, 1),
+                                                                        tooltip="Scroll to bottom",
+                                                                    ),
+                                                                ]
+                                                            ],
+                                                            justification="center",
+                                                        )
+                                                    ],
+                                                ],
+                                            ),
+                                            sg.Tab(
+                                                "",
+                                                [
+                                                    [
+                                                        sg.Multiline(
+                                                            "",
+                                                            font=FONT_CONSOLE,
+                                                            size=(80, 16),
+                                                            key=SGKeys.SESSION_TIMINGS,
+                                                            enable_events=True,
+                                                            disabled=True,
+                                                            expand_x=True,
+                                                            expand_y=True,
+                                                        )
+                                                    ],
+                                                    [
+                                                        sg.Column(
+                                                            [
+                                                                [
+                                                                    sg.Checkbox(
+                                                                        "Enable timings",
+                                                                        font=FONT_CONSOLE,
+                                                                        default=True,
+                                                                        tooltip="Enable timings for this session.",
+                                                                        enable_events=True,
+                                                                        key=SGKeys.SESSION_TIMINGS_ENABLE,
+                                                                    ),
+                                                                    sg.Checkbox(
+                                                                        "Freeze timings",
+                                                                        font=FONT_CONSOLE,
+                                                                        default=False,
+                                                                        tooltip="Freeze timings to view exact values.",
+                                                                        enable_events=True,
+                                                                        key=SGKeys.SESSION_TIMINGS_FREEZE,
+                                                                    ),
+                                                                ],
+                                                            ],
+                                                            justification="center",
+                                                        )
+                                                    ],
+                                                ],
+                                            ),
+                                        ]
+                                    ],
+                                    key=SGKeys.SESSION_TABS,
+                                    tab_location="bottom",
+                                    font=(None, 0.0),
+                                    pad=(0, 0),
+                                    tab_border_width=0,
+                                    title_color=TRANSPARENT_COLOR,
+                                    tab_background_color=TRANSPARENT_COLOR,
+                                    selected_title_color=TRANSPARENT_COLOR,
+                                    selected_background_color=TRANSPARENT_COLOR,
+                                    focus_color=TRANSPARENT_COLOR,
+                                    enable_events=True,
+                                )
                             ]
                         ],
-                        justification="center",
+                        key=SGKeys.SESSION_TABS_VIEW,
+                        visible=True,
                     )
                 ],
             ],
@@ -444,6 +604,8 @@ def gui_main() -> None:
     updated_executable: str = None
     # Flag if app should restart for update.
     update_restart = False
+    # Active session tab.
+    active_session_tab = SGKeys.SESSION_TAB_LOGS_BUTTON
 
     # Application window.
     window = sg.Window(
@@ -511,6 +673,8 @@ def gui_main() -> None:
                         window[SGKeys.SESSION_LOGS].update(
                             value=selected_session.get_logs(), autoscroll=scroll_state[1] == 1
                         )
+                    if active_session_tab == SGKeys.SESSION_TAB_TIMINGS_BUTTON:
+                        _format_timings(window, selected_session)
 
                 if any([session.should_update_ui() for session in sessions[:]]):
                     _update_sessions_active_view(window, sessions, selected_session)
@@ -603,6 +767,11 @@ def gui_main() -> None:
         elif event.startswith(SGKeys.SESSION_PREFIX):
             selected_session = sessions[SGKeys.get_session_idx(event)]
             _update_session_overview(window, selected_session)
+        elif event in _SESSION_TABS:
+            _select_session_tab(window, event)
+            active_session_tab = event
+        elif event == SGKeys.SESSION_TABS:
+            window[SGKeys.SESSION_TABS].Widget.select(_SESSION_TABS.index(active_session_tab))
         elif event == SGKeys.SESSION_KILL_BUTTON:
             if show_popup_text(
                 "Confirm session kill",
@@ -633,6 +802,15 @@ def gui_main() -> None:
         elif event == SGKeys.SESSION_LOGS_CLEAR_BUTTON:
             selected_session.clear_logs()
             window[SGKeys.SESSION_LOGS].update(value="", autoscroll=True)
+        elif event == SGKeys.SESSION_TIMINGS_ENABLE:
+            selected_session.timings_on.value = values[event]
+            selected_session.timings_freeze = False
+            window[SGKeys.SESSION_TIMINGS_FREEZE].update(
+                value=False,
+                disabled=not selected_session.has_enabled_timings(),
+            )
+        elif event == SGKeys.SESSION_TIMINGS_FREEZE:
+            selected_session.timings_freeze = values[event]
         elif event == SGKeys.MENU_SETTINGS_OPTION:
             display_settings_window(window)
         elif event == SGKeys.MENU_PIPELINE_FORCE_DOWNLOAD_OPTION:

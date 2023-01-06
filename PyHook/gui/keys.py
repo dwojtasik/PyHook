@@ -25,10 +25,17 @@ class SGKeys:
     SESSION_KILL_BUTTON (str): Key for: Session kill button.
     SESSION_RESTART_BUTTON (str): Key for: Session restart button.
     SESSION_CLOSE_OVERVIEW_BUTTON (str): Key for: Session overview close button.
+    SESSION_TABS (str): Key for: Session tabs.
+    SESSION_TABS_VIEW (str): Key for: Session tabs view.
+    SESSION_TAB_LOGS_BUTTON (str): Key for: Session logs tab button.
+    SESSION_TAB_TIMINGS_BUTTON (str): Key for: Session timings tab button.
     SESSION_LOGS (str): Key for: Session logs multiline box.
     SESSION_LOGS_SCROLL_TOP_BUTTON (str): Key for: Session logs scroll top button.
     SESSION_LOGS_CLEAR_BUTTON (str): Key for: Session logs clear button.
     SESSION_LOGS_SCROLL_BOT_BUTTON (str): Key for: Session logs scroll bottom button.
+    SESSION_TIMINGS (str): Key for: Session timings multiline box.
+    SESSION_TIMINGS_ENABLE (str): Key for: Session timings enable checkbox.
+    SESSION_TIMINGS_FREEZE (str): Key for: Session timings freeze checkbox.
     BORDER_SUFFIX (str): Key for: Border suffix.
     MENU_SETTINGS_OPTION (str): Key for: Menu settings option.
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION (str): Key for: Menu pipeline force download option.
@@ -71,10 +78,17 @@ class SGKeys:
     SESSION_KILL_BUTTON = "-SESSION_KILL_BUTTON-"
     SESSION_RESTART_BUTTON = "-SESSION_RESTART_BUTTON-"
     SESSION_CLOSE_OVERVIEW_BUTTON = "-SESSION_CLOSE_OVERVIEW_BUTTON-"
+    SESSION_TABS = "-SESSION_TABS-"
+    SESSION_TABS_VIEW = "-SESSION_TABS_VIEW-"
+    SESSION_TAB_LOGS_BUTTON = "-SESSION_TAB_LOGS_BUTTON-"
+    SESSION_TAB_TIMINGS_BUTTON = "-SESSION_TAB_TIMINGS_BUTTON-"
     SESSION_LOGS = "-SESSION_LOGS-"
     SESSION_LOGS_SCROLL_TOP_BUTTON = "-SESSION_LOGS_SCROLL_TOP_BUTTON-"
     SESSION_LOGS_CLEAR_BUTTON = "-SESSION_LOGS_CLEAR_BUTTON-"
     SESSION_LOGS_SCROLL_BOT_BUTTON = "-SESSION_LOGS_SCROLL_BOT_BUTTON-"
+    SESSION_TIMINGS = "-SESSION_TIMINGS-"
+    SESSION_TIMINGS_ENABLE = "-SESSION_TIMINGS_ENABLE-"
+    SESSION_TIMINGS_FREEZE = "-SESSION_TIMINGS_FREEZE-"
     BORDER_SUFFIX = "-BORDER-"
     MENU_SETTINGS_OPTION = "Settings"
     MENU_PIPELINE_FORCE_DOWNLOAD_OPTION = "Force re-download"

@@ -9,7 +9,7 @@ PyHook subprocess sessions for PyHook
 import logging
 import queue
 import uuid
-from multiprocessing import Array, Process, Queue, Value
+from multiprocessing import Array, Manager, Process, Queue, Value
 from threading import Thread
 from time import sleep
 from typing import List
@@ -30,6 +30,15 @@ _UNKNOWN_PROCESS = "Unknown"
 _AUTO_NAME = "AUTO"
 # Session button icon for automatic process.
 _AUTOMATIC_ICON = get_as_buffer(get_button_image(get_button_image_template(), "AUTO...", None))
+# Multiprocessing manager.
+_MP_MANAGER = None
+
+
+def _init_manager() -> None:
+    """Initializes multiprocessing manager if not yet initialized."""
+    global _MP_MANAGER  # pylint: disable=global-statement
+    if _MP_MANAGER is None:
+        _MP_MANAGER = Manager()
 
 
 class ProcessInfo:
@@ -86,6 +95,9 @@ class Session:
     pid (Value[int]): Shared integer process id.
     name (Array[bytes]): Shared string bytes process name.
     path (Array[bytes]): Shared string bytes process executable path.
+    timings_on (Value[bool]): Shared flag if timings are enabled.
+    timings_freeze (bool): Flag if timings are frozen.
+    timings (multiprocessing.managers.DictProxy): Shared processing timings dictionary.
     button_image (bytes | None): Image button to be displayed in UI.
     _is_auto (bool): Flag if PyHook session is running in automatic detection mode.
     _has_new_logs (bool): Flag if new logs are ready to be displayed.
@@ -99,11 +111,15 @@ class Session:
     """
 
     def __init__(self, process_info: ProcessInfo | None, pids_to_skip: List[int] | None = None):
+        _init_manager()
         self.pids_to_skip = [] if pids_to_skip is None else pids_to_skip
         self.uuid = str(uuid.uuid4())
         self.pid = Value("i", -1 if process_info is None else process_info.pid)
         self.name = Array("c", 150 if process_info is None else str.encode(process_info.name))
         self.path = Array("c", 250 if process_info is None else str.encode(process_info.path))
+        self.timings_on = Value("b", True)
+        self.timings_freeze = False
+        self.timings = _MP_MANAGER.dict()
         self.button_image = None
         self._is_auto = process_info is None
         self._has_new_logs = False
@@ -114,7 +130,17 @@ class Session:
         self._log = ""
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings(), self.pids_to_skip),
+            args=(
+                self._running,
+                self.pid,
+                self.name,
+                self.path,
+                self.timings_on,
+                self.timings,
+                self._log_queue,
+                get_settings(),
+                self.pids_to_skip,
+            ),
         )
         self._worker = Thread(target=self._update_self)
         self._set_button_image()
@@ -139,6 +165,14 @@ class Session:
         """
         return bool(self._running.value)
 
+    def has_enabled_timings(self) -> bool:
+        """Checks if PyHook session has enabled timings.
+
+        Returns:
+            bool: PyHook session timings enabled flag.
+        """
+        return bool(self.timings_on.value)
+
     def close(self) -> None:
         """Closes PyHook session subprocess and local worker."""
         if not self._is_closed:
@@ -147,6 +181,7 @@ class Session:
             self._process.join()
             self._worker.join()
             self.clear_logs()
+            self.timings.clear()
             self._has_ui_change = True
 
     def restart(self) -> None:
@@ -157,9 +192,20 @@ class Session:
         self._has_ui_change = True
         self._is_closed = False
         self._running.value = True
+        self.timings.clear()
         self._process = Process(
             target=pyhook_main,
-            args=(self._running, self.pid, self.name, self.path, self._log_queue, get_settings(), self.pids_to_skip),
+            args=(
+                self._running,
+                self.pid,
+                self.name,
+                self.path,
+                self.timings_on,
+                self.timings,
+                self._log_queue,
+                get_settings(),
+                self.pids_to_skip,
+            ),
         )
         self._worker = Thread(target=self._update_self)
         self._process.start()
@@ -230,6 +276,7 @@ class Session:
         while not self._log_queue.empty():
             self._log += _DEFAULT_FORMATTER.format(self._log_queue.get()) + "\n"
             self._has_new_logs = True
+        self.timings.clear()
 
 
 def _filter_64_bit(pid: int) -> bool:
