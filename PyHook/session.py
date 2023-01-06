@@ -19,7 +19,8 @@ import psutil
 from gui.image import get_as_buffer, get_button_image, get_button_image_template
 from gui.settings import get_settings
 from pyhook import pyhook_main
-from win.api import get_hq_icon_raw
+from win.api import get_hq_icon_raw, is_wow_process_64_bit
+from win.utils import is_32_bit_os
 
 # Default log formatter.
 _DEFAULT_FORMATTER = logging.Formatter()
@@ -231,10 +232,28 @@ class Session:
             self._has_new_logs = True
 
 
-def get_process_list() -> List[ProcessInfo]:
-    """Returns list of active processes.
+def _filter_64_bit(pid: int) -> bool:
+    """Checks if given process is 64-bit.
+
+    Args:
+        pid (int): Process ID.
 
     Returns:
-        List[ProcessInfo]: List of active processes.
+        bool: Flag if process is 64-bit.
     """
-    return [ProcessInfo(process) for process in psutil.process_iter()]
+    try:
+        return is_wow_process_64_bit(pid)
+    except ValueError:
+        return False
+
+
+def get_process_list() -> List[ProcessInfo]:
+    """Returns list of active processes for given PyHook architecture.
+
+    Returns:
+        List[ProcessInfo]: List of active processes for given PyHook architecture.
+    """
+    proc_list = [ProcessInfo(process) for process in psutil.process_iter()]
+    if not is_32_bit_os():
+        return [proc for proc in proc_list if _filter_64_bit(proc.pid)]
+    return proc_list

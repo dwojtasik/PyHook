@@ -44,39 +44,35 @@ def with_border(elem: sg.Element, color: str, visible: bool = True) -> sg.Column
     )
 
 
-def center_in_parent(child: sg.Window, parent: sg.Window, min_width: int = None) -> None:
+def center_in_parent(child: sg.Window, parent: sg.Window) -> None:
     """Centers child window in parent.
 
     If parent is not provided it will finalize child if needed.
-    Child window will be hidden (by alpha transparency) while centering.
+    Child window will be hidden (by alpha transparency) while centering if not yet finalized.
 
     Args:
         child (sg.Window): Child window to center.
         parent (sg.Window): Parent window.
-        min_width (int, optional): Minimum width of child window in pixels.
-            Used to minimize flashing. Defaults to None.
     """
+    child_was_finalized = child.finalize_in_progress
     if parent is None:
-        if not child.finalize_in_progress:
+        if not child_was_finalized:
             child.finalize()
         return
     parent_x, parent_y = parent.current_location(True)
     parent_w, parent_h = parent.current_size_accurate()
     child_x, child_y = parent_x + parent_w // 2, parent_y + parent_h // 2
-    if min_width is not None:
-        child_x -= min_width // 2
-    if child.finalize_in_progress:
+    if child_was_finalized:
         child.move(child_x, child_y)
     else:
         child.Location = (child_x, child_y)
         child._AlphaChannel = 0
         child.finalize()
     child_w, child_h = child.current_size_accurate()
-    if min_width is not None:
-        child_x += min_width // 2
     child.move(child_x - child_w // 2, child_y - child_h // 2)
     child.refresh()
-    child.reappear()
+    if not child_was_finalized:
+        child.reappear()
 
 
 def show_popup(
@@ -122,7 +118,7 @@ def show_popup(
         modal=True,
         keep_on_top=True,
     )
-    center_in_parent(popup, parent, min_width)
+    center_in_parent(popup, parent)
     if return_window:
         return popup
     if events is None:

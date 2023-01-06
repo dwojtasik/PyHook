@@ -114,7 +114,7 @@ def _process_update(tag: str, parent: sg.Window = None) -> str | None:
         modal=True,
         keep_on_top=True,
     )
-    center_in_parent(window, parent, 300)
+    center_in_parent(window, parent)
     window.refresh()
 
     def _download_callback(progress: int) -> bool:

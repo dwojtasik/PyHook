@@ -279,7 +279,7 @@ def display_settings_window(parent: sg.Window = None) -> None:
         modal=True,
         keep_on_top=True,
     )
-    center_in_parent(window, parent, 350)
+    center_in_parent(window, parent)
     while True:
         event, values = window.read()
         if event in (sg.WIN_CLOSED, SGKeys.EXIT, SGKeys.SETTINGS_CANCEL_BUTTON):

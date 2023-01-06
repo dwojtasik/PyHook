@@ -182,7 +182,7 @@ def verify_download(forced: bool = False, parent: sg.Window = None) -> None:
                 modal=True,
                 keep_on_top=True,
             )
-            center_in_parent(window, parent, 600)
+            center_in_parent(window, parent)
             window.refresh()
             for i, pipeline in enumerate(pipelines):
                 window[SGKeys.DOWNLOAD_VERIFY_TEXT].update(value=_PIPELINE_TEXT_FORMAT % (i + 1, count, pipeline))
@@ -259,7 +259,7 @@ def install_requirements(local_python_path: str, parent: sg.Window = None) -> No
         modal=True,
         keep_on_top=True,
     )
-    center_in_parent(window, parent, 450)
+    center_in_parent(window, parent)
     window.refresh()
 
     def is_cancelled() -> bool:

@@ -295,7 +295,10 @@ _APP_LAYOUT = [
             enable_events=True,
             font=FONT_MONO_DEFAULT,
             size=(50, 1),
-            tooltip="Process to inject PyHook",
+            tooltip=(
+                "Process to inject PyHook.\n"
+                f"Only {64 if sys.maxsize > 2**32 else 32}-bit applications are visible on list."
+            ),
         ),
         sg.Button("\u274C", key=SGKeys.INJECT_CLEAR, font=FONT_MONO_DEFAULT, size=(2, 1), tooltip="Clear input"),
         sg.Button(
