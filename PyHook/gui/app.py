@@ -2,7 +2,7 @@
 gui.app for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 GUI for PyHook
-:copyright: (c) 2022 by Dominik Wojtasik.
+:copyright: (c) 2023 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
 
@@ -609,7 +609,7 @@ def gui_main() -> None:
 
     # Application window.
     window = sg.Window(
-        f"PyHook v{__version__} (c) 2022 by Dominik Wojtasik",
+        f"PyHook v{__version__} (c) 2023",
         _APP_LAYOUT,
         font=FONT_DEFAULT,
         enable_close_attempted_event=True,
@@ -843,7 +843,7 @@ def gui_main() -> None:
                 [
                     [sg.Image(data=_APP_ICON, size=(128, 128))],
                     [sg.Text(f"PyHook v{__version__}", justification="center")],
-                    [sg.Text("(c) 2022 by Dominik Wojtasik", justification="center")],
+                    [sg.Text("(c) 2023 by Dominik Wojtasik", justification="center")],
                     [sg.Button("GitHub", size=(10, 1), pad=((0, 0), (10, 0)), key=SGKeys.ABOUT_GITHUB_BUTTON)],
                 ],
                 events={SGKeys.ABOUT_GITHUB_BUTTON: EventCallback(open_github, False)},

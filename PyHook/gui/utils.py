@@ -2,7 +2,7 @@
 gui.utils for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 GUI utilities for PyHook
-:copyright: (c) 2022 by Dominik Wojtasik.
+:copyright: (c) 2023 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
 import textwrap

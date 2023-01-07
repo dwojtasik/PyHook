@@ -2,7 +2,7 @@
 PyHook
 ~~~~~~~~~~~~~
 Python hook for ReShade processing
-:copyright: (c) 2022 by Dominik Wojtasik.
+:copyright: (c) 2023 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
 import logging
@@ -158,7 +158,7 @@ def pyhook_main(
         displayed_ms_error = False
         _init_logger(log_queue)
         sys.stdout = LogWriter(_LOGGER)
-        _LOGGER.info("PyHook v%s (c) 2022 by Dominik Wojtasik", __version__)
+        _LOGGER.info("PyHook v%s (c) 2023 by Dominik Wojtasik", __version__)
         if sys.maxsize > 2**32:
             if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_64, "")) > 0:
                 os.environ[SettingsKeys.KEY_LOCAL_PYTHON_64.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_64]

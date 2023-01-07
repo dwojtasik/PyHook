@@ -2,12 +2,13 @@
 session for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 PyHook subprocess sessions for PyHook
-:copyright: (c) 2022 by Dominik Wojtasik.
+:copyright: (c) 2023 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
 
 import logging
 import queue
+import sys
 import uuid
 from multiprocessing import Array, Manager, Process, Queue, Value
 from threading import Thread
@@ -279,17 +280,18 @@ class Session:
         self.timings.clear()
 
 
-def _filter_64_bit(pid: int) -> bool:
-    """Checks if given process is 64-bit.
+def _filter_by_arch(pid: int, is_64_bit: bool) -> bool:
+    """Checks if given process has given architecture.
 
     Args:
         pid (int): Process ID.
+        is_64_bit (bool): Flag if looking for 64-bit arch.
 
     Returns:
-        bool: Flag if process is 64-bit.
+        bool: Flag if process has given architecture.
     """
     try:
-        return is_wow_process_64_bit(pid)
+        return is_wow_process_64_bit(pid) == is_64_bit
     except ValueError:
         return False
 
@@ -302,5 +304,6 @@ def get_process_list() -> List[ProcessInfo]:
     """
     proc_list = [ProcessInfo(process) for process in psutil.process_iter()]
     if not is_32_bit_os():
-        return [proc for proc in proc_list if _filter_64_bit(proc.pid)]
+        is_64_bit = sys.maxsize > 2**32
+        return [proc for proc in proc_list if _filter_by_arch(proc.pid, is_64_bit)]
     return proc_list
