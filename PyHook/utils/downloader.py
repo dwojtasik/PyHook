@@ -22,14 +22,14 @@ _FILENAME_REGEX = re.compile(r"^.*?filename=\"(.*?)\";.*$")
 _STREAM_TIMEOUT_SEC = 5
 
 
-def download_file(url: str, directory: str, callback: Callable[[int], bool] = None) -> bool:
+def download_file(url: str, directory: str, callback: Callable[[int | None], bool] = None) -> bool:
     """Download file from given url and save it into directory.
 
     Args:
         url (str): The url to given file.
         directory (str): The directory to save downloaded file.
-        callback (Callable[[int], bool], optional): Optional downloading callback.
-            Args: downloading progress in percent. Result: flag if downloading should be continued.
+        callback (Callable[[int | None], bool], optional): Optional downloading callback.
+            Args: downloading progress in percent or None. Result: flag if downloading should be continued.
             Defaults to None.
 
     Returns:
@@ -44,21 +44,22 @@ def download_file(url: str, directory: str, callback: Callable[[int], bool] = No
     filepath = f"{directory}\\{filename}"
     filesize = int(response_stream.headers["Content-Length"])
     byte_count = 0
-    cancelled = False
-    if not exists(filepath) or getsize(filepath) != filesize:
-        with open(filepath, "wb") as d_file:
-            for chunk in response_stream.iter_content(_CHUNK_SIZE):
-                d_file.write(chunk)
-                byte_count += _CHUNK_SIZE
-                if byte_count > filesize:
-                    byte_count = filesize
-                percent = byte_count / filesize * 100
-                if callback is not None:
-                    if not callback(percent):
-                        if byte_count != filesize:
-                            cancelled = True
-                            break
-        response_stream.close()
-        if cancelled:
-            os.remove(filepath)
+    cancelled = False if callback is None else not callback(None)
+    if not cancelled:
+        if not exists(filepath) or getsize(filepath) != filesize:
+            with open(filepath, "wb") as d_file:
+                for chunk in response_stream.iter_content(_CHUNK_SIZE):
+                    d_file.write(chunk)
+                    byte_count += _CHUNK_SIZE
+                    if byte_count > filesize:
+                        byte_count = filesize
+                    percent = byte_count / filesize * 100
+                    if callback is not None:
+                        if not callback(percent):
+                            if byte_count != filesize:
+                                cancelled = True
+                                break
+            response_stream.close()
+            if cancelled:
+                os.remove(filepath)
     return cancelled

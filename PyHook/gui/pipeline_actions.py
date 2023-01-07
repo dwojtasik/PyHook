@@ -19,6 +19,7 @@ from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
 from gui.utils import center_in_parent, show_popup_exception, show_popup_text
 from utils.downloader import download_file
+from utils.threading import BackgroundTask
 from win.api import CREATE_NO_WINDOW
 
 # Text format for pipeline.
@@ -44,47 +45,22 @@ def _verify_files(
         Tuple[sg.Window, bool]: Cancel popup window and flag if all files were successfully verified.
     """
 
+    is_cancelled = False
     last_progress = 0
+    act_progress: int | None = None
 
-    def _download_callback(progress: int) -> bool:
-        """Download callback to manage download process and display progress bar.
+    def _download_callback(progress: int | None) -> bool:
+        """Download callback to manage download process and display progress bar in UI thread.
 
         Args:
-            progress (int): Downloading progress percentage.
+            progress (int | None): Downloading progress percentage. Could be None.
 
         Returns:
             bool: Flag if downloading should be continued.
         """
-        nonlocal last_progress, cancel_popup
-        if progress > last_progress or progress == -1:
-            window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(current_count=max(progress, 0), visible=progress > -1)
-            window[SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT].update(visible=progress < 0)
-            last_progress = progress
-        event, _ = window.read(0)
-        if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
-            if cancel_popup is None:
-                cancel_popup = show_popup_text(
-                    "Confirm cancel",
-                    "Are you sure to cancel files verifying?",
-                    ok_label="Yes",
-                    cancel_button=True,
-                    cancel_label="No",
-                    return_window=True,
-                    parent=window,
-                )
-        if cancel_popup is not None:
-            popup_event, _ = cancel_popup.read(0)
-            if popup_event in (
-                sg.WIN_CLOSED,
-                SGKeys.EXIT,
-                SGKeys.POPUP_KEY_OK_BUTTON,
-                SGKeys.POPUP_KEY_CANCEL_BUTTON,
-            ):
-                should_continue = popup_event != SGKeys.POPUP_KEY_OK_BUTTON
-                cancel_popup.close()
-                cancel_popup = None
-                return should_continue
-        return True
+        nonlocal act_progress
+        act_progress = progress
+        return not is_cancelled
 
     pipeline_data_dir = f"{pipeline_dir}\\{pipeline_file[:-3]}"
     download_list_file = f"{pipeline_data_dir}\\download.txt"
@@ -104,7 +80,41 @@ def _verify_files(
                             else f"{url[: _MAX_URL_LENGTH // 2]}...{url[-_MAX_URL_LENGTH // 2 :]}",
                         )
                     )
-                    if not _download_callback(-1) or download_file(url, pipeline_data_dir, _download_callback):
+                    bg_task = BackgroundTask(download_file, [url, pipeline_data_dir, _download_callback])
+                    bg_task.start()
+                    while bg_task.is_running():
+                        event, _ = window.read(0)
+                        if act_progress is None or act_progress > last_progress:
+                            window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(
+                                current_count=max(0 if act_progress is None else act_progress, 0),
+                                visible=act_progress is not None,
+                            )
+                            window[SGKeys.DOWNLOAD_PROGRESS_PLACEHOLDER_TEXT].update(visible=act_progress is None)
+                            last_progress = 0 if act_progress is None else act_progress
+                        if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
+                            if cancel_popup is None:
+                                cancel_popup = show_popup_text(
+                                    "Confirm cancel",
+                                    "Are you sure to cancel files verifying?",
+                                    ok_label="Yes",
+                                    cancel_button=True,
+                                    cancel_label="No",
+                                    return_window=True,
+                                    parent=window,
+                                )
+                        if cancel_popup is not None:
+                            popup_event, _ = cancel_popup.read(0)
+                            if popup_event in (
+                                sg.WIN_CLOSED,
+                                SGKeys.EXIT,
+                                SGKeys.POPUP_KEY_OK_BUTTON,
+                                SGKeys.POPUP_KEY_CANCEL_BUTTON,
+                            ):
+                                cancel_popup.close()
+                                cancel_popup = None
+                                is_cancelled = popup_event == SGKeys.POPUP_KEY_OK_BUTTON
+                    bg_task.join()
+                    if bg_task.get_output():
                         window.write_event_value(SGKeys.DOWNLOAD_CANCEL_EVENT, ())
                         return cancel_popup, False
             return cancel_popup, True
@@ -209,9 +219,33 @@ def verify_download(forced: bool = False, parent: sg.Window = None) -> None:
                         event, _ = window.read(0)
                         if event == SGKeys.DOWNLOAD_CANCEL_EVENT:
                             break
+            if cancel_popup is not None:
+                cancel_popup.close()
             window.close()
     if has_change:
         save_settings(settings)
+
+
+def _install_with_pip(local_python_path: str, file: str) -> None:
+    """Installs requirements from given file.
+
+    Args:
+        local_python_path (str): Path to local Python executable.
+        file (str): Requirements file path.
+
+    Raises:
+        Exception: When installation did not succeed.
+    """
+    with Popen(
+        f"{local_python_path} -m pip install -r {file} --quiet --disable-pip-version-check",
+        stderr=PIPE,
+        shell=False,
+        creationflags=CREATE_NO_WINDOW,
+        start_new_session=True,
+    ) as process:
+        _, err = process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError(err.decode("utf-8"))
 
 
 def install_requirements(local_python_path: str, parent: sg.Window = None) -> None:
@@ -233,6 +267,7 @@ def install_requirements(local_python_path: str, parent: sg.Window = None) -> No
     pipelines = [basename(path) for path in pipeline_files]
     count = len(pipelines)
     cancel_popup: sg.Window = None
+    cancelled = False
     window = sg.Window(
         "Installing requirements...",
         [
@@ -268,6 +303,8 @@ def install_requirements(local_python_path: str, parent: sg.Window = None) -> No
         Returns:
             bool: Flag if user confirmed cancellation.
         """
+        if cancelled:
+            return True
         nonlocal cancel_popup
         event, _ = window.read(0)
         if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
@@ -301,32 +338,34 @@ def install_requirements(local_python_path: str, parent: sg.Window = None) -> No
             break
         pipeline_requirements = f"{pipeline_dir}\\{pipeline[:-3]}.requirements.txt"
         if exists(pipeline_requirements):
-            with Popen(
-                f"{local_python_path} -m pip install -r {pipeline_requirements} --quiet --disable-pip-version-check",
-                stderr=PIPE,
-                shell=False,
-                creationflags=CREATE_NO_WINDOW,
-                start_new_session=True,
-            ) as process:
-                try:
-                    _, err = process.communicate()
-                    if process.returncode != 0:
-                        raise RuntimeError(err.decode("utf-8"))
-                except Exception as ex:
-                    if not show_popup_exception(
-                        title="Error",
-                        text=f'Error occurred while installing requirements for pipeline "{pipeline}".',
-                        ex=ex,
-                        ok_label="Yes",
-                        cancel_button=True,
-                        cancel_label="No",
-                        ex_width=100,
-                        text_after="Do you want to continue installation for other pipelines?",
-                        parent=window,
-                    ):
-                        break
+            bg_task = BackgroundTask(_install_with_pip, [local_python_path, pipeline_requirements])
+            bg_task.start()
+            while bg_task.is_running():
+                if is_cancelled():
+                    window[SGKeys.REQUIREMENTS_INSTALL_TEXT].update(value="Cancelling, please wait...")
+                    window.refresh()
+                    cancelled = True
+                    break
+            bg_task.join()
+            if cancelled:
+                break
+            try:
+                bg_task.get_output()
+            except Exception as ex:
+                if not show_popup_exception(
+                    title="Error",
+                    text=f'Error occurred while installing requirements for pipeline "{pipeline}".',
+                    ex=ex,
+                    ok_label="Yes",
+                    cancel_button=True,
+                    cancel_label="No",
+                    ex_width=100,
+                    text_after="Do you want to continue installation for other pipelines?",
+                    parent=window,
+                ):
+                    break
         window[SGKeys.REQUIREMENTS_INSTALL_PROGRESS_BAR].update(current_count=int((i + 1) / count * 100))
         window.refresh()
-        if is_cancelled():
-            break
+    if cancel_popup is not None:
+        cancel_popup.close()
     window.close()

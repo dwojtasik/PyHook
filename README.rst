@@ -621,6 +621,7 @@ History
 
 NEXT / DEV
 ----------
+- Improved popup windows responsiveness.
 - Added timings for pipeline processing.
 - Added process list filtration by PyHook architecture.
 - Added child window centering in parent.

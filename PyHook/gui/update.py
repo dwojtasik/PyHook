@@ -24,6 +24,7 @@ from keys import SettingsKeys
 from pipeline import get_pipeline_directory
 from utils.common import is_frozen_bundle
 from utils.downloader import download_file
+from utils.threading import BackgroundTask
 
 _GITHUB_URL = "https://github.com/dwojtasik/PyHook"
 _TAG_URL = f"{_GITHUB_URL}/releases/tag/"
@@ -85,7 +86,9 @@ def _process_update(tag: str, parent: sg.Window = None) -> str | None:
         str | None: Name of updated executable or None.
     """
     release_url = _get_release_url(tag)
+    is_cancelled = False
     last_progress = 0
+    act_progress: int | None = None
     cancel_popup: sg.Window = None
 
     window = sg.Window(
@@ -118,7 +121,7 @@ def _process_update(tag: str, parent: sg.Window = None) -> str | None:
     window.refresh()
 
     def _download_callback(progress: int) -> bool:
-        """Download callback to manage download process and display progress bar.
+        """Download callback to manage download process and display progress bar in UI thread.
 
         Args:
             progress (int): Downloading progress percentage.
@@ -126,11 +129,20 @@ def _process_update(tag: str, parent: sg.Window = None) -> str | None:
         Returns:
             bool: Flag if downloading should be continued.
         """
-        nonlocal last_progress, cancel_popup
-        if progress > last_progress or progress == 0:
-            window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(current_count=max(progress, 0))
-            last_progress = progress
+        nonlocal act_progress
+        act_progress = progress
+        return not is_cancelled
+
+    # Download update
+    bg_task = BackgroundTask(download_file, [release_url, os.getcwd(), _download_callback])
+    bg_task.start()
+    while bg_task.is_running():
         event, _ = window.read(0)
+        if act_progress is None or act_progress > last_progress:
+            window[SGKeys.DOWNLOAD_PROGRESS_BAR].update(
+                current_count=max(0 if act_progress is None else act_progress, 0),
+            )
+            last_progress = 0 if act_progress is None else act_progress
         if event == sg.WIN_CLOSE_ATTEMPTED_EVENT:
             if cancel_popup is None:
                 cancel_popup = show_popup_text(
@@ -152,15 +164,11 @@ def _process_update(tag: str, parent: sg.Window = None) -> str | None:
             ):
                 cancel_popup.close()
                 cancel_popup = None
-                return popup_event != SGKeys.POPUP_KEY_OK_BUTTON
-        return True
-
-    # Download update
-    was_cancelled = not _download_callback(0) or download_file(release_url, os.getcwd(), _download_callback)
+                is_cancelled = popup_event == SGKeys.POPUP_KEY_OK_BUTTON
+    bg_task.join()
     if cancel_popup is not None:
         cancel_popup.close()
-        cancel_popup = None
-    if was_cancelled:
+    if bg_task.get_output():
         window.close()
         return None
 

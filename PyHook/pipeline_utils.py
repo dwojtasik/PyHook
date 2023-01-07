@@ -168,11 +168,11 @@ def _communicate_with_timeout(cmd: str, timeout: int = _PROCESS_TIMEOUT_SEC) -> 
         timeout (int, optional): Timeout in seconds for communication.
             Defaults to value of _PROCESS_TIMEOUT_SEC (2).
 
-    Raises:
-        Exception: When cannot communicate with subprocess.
-
     Returns:
         str: Output from subprocess pipe.
+
+    Raises:
+        Exception: When cannot communicate with subprocess.
     """
     with Popen(
         cmd,
@@ -296,11 +296,11 @@ def build_variable(
         step (Any, optional): Step between min->max values. Defaults to None.
         tooltip (str, optional): Tooltip describing variable. Defaults to None.
 
-    Raises:
-        ValueError: When value has not allowed type.
-
     Returns:
         List[Any, float, float, float, str]: The variable data list.
+
+    Raises:
+        ValueError: When value has not allowed type.
     """
     if isinstance(value, (bool, int, float)):
         return [
