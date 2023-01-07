@@ -6,7 +6,7 @@ Utils for Windows OS
 :license: MIT, see LICENSE for more details.
 """
 
-from platform import architecture
+from platform import machine
 
 from psutil import pid_exists
 
@@ -16,6 +16,8 @@ from win.api import is_wow_process_64_bit
 _ARCH_32_BIT = "32bit"
 # String for 64-bit architecture.
 _ARCH_64_BIT = "64bit"
+# 64-bit machine string.
+_MACHINE_64_BIT = "AMD64"
 
 
 def to_arch_string(is_64_bit: bool) -> str:
@@ -36,7 +38,7 @@ def is_32_bit_os() -> bool:
     Returns:
         bool: True if OS is 32 bit
     """
-    return architecture()[0] == _ARCH_32_BIT
+    return machine() != _MACHINE_64_BIT
 
 
 def is_process_64_bit(pid: int) -> bool:

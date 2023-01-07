@@ -1,6 +1,6 @@
 """
-gui.keys for PyHook
-~~~~~~~~~~~~~~~~~~~~~~~
+gui.ui_keys for PyHook
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Contains UI keys enums
 :copyright: (c) 2023 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.

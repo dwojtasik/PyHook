@@ -10,7 +10,7 @@ PyHook consists of two elements:
 - | Python code that finds process with ReShade loaded, injects addon into it
   | and allows to process frames in code via dynamic pipelines.
 - | C++ addon DLL written using ReShade API that exposes back buffer via shared memory
-  | and allows to configure dynamic pipelines in settings UI.
+  | and allows to configure dynamic pipelines in ReShade Addon UI.
 
 .. contents:: **Table of Contents**
 
@@ -28,10 +28,10 @@ Features
 - Frame processing in Python via ``numpy`` array
 - JSON file with pipelines settings
 - Local Python environment usage in pipeline code
-- Automatic update [DEV]
+- Automatic update
 - Automatic pipeline files download
-- Automatic requirements installation [DEV]
-- Session timings for each pipeline processing [DEV]
+- Automatic requirements installation
+- Session timings for each pipeline processing
 
 Graphics API support
 ====================
@@ -370,7 +370,13 @@ GUI consists of few elements:
 - Menu bar, where user can change app settings, verify pipeline files and show information about app.
 - Injection bar, where user can find given process automatically or by search bar using process name or id.
 - Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API), executable name and process id. Active sessions have green border, dead are using red color.
-- Session overview, where user can see live logs and timings from given session, kill it or restart (if was stopped by some reason).
+- Session overview, where user can see live logs and timings (on screenshot below) from given session, kill it or restart (if it was stopped by any reason).
+
+.. raw:: html
+
+   <p align="center">
+      <img src="https://raw.githubusercontent.com/dwojtasik/PyHook/main/docs/images/timings.jpg" alt="Go to /docs/images/timings.jpg">
+   </p>
 
 PyHook addon
 ------------
@@ -439,11 +445,11 @@ You can download selected PyHook archives from `Releases <https://github.com/dwo
 
 1. Download and unpack zip catalog with PyHook executable and pipelines. Releases up to 1.1.2 contains also ``*.addon`` file.
 2. | Prepare Python local environment (read more in `Virtual environment <#virtual-environment>`_) and download pipelines files if needed.
-   | Pipelines has own directories with ``download.txt`` file that has list of files to download.
+   | Pipelines has own directories with ``download.txt`` file that has list of files to download. Files can be also downloaded from PyHook app menu.
 3. Start game with `ReShade <https://reshade.me/>`_ installed.
 4. Start PyHook.exe.
 
-For custom pipelines (e.g. AI ones) install requirements and setup ENV variables that points to Python3 binary in required version.
+For custom pipelines (e.g. AI ones) install requirements (manually or from PyHook app menu) and setup ENV variables or settings that points to Python3 binary in required version.
 
 Available ENV variables (required up to 1.1.2, can be set in settings in newer versions):
 
@@ -619,8 +625,9 @@ Breaking changes
 History
 =======
 
-NEXT / DEV
-----------
+1.2.5 (2023-01-07)
+------------------
+- Fixed OS architecture test.
 - Improved popup windows responsiveness.
 - Added timings for pipeline processing.
 - Added process list filtration by PyHook architecture.

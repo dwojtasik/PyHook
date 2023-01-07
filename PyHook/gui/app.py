@@ -20,10 +20,10 @@ import PySimpleGUI as sg
 from _version import __version__
 from session import ProcessInfo, Session, get_process_list
 from gui.image import format_raw_data, get_as_buffer, get_button_image_template, get_img
-from gui.keys import SGKeys, TKKeys
 from gui.pipeline_actions import install_requirements, verify_download
 from gui.settings import display_settings_window, get_settings, load_settings
 from gui.style import *  # pylint: disable=wildcard-import, unused-wildcard-import
+from gui.ui_keys import SGKeys, TKKeys
 from gui.update import try_update
 from gui.utils import EventCallback, show_popup, show_popup_text, with_border
 from keys import SettingsKeys, TimingsKeys
@@ -397,34 +397,44 @@ _APP_LAYOUT = [
             "Session overview",
             [
                 [
-                    sg.Text(
-                        "Select session...",
-                        font=FONT_MID_DEFAULT,
-                        pad=(10, 10),
-                        justification="left",
-                        key=SGKeys.SESSION_TITLE,
+                    sg.Column(
+                        [
+                            [
+                                sg.Text(
+                                    "Select session...",
+                                    font=FONT_MID_DEFAULT,
+                                    pad=((10, 0), (0, 0)),
+                                    justification="left",
+                                    key=SGKeys.SESSION_TITLE,
+                                )
+                            ],
+                            [sg.VPush()],
+                            [
+                                sg.Button(
+                                    "Logs",
+                                    size=(7, 1),
+                                    pad=((241, 2), (0, 0)),
+                                    font=FONT_CONSOLE,
+                                    button_color=SESSION_TABS_BUTTON_SELECTED_COLORS,
+                                    key=SGKeys.SESSION_TAB_LOGS_BUTTON,
+                                    tooltip="Opens session logs tab",
+                                    visible=True,
+                                ),
+                                sg.Button(
+                                    "Timings",
+                                    size=(7, 1),
+                                    pad=((2, 0), (0, 0)),
+                                    font=FONT_CONSOLE,
+                                    button_color=SESSION_TABS_BUTTON_COLORS,
+                                    key=SGKeys.SESSION_TAB_TIMINGS_BUTTON,
+                                    tooltip="Opens session timings tab",
+                                    visible=True,
+                                ),
+                            ],
+                        ],
+                        pad=(0, 0),
                     ),
                     sg.Push(),
-                    sg.Button(
-                        "Logs",
-                        size=(7, 1),
-                        pad=((0, 2), (30, 0)),
-                        font=FONT_CONSOLE,
-                        button_color=SESSION_TABS_BUTTON_SELECTED_COLORS,
-                        key=SGKeys.SESSION_TAB_LOGS_BUTTON,
-                        tooltip="Opens session logs tab",
-                        visible=True,
-                    ),
-                    sg.Button(
-                        "Timings",
-                        size=(7, 1),
-                        pad=((2, 77), (30, 0)),
-                        font=FONT_CONSOLE,
-                        button_color=SESSION_TABS_BUTTON_COLORS,
-                        key=SGKeys.SESSION_TAB_TIMINGS_BUTTON,
-                        tooltip="Opens session timings tab",
-                        visible=True,
-                    ),
                     sg.Button(
                         "Kill",
                         size=(6, 1),

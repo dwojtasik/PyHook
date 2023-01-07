@@ -16,9 +16,9 @@ import PySimpleGUI as sg
 import requests
 
 from _version import __version__
-from gui.keys import SGKeys
 from gui.settings import get_settings
 from gui.style import COLOR_TEXT_URL, FONT_SMALL_DEFAULT
+from gui.ui_keys import SGKeys
 from gui.utils import EventCallback, center_in_parent, show_popup, show_popup_text
 from keys import SettingsKeys
 from pipeline import get_pipeline_directory

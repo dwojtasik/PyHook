@@ -17,8 +17,8 @@ from typing import Any, Dict, List
 
 import PySimpleGUI as sg
 
-from gui.keys import SGKeys
 from gui.style import FONT_SMALL_DEFAULT
+from gui.ui_keys import SGKeys
 from gui.utils import center_in_parent, show_popup_text
 from keys import SettingsKeys
 from win.api import CREATE_NO_WINDOW
@@ -105,7 +105,7 @@ def load_settings(parent: sg.Window = None) -> None:
                         continue
                     _SETTINGS[key] = list(value)
     else:
-        save_settings(parent)
+        save_settings(parent=parent)
 
 
 def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column]]:

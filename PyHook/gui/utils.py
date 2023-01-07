@@ -10,8 +10,8 @@ from typing import Callable, Dict, List
 
 import PySimpleGUI as sg
 
-from gui.keys import SGKeys
 from gui.style import FONT_CONSOLE, FONT_SMALL_DEFAULT
+from gui.ui_keys import SGKeys
 
 
 class EventCallback:

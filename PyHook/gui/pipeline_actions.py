@@ -14,9 +14,9 @@ import PySimpleGUI as sg
 
 from keys import SettingsKeys
 from pipeline import PipelinesDirNotFoundError, get_pipeline_directory, get_pipeline_file_list
-from gui.keys import SGKeys
 from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
+from gui.ui_keys import SGKeys
 from gui.utils import center_in_parent, show_popup_exception, show_popup_text
 from utils.downloader import download_file
 from utils.threading import BackgroundTask
