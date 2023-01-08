@@ -11,7 +11,7 @@ with use_local_python():
     from torchvision import transforms
 
 name = "[AI] Style Transfer"
-version = "1.1.2"
+version = "1.2.9"
 desc = """Torch pipeline for fast style transfer.
 Based on "Fast neural style with MobileNetV2 bottleneck blocks" from:
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2"""

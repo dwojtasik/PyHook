@@ -2,7 +2,7 @@ from pipeline_utils import build_variable, read_value
 import numpy as np
 
 name = "[Test] RGB"
-version = "1.1.2"
+version = "1.2.9"
 desc = "Dummy pipeline for testing. Tests RGB manipulation and multiple UI settings."
 supports = [32, 64]
 

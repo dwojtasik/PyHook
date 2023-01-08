@@ -12,6 +12,9 @@ from os.path import abspath, exists
 from subprocess import check_call
 from zipfile import ZipFile
 
+from utils.common import get_frozen_path, is_frozen_bundle
+from win.api import CREATE_NO_WINDOW
+
 # Directory for 32-bit data.
 _LIB32_DIRECTORY = "lib32"
 # Version of pyinjector module.
@@ -40,7 +43,9 @@ def unpack_32bit_injector() -> None:
                     "--platform win32 "
                     "--python-version 3.10 "
                     f"pyinjector=={_PYINJECTOR_VERSION}"
-                )
+                ),
+                shell=False,
+                creationflags=CREATE_NO_WINDOW,
             )
             whl_path = f"pyinjector-{_PYINJECTOR_VERSION}-cp310-cp310-win32.whl"
             with ZipFile(whl_path, "r") as whl_archive:
@@ -61,18 +66,24 @@ def inject_external(exe_path: str, pid: int, dll_path: str) -> None:
         pid (int): Process ID.
         dll_path (str): DLL path.
     """
-    lib_init = abspath(f"{_LIB32_DIRECTORY}\\pyinjector\\__init__.py")
+    lib_init = f"{_LIB32_DIRECTORY}\\pyinjector\\__init__.py"
+    if is_frozen_bundle():
+        lib_init = get_frozen_path(lib_init)
+    else:
+        lib_init = abspath(lib_init)
     check_call(
         [
             exe_path,
             "-c",
             (
-                """import importlib, sys;"""
+                """import importlib.util, sys;"""
                 f"""spec = importlib.util.spec_from_file_location("pyinjector_ext", "{lib_init}");"""
                 """module = importlib.util.module_from_spec(spec);"""
                 """sys.modules["pyinjector_ext"] = module;"""
                 """spec.loader.exec_module(module);"""
                 f"""module.inject({pid}, "{dll_path}")"""
-            ),
-        ]
+            ).replace("\\", "\\\\"),
+        ],
+        shell=False,
+        creationflags=CREATE_NO_WINDOW,
     )

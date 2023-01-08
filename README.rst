@@ -368,6 +368,7 @@ PyHook
 GUI consists of few elements:
 
 - Menu bar, where user can change app settings, verify pipelines files, install pipelines requirements, update app and show information about it.
+- In 64-bit version of PyHook there is also checkbox that allows to select 32-bit processes.
 - Injection bar, where user can find given process automatically or by search bar using process name or id.
 - Session list, where user can see all active/dead sessions. Each session have icon (if possible to get from .exe file by Windows API), executable name and process id. Active sessions have green border, dead are using red color.
 - Session overview, where user can see live logs and timings (on screenshot below) from given session, kill it or restart (if it was stopped by any reason).
@@ -412,13 +413,14 @@ Requirements
 Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
-- `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit`` | ``3.10.4 for 32-bit`` (for pipelines only)
-- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3\* (optional for AI pipelines only)
-- `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1\* (optional for AI pipelines only)
+- `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit``\* | ``3.10.4 for 32-bit`` (for pipelines only)
+- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3\*\* (optional for AI pipelines only)
+- `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1\*\* (optional for AI pipelines only)
 - | Only for specific pipelines: Any libraries that are required by pipeline code.
   | Do note that AI pipelines that requires PyTorch or TensorFlow will not work on 32-bit system because libraries does not support it.
 
-\* CUDA and cuDNN version should be last supported by your GPU and pipeline modules.
+| \* 64-bit version of PyHook also uses 32-bit Python executable for injecting addon DLL into 32-bit processes.
+| \*\* CUDA and cuDNN version should be last supported by your GPU and pipeline modules.
 
 Build
 -----
@@ -625,8 +627,8 @@ Breaking changes
 History
 =======
 
-NEXT / DEV
-----------
+1.2.9 (2023-01-08)
+------------------
 - Now 64-bit PyHook supports AI pipelines for 32-bit applications.
 - Added information about supported platform (either 32-bit, 64-bit or both) to pipelines.
 - Added possibility to inject into 32-bit application in 64-bit PyHook.

@@ -5,7 +5,7 @@ with use_local_python():
     import cv2
 
 name = "[CV2] Sharpen"
-version = "1.1.2"
+version = "1.2.9"
 desc = "OpenCV sharpen filter"
 supports = [64]
 

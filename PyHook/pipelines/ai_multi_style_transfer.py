@@ -11,7 +11,7 @@ with use_local_python():
     from torch.autograd import Variable
 
 name = "[AI] Multi Style Transfer"
-version = "1.1.2"
+version = "1.2.9"
 desc = """Torch pipeline for fast multi style transfer.
 Based on "PyTorch-Style-Transfer" from:
 https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer"""

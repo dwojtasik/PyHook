@@ -10,7 +10,7 @@ with use_local_python():
     import torch.nn.functional as F
 
 name = "[AI] Semantic Segmentation"
-version = "1.1.2"
+version = "1.2.9"
 desc = """Torch pipeline for semantic segmentation.
 Based on "PIDNet: A Real-time Semantic Segmentation Network Inspired from PID Controller" from:
 https://github.com/XuJiacong/PIDNet"""

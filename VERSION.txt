@@ -15,12 +15,12 @@ VSVersionInfo(
         u'040904B0',
         [StringStruct(u'CompanyName', u'Dominik Wojtasik'),
         StringStruct(u'FileDescription', u'PyHook'),
-        StringStruct(u'FileVersion', u'1.2.5'),
+        StringStruct(u'FileVersion', u'1.2.9'),
         StringStruct(u'InternalName', u'PyHook.exe'),
         StringStruct(u'LegalCopyright', u'Copyright (C) 2023 Dominik Wojtasik'),
         StringStruct(u'OriginalFilename', u'PyHook.exe'),
         StringStruct(u'ProductName', u'PyHook'),
-        StringStruct(u'ProductVersion', u'1.2.5')])
+        StringStruct(u'ProductVersion', u'1.2.9')])
       ]
     ),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])

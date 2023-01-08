@@ -383,18 +383,7 @@ _APP_LAYOUT = [
             size=(4, 1),
             tooltip="Try to automatically find process with ReShade and PyHook loaded",
         ),
-    ]
-    + [
-        sg.Checkbox(
-            "Show 32-bit apps",
-            default=False,
-            tooltip="Show 32-bit applications in process list but disables automatic injection.",
-            enable_events=True,
-            key=SGKeys.INJECT_ALLOW_32_BIT_CHECKBOX,
-        )
-    ]
-    if _IS_64_BIT
-    else [],
+    ],
     [
         sg.Frame(
             "Sessions",
@@ -594,6 +583,17 @@ _APP_LAYOUT = [
         ),
     ],
 ]
+
+if _IS_64_BIT:
+    _APP_LAYOUT[1].append(
+        sg.Checkbox(
+            "Show 32-bit apps",
+            default=False,
+            tooltip="Show 32-bit applications in process list but disables automatic injection.",
+            enable_events=True,
+            key=SGKeys.INJECT_ALLOW_32_BIT_CHECKBOX,
+        )
+    )
 
 
 def open_github() -> None:
