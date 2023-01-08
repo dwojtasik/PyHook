@@ -117,43 +117,43 @@ def _get_python_settings_layout(settings: Dict[str, Any]) -> List[List[sg.Column
     Returns:
         List[List[sg.Column]]: Layout for settings fragment with Python executable paths.
     """
-    is_64_bit = sys.maxsize > 2**32
-    path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if is_64_bit else SettingsKeys.KEY_LOCAL_PYTHON_32]
-    initial_folder = os.getcwd() if len(path) == 0 or not exists(path) else dirname(path)
-    return [
-        [
-            sg.Text(
-                f"Python {64 if is_64_bit else 32}-bit executable path:",
-                tooltip=(
-                    "Path to Python executable that will be used in pipelines as local Python.\n"
-                    "Value set in here will override LOCAL_PYTHON environment variables."
-                ),
-            ),
-            sg.FileBrowse(
-                size=(10, 1),
-                initial_folder=initial_folder,
-                tooltip=(
-                    "Path to Python executable that will be used in pipelines as local Python.\n"
-                    "Value set in here will override LOCAL_PYTHON environment variables."
-                ),
-                file_types=[("EXE Files", "*.exe")],
-                key=SGKeys.SETTINGS_PYTHON_64_BROWSE if is_64_bit else SGKeys.SETTINGS_PYTHON_32_BROWSE,
-                target=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
-            ),
-        ],
-        [
-            sg.Input(
-                default_text=path,
-                tooltip=(
-                    "Path to Python executable that will be used in pipelines as local Python.\n"
-                    "Value set in here will override LOCAL_PYTHON environment variables."
-                ),
-                size=(45, 1),
-                enable_events=True,
-                key=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
-            )
-        ],
-    ]
+    layout = []
+    is_os_64_bit = sys.maxsize > 2**32
+    for is_64_bit in [False, True] if is_os_64_bit else [False]:
+        path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if is_64_bit else SettingsKeys.KEY_LOCAL_PYTHON_32]
+        initial_folder = os.getcwd() if len(path) == 0 or not exists(path) else dirname(path)
+        tooltip = (
+            "Path to Python executable that will be used in pipelines as local Python.\n"
+            f"Value set in here will override LOCAL_PYTHON_{64 if is_64_bit else 32} environment variables."
+        )
+        layout.extend(
+            [
+                [
+                    sg.Text(
+                        f"Python {64 if is_64_bit else 32}-bit executable path:",
+                        tooltip=tooltip,
+                    ),
+                    sg.FileBrowse(
+                        size=(10, 1),
+                        initial_folder=initial_folder,
+                        tooltip=tooltip,
+                        file_types=[("EXE Files", "*.exe")],
+                        key=SGKeys.SETTINGS_PYTHON_64_BROWSE if is_64_bit else SGKeys.SETTINGS_PYTHON_32_BROWSE,
+                        target=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
+                    ),
+                ],
+                [
+                    sg.Input(
+                        default_text=path,
+                        tooltip=tooltip,
+                        size=(45, 1),
+                        enable_events=True,
+                        key=SGKeys.SETTINGS_PYTHON_64_INPUT if is_64_bit else SGKeys.SETTINGS_PYTHON_32_INPUT,
+                    )
+                ],
+            ]
+        )
+    return layout
 
 
 def _validate_python_paths(settings: Dict[str, Any], parent: sg.Window = None) -> bool:

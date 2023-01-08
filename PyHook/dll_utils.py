@@ -8,6 +8,7 @@ Utils for DLL management
 
 import glob
 import os
+import sys
 from ctypes import c_char_p
 from os.path import abspath, basename, dirname, exists
 from typing import List
@@ -15,25 +16,25 @@ from typing import List
 import psutil
 from pyinjector import inject
 
+from keys import SettingsKeys
 from utils.common import get_frozen_path, is_frozen_bundle
+from utils.external import unpack_32bit_injector, inject_external
 from win.api import DONT_RESOLVE_DLL_REFERENCES, FreeLibrary, GetProcAddress, LoadLibrary
 from win.utils import is_process_64_bit, to_arch_string
 
 # Search paths (in priority order) for 32-bit addon file.
 _ADDON_PATHS_32BIT = [
     "./Addon/Release/PyHook.addon",
-    "./PyHook.addon",
     "./PyHook32.addon",
-    "./Addons/PyHook32.addon",
+    "./PyHook.addon",
     "./Addon/Debug/PyHook.addon",
 ]
 
 # Search paths (in priority order) for 64-bit addon file.
 _ADDON_PATHS_64BIT = [
     "./Addon/x64/Release/PyHook.addon",
-    "./PyHook.addon",
     "./PyHook64.addon",
-    "./Addons/PyHook64.addon",
+    "./PyHook.addon",
     "./Addon/x64/Debug/PyHook.addon",
 ]
 
@@ -130,8 +131,21 @@ class AddonHandler:
         return f"{self.process_name} [PID={self.pid}, {to_arch_string(self.is_64_bit)}]{reshade_version_string}"
 
     def inject_addon(self) -> None:
-        """Injects addon DLL into process."""
-        inject(self.pid, self.addon_path)
+        """Injects addon DLL into process.
+
+        Raises:
+            ValueError: When trying to inject into 32-bit process on 64-bit OS
+                without setting path to 32-bit Python executable.
+        """
+        if not self.is_64_bit and sys.maxsize > 2**32:
+            if not is_frozen_bundle():
+                unpack_32bit_injector()
+            local_path = os.getenv(SettingsKeys.KEY_LOCAL_PYTHON_32.upper(), "")
+            if len(local_path) == 0:
+                raise ValueError("Path to 32-bit Python executable is not set.")
+            inject_external(local_path, self.pid, self.addon_path)
+        else:
+            inject(self.pid, self.addon_path)
 
     def has_addon_loaded(self) -> bool:
         """Checks if addon is still loaded into process.
@@ -152,7 +166,7 @@ class AddonHandler:
             AddonNotFoundException: When addon DLL file cannot be found.
         """
         if is_frozen_bundle():
-            frozen_path = get_frozen_path("PyHook.addon")
+            frozen_path = get_frozen_path(f"{'.' if self.is_64_bit else 'lib32'}\\PyHook.addon")
             if exists(frozen_path):
                 return frozen_path
         paths = _ADDON_PATHS_64BIT if self.is_64_bit else _ADDON_PATHS_32BIT

@@ -17,6 +17,7 @@ class SGKeys:
     INJECT (str): Key for: Injection button.
     INJECT_CLEAR (str): Key for: Clear injection select box button.
     INJECT_AUTO (str): Key for: Automatic injection button.
+    INJECT_ALLOW_32_BIT_CHECKBOX (str): Key for: 32-bit apps allow checkbox.
     POPUP_KEY_OK_BUTTON (str): Key for: Popup OK button.
     POPUP_KEY_CANCEL_BUTTON (str): Key for: Popup cancel button.
     SESSION_LIST (str): Key for: Session list column.
@@ -70,6 +71,7 @@ class SGKeys:
     INJECT = "-INJECT-"
     INJECT_CLEAR = "-INJECT_CLEAR-"
     INJECT_AUTO = "-INJECT_AUTO-"
+    INJECT_ALLOW_32_BIT_CHECKBOX = "-INJECT_ALLOW_32_BIT_CHECKBOX-"
     POPUP_KEY_OK_BUTTON = "-OK-"
     POPUP_KEY_CANCEL_BUTTON = "-CANCEL-"
     SESSION_LIST = "-SESSION_LIST-"

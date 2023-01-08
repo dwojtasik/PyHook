@@ -296,8 +296,11 @@ def _filter_by_arch(pid: int, is_64_bit: bool) -> bool:
         return False
 
 
-def get_process_list() -> List[ProcessInfo]:
+def get_process_list(show_32_bit: bool) -> List[ProcessInfo]:
     """Returns list of active processes for given PyHook architecture.
+
+    Args:
+        show_32_bit (bool): Flag if 32-bit applications should be visible on 64-bit OS.
 
     Returns:
         List[ProcessInfo]: List of active processes for given PyHook architecture.
@@ -305,5 +308,7 @@ def get_process_list() -> List[ProcessInfo]:
     proc_list = [ProcessInfo(process) for process in psutil.process_iter()]
     if not is_32_bit_os():
         is_64_bit = sys.maxsize > 2**32
+        if is_64_bit and show_32_bit:
+            return proc_list
         return [proc for proc in proc_list if _filter_by_arch(proc.pid, is_64_bit)]
     return proc_list

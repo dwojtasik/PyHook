@@ -159,6 +159,13 @@ def pyhook_main(
         _init_logger(log_queue)
         sys.stdout = LogWriter(_LOGGER)
         _LOGGER.info("PyHook v%s (c) 2023 by Dominik Wojtasik", __version__)
+        if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_32, "")) > 0:
+            os.environ[SettingsKeys.KEY_LOCAL_PYTHON_32.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_32]
+            _LOGGER.info(
+                '- Overriding %s to "%s"',
+                SettingsKeys.KEY_LOCAL_PYTHON_32.upper(),
+                settings[SettingsKeys.KEY_LOCAL_PYTHON_32],
+            )
         if sys.maxsize > 2**32:
             if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_64, "")) > 0:
                 os.environ[SettingsKeys.KEY_LOCAL_PYTHON_64.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_64]
@@ -166,14 +173,6 @@ def pyhook_main(
                     '- Overriding %s to "%s"',
                     SettingsKeys.KEY_LOCAL_PYTHON_64.upper(),
                     settings[SettingsKeys.KEY_LOCAL_PYTHON_64],
-                )
-        else:
-            if len(settings.get(SettingsKeys.KEY_LOCAL_PYTHON_32, "")) > 0:
-                os.environ[SettingsKeys.KEY_LOCAL_PYTHON_32.upper()] = settings[SettingsKeys.KEY_LOCAL_PYTHON_32]
-                _LOGGER.info(
-                    '- Overriding %s to "%s"',
-                    SettingsKeys.KEY_LOCAL_PYTHON_32.upper(),
-                    settings[SettingsKeys.KEY_LOCAL_PYTHON_32],
                 )
         _LOGGER.info("- Loading pipelines...")
         pipelines = load_pipelines(_LOGGER)

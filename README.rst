@@ -625,6 +625,10 @@ Breaking changes
 History
 =======
 
+NEXT / DEV
+----------
+- Added possibility to inject into 32-bit application in 64-bit PyHook.
+
 1.2.5 (2023-01-07)
 ------------------
 - Fixed OS architecture test.

@@ -28,7 +28,7 @@ from gui.update import try_update
 from gui.utils import EventCallback, show_popup, show_popup_text, with_border
 from keys import SettingsKeys, TimingsKeys
 from utils.common import delete_self_exe, is_frozen_bundle
-from win.api import get_hq_icon_raw
+from win.api import get_hq_icon_raw, is_wow_process_64_bit
 
 # Flag if PyHook is started as 64-bit app.
 _IS_64_BIT = sys.maxsize > 2**32
@@ -365,8 +365,7 @@ _APP_LAYOUT = [
             font=FONT_MONO_DEFAULT,
             size=(50, 1),
             tooltip=(
-                "Process to inject PyHook.\n"
-                f"Only {64 if sys.maxsize > 2**32 else 32}-bit applications are visible on list."
+                "Process to inject PyHook.\n" f"Only {64 if _IS_64_BIT else 32}-bit applications are visible on list."
             ),
         ),
         sg.Button("\u274C", key=SGKeys.INJECT_CLEAR, font=FONT_MONO_DEFAULT, size=(2, 1), tooltip="Clear input"),
@@ -384,7 +383,18 @@ _APP_LAYOUT = [
             size=(4, 1),
             tooltip="Try to automatically find process with ReShade and PyHook loaded",
         ),
-    ],
+    ]
+    + [
+        sg.Checkbox(
+            "Show 32-bit apps",
+            default=False,
+            tooltip="Show 32-bit applications in process list but disables automatic injection.",
+            enable_events=True,
+            key=SGKeys.INJECT_ALLOW_32_BIT_CHECKBOX,
+        )
+    ]
+    if _IS_64_BIT
+    else [],
     [
         sg.Frame(
             "Sessions",
@@ -598,8 +608,10 @@ def gui_main() -> None:
     running = True
     # UI worker thread.
     ui_worker: Thread = None
+    # Flag if 32-bit apps are allowed on 64-bit OS.
+    show_32_bit_app = False
     # Last read process list.
-    process_list = get_process_list()
+    process_list = get_process_list(show_32_bit_app)
     # Last process filter string.
     last_process_filter = ""
     # Last selected PID.
@@ -619,7 +631,7 @@ def gui_main() -> None:
 
     # Application window.
     window = sg.Window(
-        f"PyHook v{__version__} (c) 2023",
+        f"PyHook v{__version__} (c) 2023 [{64 if _IS_64_BIT else 32}-bit]",
         _APP_LAYOUT,
         font=FONT_DEFAULT,
         enable_close_attempted_event=True,
@@ -723,7 +735,7 @@ def gui_main() -> None:
                 last_pid = None
         elif event in (SGKeys.INJECT_CLEAR, SGKeys.PROCESS_RELOAD):
             if event == SGKeys.PROCESS_RELOAD:
-                process_list = get_process_list()
+                process_list = get_process_list(show_32_bit_app)
             last_process_filter = ""
             _update_process_list(window, process_list, last_process_filter)
             last_pid = None
@@ -739,10 +751,31 @@ def gui_main() -> None:
                     "Error", "Maximum amount of sessions reached.\nKill old session to start new one.", parent=window
                 )
                 continue
+            try:
+                if show_32_bit_app and not is_wow_process_64_bit(last_pid):
+                    settings = get_settings()
+                    local_path = settings[SettingsKeys.KEY_LOCAL_PYTHON_32]
+                    if len(local_path) == 0:
+                        if show_popup_text(
+                            "Error",
+                            (
+                                "Cannot start session for selected process due to empty local Python "
+                                "32-bit executable path.\nDo you want to open settings and configure it now?"
+                            ),
+                            ok_label="Yes",
+                            cancel_button=True,
+                            cancel_label="No",
+                            parent=window,
+                        ):
+                            display_settings_window(window)
+                        continue
+            except Exception:
+                show_popup_text("Error", "Cannot inject into selected process.", parent=window)
+                continue
             last_process_filter = ""
             process_info = ProcessInfo.from_pid(last_pid)
             if process_info is None:
-                process_list = get_process_list()
+                process_list = get_process_list(show_32_bit_app)
                 _update_process_list(window, process_list, last_process_filter)
                 show_popup_text("Error", "Process does not exists anymore.", parent=window)
                 continue
@@ -774,6 +807,11 @@ def gui_main() -> None:
                 sessions.append(selected_session)
                 _update_sessions_view(window, sessions)
             _update_session_overview(window, selected_session)
+        elif event == SGKeys.INJECT_ALLOW_32_BIT_CHECKBOX:
+            show_32_bit_app = values[event]
+            window[SGKeys.INJECT_AUTO].update(disabled=show_32_bit_app)
+            process_list = get_process_list(show_32_bit_app)
+            _update_process_list(window, process_list, last_process_filter)
         elif event.startswith(SGKeys.SESSION_PREFIX):
             selected_session = sessions[SGKeys.get_session_idx(event)]
             _update_session_overview(window, selected_session)
@@ -832,8 +870,8 @@ def gui_main() -> None:
                 if show_popup_text(
                     "Error",
                     (
-                        "Cannot install requirements due to empty local Python executable path.\n"
-                        "Do you want to open settings and configure it now?"
+                        f"Cannot install requirements due to empty local Python {64 if _IS_64_BIT else 32}"
+                        "-bit executable path.\nDo you want to open settings and configure it now?"
                     ),
                     ok_label="Yes",
                     cancel_button=True,
@@ -852,7 +890,7 @@ def gui_main() -> None:
                 "About",
                 [
                     [sg.Image(data=_APP_ICON, size=(128, 128))],
-                    [sg.Text(f"PyHook v{__version__}", justification="center")],
+                    [sg.Text(f"PyHook v{__version__} [{64 if _IS_64_BIT else 32}-bit]", justification="center")],
                     [sg.Text("(c) 2023 by Dominik Wojtasik", justification="center")],
                     [sg.Button("GitHub", size=(10, 1), pad=((0, 0), (10, 0)), key=SGKeys.ABOUT_GITHUB_BUTTON)],
                 ],

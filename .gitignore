@@ -30,4 +30,5 @@ PyHook/pipelines/*/**
 !PyHook/pipelines/test_static_img/**
 
 # PyHook data
+lib32/
 settings.json

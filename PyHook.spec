@@ -1,8 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+import re
+import sys
+from subprocess import check_call
+from zipfile import ZipFile
+
 from PyInstaller.utils.hooks import collect_all
 from stdlib_list import stdlib_list
-import os
-import sys
 
 with open('PyHook\\_version.py') as ver_file:
     exec(ver_file.read())
@@ -26,10 +30,40 @@ if is_64_bit:
     binaries += [(f"{conda_env_path}\\vcruntime140_1.dll", ".")]
 
 # Pack PyHook addon DLLs
+datas += [("Addon\\Release\\PyHook.addon", "lib32")]
 if is_64_bit:
     datas += [("Addon\\x64\\Release\\PyHook.addon", ".")]
-else:
-    datas += [("Addon\\Release\\PyHook.addon", ".")]
+
+# Pack 32-bit pyinjector code into 64-bit version
+if is_64_bit:
+    pyinjector_version = "1.1.0"
+    with open("requirements.txt") as requirements:
+        pyinjector_version = re.findall("^pyinjector==(.*?)$", requirements.read(), re.MULTILINE)[0]
+    try:
+        check_call(
+            (
+                f"{sys.executable} -m pip download "
+                "--only-binary :all: "
+                "--no-cache "
+                "--exists-action i "
+                "--platform win32 "
+                "--python-version 3.10 "
+                f"pyinjector=={pyinjector_version}"
+            )
+        )
+        whl_path = f"pyinjector-{pyinjector_version}-cp310-cp310-win32.whl"
+        whl_files = [
+            "pyinjector/__init__.py",
+            "pyinjector/libinjector.cp310-win32.pyd",
+            "pyinjector/pyinjector.py",
+        ]
+        with ZipFile(whl_path, "r") as whl_archive:
+            for whl_file in whl_files:
+                whl_archive.extract(whl_file, "lib32")
+                datas += [(f"lib32\\{whl_file}", "lib32\\pyinjector")]
+    finally:
+        if os.path.exists(whl_path):
+            os.remove(whl_path)
 
 block_cipher = None
 
