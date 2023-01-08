@@ -14,6 +14,7 @@ version = "1.1.2"
 desc = """Torch pipeline for semantic segmentation.
 Based on "PIDNet: A Real-time Semantic Segmentation Network Inspired from PID Controller" from:
 https://github.com/XuJiacong/PIDNet"""
+supports = [64]
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing."),

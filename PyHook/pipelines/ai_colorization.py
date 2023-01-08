@@ -15,6 +15,7 @@ desc = """Torch pipeline for grayscale colorization.
 Color image is converted to grayscale and colorization is applied.
 Based on "Colorful Image Colorization" from:
 https://github.com/richzhang/colorization"""
+supports = [64]
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing.")

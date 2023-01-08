@@ -770,7 +770,7 @@ def gui_main() -> None:
                             display_settings_window(window)
                         continue
             except Exception:
-                show_popup_text("Error", "Cannot inject into selected process.", parent=window)
+                show_popup_text("Error", "Cannot inject PyHook into selected process.", parent=window)
                 continue
             last_process_filter = ""
             process_info = ProcessInfo.from_pid(last_pid)
@@ -865,13 +865,14 @@ def gui_main() -> None:
             verify_download(True, parent=window)
         elif event == SGKeys.MENU_PIPELINE_INSTALL_REQUIREMENTS_OPTION:
             settings = get_settings()
+            platform = 64 if _IS_64_BIT else 32
             local_path = settings[SettingsKeys.KEY_LOCAL_PYTHON_64 if _IS_64_BIT else SettingsKeys.KEY_LOCAL_PYTHON_32]
             if len(local_path) == 0:
                 if show_popup_text(
                     "Error",
                     (
-                        f"Cannot install requirements due to empty local Python {64 if _IS_64_BIT else 32}"
-                        "-bit executable path.\nDo you want to open settings and configure it now?"
+                        f"Cannot install requirements due to empty local Python {platform}-bit "
+                        "executable path.\nDo you want to open settings and configure it now?"
                     ),
                     ok_label="Yes",
                     cancel_button=True,
@@ -880,7 +881,7 @@ def gui_main() -> None:
                 ):
                     display_settings_window(window)
                 continue
-            install_requirements(local_path, window)
+            install_requirements(local_path, platform, window)
         elif event == SGKeys.MENU_UPDATE_OPTION:
             updated_executable, update_restart = try_update(True, updated_executable, parent=window)
             if update_restart:

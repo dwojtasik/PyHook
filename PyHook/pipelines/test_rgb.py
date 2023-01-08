@@ -4,6 +4,7 @@ import numpy as np
 name = "[Test] RGB"
 version = "1.1.2"
 desc = "Dummy pipeline for testing. Tests RGB manipulation and multiple UI settings."
+supports = [32, 64]
 
 settings = {
     "R": build_variable(0, -255, 255, 1, "Red channel modifier."),

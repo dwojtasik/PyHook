@@ -37,6 +37,10 @@ name = "Pipeline name up to 64 characters"
 version = "0.0.1"
 # OPTIONAL
 desc = "Pipeline description up to 512 characters."
+# OPTIONAL
+# List of supported Python platforms. Supported values 32 and 64 for respective bit version.
+# If not provided default value of [32, 64] will be used.
+supports = [32, 64]
 
 # OPTIONAL
 # Variables that pipeline can use.

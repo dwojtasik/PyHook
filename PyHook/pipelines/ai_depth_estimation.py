@@ -24,6 +24,7 @@ version = "1.1.2"
 desc = """Torch pipeline for depth estimation.
 Based on "Towards Robust Monocular Depth Estimation: Mixing Datasets for Zero-shot Cross-dataset Transfer" from:
 https://github.com/isl-org/MiDaS"""
+supports = [64]
 
 settings = {
     "Scale": build_variable(1.0, 0.25, 1.0, 0.05, "Scale image for AI processing."),

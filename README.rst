@@ -627,6 +627,8 @@ History
 
 NEXT / DEV
 ----------
+- Now 64-bit PyHook supports AI pipelines for 32-bit applications.
+- Added information about supported platform (either 32-bit, 64-bit or both) to pipelines.
 - Added possibility to inject into 32-bit application in 64-bit PyHook.
 
 1.2.5 (2023-01-07)

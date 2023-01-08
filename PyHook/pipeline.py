@@ -6,6 +6,7 @@ PyHook pipeline definition
 :license: MIT, see LICENSE for more details.
 """
 
+import ast
 import glob
 import importlib.util
 import json
@@ -100,6 +101,8 @@ class Pipeline:
     multistage (int): Number of pipeline passes per frame processing.
     version (str, optional): Pipeline version. Defaults to None.
     desc (str, optional): Pipeline description. Defaults to None.
+    supports (List[int], optional): Pipeline supported platforms. If not set,
+        value of [32, 64] will be used. Defaults to None.
     settings (Dict[str, List[Any]], optional): Pipeline settings variables. Defaults to None.
     mappings (Dict[str, int]): Internal mappings for settings variables.
     """
@@ -112,6 +115,7 @@ class Pipeline:
         callbacks: PipelineCallbacks,
         version: str = None,
         desc: str = None,
+        supports: List[int] = None,
         settings: Dict[str, List[Any]] = None,
     ):
         self.path = path
@@ -121,6 +125,7 @@ class Pipeline:
         self.callbacks = callbacks
         self.version = version
         self.desc = desc
+        self.supports = supports if supports is not None else [32, 64]
         self.settings = settings
         self.mappings = (
             {} if settings is None else {k: self._to_internal_type(v[0], v[4]) for k, v in settings.items()}
@@ -319,6 +324,7 @@ def _build_pipeline(module: "sys.ModuleType", name: str, path: str) -> Pipeline:
         callbacks=callbacks,
         version="" if not hasattr(module, "version") else module.version,
         desc="" if not hasattr(module, "desc") else module.desc,
+        supports=None if not hasattr(module, "supports") else module.supports,
         settings=None if not hasattr(module, "settings") else module.settings,
     )
 
@@ -350,6 +356,24 @@ def get_pipeline_file_list(pipeline_dir: str) -> List[str]:
     return glob.glob(f"{pipeline_dir}/*.py")
 
 
+def supports_platform(pipeline_path: str, platform: int) -> bool:
+    """Checks if pipeline supports platform.
+
+    Args:
+        pipeline_path (str): Path to pipeline.
+        platform (int): Platform bit, either 32 or 64.
+
+    Returns:
+        bool: Flag if platform is supported by pipeline.
+    """
+    with open(pipeline_path, "r", encoding="utf-8") as pipeline_file:
+        supports_entries = re.findall(r"^\s*supports\s*=\s*(.*?)\s*$", pipeline_file.read(), re.MULTILINE)
+        if len(supports_entries) > 0:
+            supports = ast.literal_eval(supports_entries[-1])
+            return platform in supports
+    return True
+
+
 def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
     """Loads pipelines for frame processing.
 
@@ -366,8 +390,12 @@ def load_pipelines(logger: logging.Logger = None) -> Dict[str, Pipeline]:
     pipelines = {}
     pipeline_dir = get_pipeline_directory()
     pipeline_files = get_pipeline_file_list(pipeline_dir)
+    bit_platform = 64 if sys.maxsize > 2**32 else 32
 
     for path in pipeline_files:
+        if not supports_platform(path, bit_platform):
+            logger.info('-- Skipping pipeline: "%s".', path)
+            continue
         module_name = basename(path)[:-3]
         try:
             if logger is not None:

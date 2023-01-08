@@ -8,6 +8,7 @@ with use_local_python():
 name = "[Test] Static Image"
 version = "1.1.2"
 desc = "Dummy pipeline for testing. Displays static image."
+supports = [32, 64]
 
 settings = {
     "Image": build_variable(0, 0, 14, 1, "%COMBO[Crysis 3,CS:GO,Don't Starve,Far Cry 5,God of War,GTA V,Hollow Knight,Limbo,Minecraft,Return of the Obra Dinn,Skyrim,Tomb Raider,Trek to Yomi,Witcher 3,Zelda BoTW]Static image to be displayed.")

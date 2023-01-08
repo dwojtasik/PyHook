@@ -10,6 +10,7 @@ version = "1.1.2"
 desc = """OpenCV pipeline for DNN super resolution.
 On first stage frame resolution is shorten by given multiplier.
 On second stage selected super resolution is applied."""
+supports = [64]
 multistage = 2
 
 settings = {

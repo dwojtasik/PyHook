@@ -20,6 +20,7 @@ version = "1.1.2"
 desc = """Torch pipeline for object detection.
 Based on "YOLOv5" from:
 https://github.com/ultralytics/yolov5"""
+supports = [64]
 
 settings = {
     "YOLO Model": build_variable(2, 0, 4, 1, "%COMBO[Nano,Small,Medium,Large,Extra large]YOLOv5 model. Bigger models allows to detect more objects."),

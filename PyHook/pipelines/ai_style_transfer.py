@@ -15,6 +15,7 @@ version = "1.1.2"
 desc = """Torch pipeline for fast style transfer.
 Based on "Fast neural style with MobileNetV2 bottleneck blocks" from:
 https://github.com/mmalotin/pytorch-fast-neural-style-mobilenetV2"""
+supports = [64]
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing."),

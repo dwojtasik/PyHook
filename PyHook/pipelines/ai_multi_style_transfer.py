@@ -15,6 +15,7 @@ version = "1.1.2"
 desc = """Torch pipeline for fast multi style transfer.
 Based on "PyTorch-Style-Transfer" from:
 https://github.com/zhanghang1989/PyTorch-Multi-Style-Transfer"""
+supports = [64]
 
 settings = {
     "Scale": build_variable(0.75, 0.25, 1.0, 0.05, "Scale image for AI processing."),

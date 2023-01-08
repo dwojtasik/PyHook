@@ -7,6 +7,7 @@ with use_local_python():
 name = "[CV2] Sharpen"
 version = "1.1.2"
 desc = "OpenCV sharpen filter"
+supports = [64]
 
 settings = {"Amount": build_variable(1.0, 0.0, 5.0, 0.1, "Amount of sharpening to apply.")}
 

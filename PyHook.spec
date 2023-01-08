@@ -37,8 +37,8 @@ if is_64_bit:
 # Pack 32-bit pyinjector code into 64-bit version
 if is_64_bit:
     pyinjector_version = "1.1.0"
-    with open("requirements.txt") as requirements:
-        pyinjector_version = re.findall("^pyinjector==(.*?)$", requirements.read(), re.MULTILINE)[0]
+    with open("requirements.txt", "r", encoding="utf-8") as requirements:
+        pyinjector_version = re.findall(r"^pyinjector==(.*?)$", requirements.read(), re.MULTILINE)[0]
     try:
         check_call(
             (

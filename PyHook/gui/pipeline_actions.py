@@ -13,7 +13,7 @@ from typing import Tuple
 import PySimpleGUI as sg
 
 from keys import SettingsKeys
-from pipeline import PipelinesDirNotFoundError, get_pipeline_directory, get_pipeline_file_list
+from pipeline import PipelinesDirNotFoundError, get_pipeline_directory, get_pipeline_file_list, supports_platform
 from gui.settings import get_settings, save_settings
 from gui.style import FONT_SMALL_DEFAULT
 from gui.ui_keys import SGKeys
@@ -248,11 +248,12 @@ def _install_with_pip(local_python_path: str, file: str) -> None:
             raise RuntimeError(err.decode("utf-8"))
 
 
-def install_requirements(local_python_path: str, parent: sg.Window = None) -> None:
+def install_requirements(local_python_path: str, platform: int, parent: sg.Window = None) -> None:
     """Installs pipelines requirements for local Python.
 
     Args:
         local_python_path (str): Path to local Python executable.
+        platform (int): Platform bit, either 32 or 64.
         parent (sg.Window, optional): Parent window for centering. Defaults to None.
     """
     pipeline_dir = None
@@ -263,7 +264,7 @@ def install_requirements(local_python_path: str, parent: sg.Window = None) -> No
             "Error", "Cannot find pipelines directory!\nMake sure pipelines directory exists in PyHook directory."
         )
         return
-    pipeline_files = get_pipeline_file_list(pipeline_dir)
+    pipeline_files = [path for path in get_pipeline_file_list(pipeline_dir) if supports_platform(path, platform)]
     pipelines = [basename(path) for path in pipeline_files]
     count = len(pipelines)
     cancel_popup: sg.Window = None
