@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Wojtasik
+ * Copyright (C) 2022 Dominik Wojtasik
  * SPDX-License-Identifier: MIT
  *
  * PyHook addon
@@ -13,7 +13,7 @@
 #include <sstream>
 
  // Export special variables for ReShade addon.
-extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v1.2.9
+extern "C" __declspec(dllexport) const char* NAME = "PyHook"; //v1.3.0
 extern "C" __declspec(dllexport) const char* DESCRIPTION = "Passes processed back buffer to Python pipeline.";
 
 // ReShade version

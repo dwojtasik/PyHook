@@ -2,7 +2,7 @@
 keys for PyHook
 ~~~~~~~~~~~~~~~~~~~~~~~
 Contains keys enums
-:copyright: (c) 2023 by Dominik Wojtasik.
+:copyright: (c) 2022 by Dominik Wojtasik.
 :license: MIT, see LICENSE for more details.
 """
 

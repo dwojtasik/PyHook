@@ -627,6 +627,11 @@ Breaking changes
 History
 =======
 
+1.3.0 (2023-01-25)
+------------------
+- Updated copyright note.
+- Added license info in about window.
+
 1.2.9 (2023-01-08)
 ------------------
 - Now 64-bit PyHook supports AI pipelines for 32-bit applications.

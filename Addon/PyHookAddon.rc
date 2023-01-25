@@ -69,12 +69,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Dominik Wojtasik"
             VALUE "FileDescription", "Python hook for ReShade processing"
-            VALUE "FileVersion", "1.2.9"
+            VALUE "FileVersion", "1.3.0"
             VALUE "InternalName", "PyHook.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2023 Dominik Wojtasik"
+            VALUE "LegalCopyright", "Copyright (C) 2022 Dominik Wojtasik"
             VALUE "OriginalFilename", "PyHook.dll"
             VALUE "ProductName", "PyHook Addon for ReShade"
-            VALUE "ProductVersion", "1.2.9"
+            VALUE "ProductVersion", "1.3.0"
         END
     END
     BLOCK "VarFileInfo"

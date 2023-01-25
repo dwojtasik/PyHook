@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Dominik Wojtasik
+ * Copyright (C) 2022 Dominik Wojtasik
  * SPDX-License-Identifier: MIT
  *
  * ImGui overlay for PyHook addon
