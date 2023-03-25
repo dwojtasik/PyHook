@@ -12,7 +12,7 @@
 set cwd=%cd%
 set envName=opencv_build
 set opencv-version=4.6.0
-conda create -y --name %envName% numpy
+conda create -y --name %envName% python=3.10.6 numpy
 
 :: Clone OpenCV repository
 cd %cwd%

@@ -414,8 +414,8 @@ Runtime
 -------
 - `ReShade <https://reshade.me/>`_ >= 5.0.0
 - `Python <https://www.python.org/>`_ == ``3.10.6 for 64-bit``\* | ``3.10.4 for 32-bit`` (for pipelines only)
-- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3\*\* (optional for AI pipelines only)
-- `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1\*\* (optional for AI pipelines only)
+- `CUDA <https://developer.nvidia.com/cuda-zone>`_ >= 11.3\*\* (optional for AI pipelines only)
+- `cuDNN <https://developer.nvidia.com/cudnn>`_ >= 8.4.1\*\* (optional for AI pipelines only)
 - | Only for specific pipelines: Any libraries that are required by pipeline code.
   | Do note that AI pipelines that requires PyTorch or TensorFlow will not work on 32-bit system because libraries does not support it.
 
@@ -519,8 +519,8 @@ OpenCV with CUDA support
 | To do this install all requirements listed below:
 
 - `Anaconda <https://www.anaconda.com/>`_ for virtual environment
-- `CUDA <https://developer.nvidia.com/cuda-zone>`_ == 11.3 (or last supported by your GPU and pipeline modules)
-- `cuDNN <https://developer.nvidia.com/cudnn>`_ == 8.4.1 (or last supported by your CUDA version)
+- `CUDA <https://developer.nvidia.com/cuda-zone>`_ >= 11.3 (pick last supported by your GPU and pipeline modules)
+- `cuDNN <https://developer.nvidia.com/cudnn>`_ >= 8.4.1 (pick last supported by your CUDA version)
 - `Visual Studio <https://visualstudio.microsoft.com/pl/vs/community/>`_ >= 16 with C++ support
 - `git <https://git-scm.com/>`_ for version control
 - `CMake <https://cmake.org/>`_ for source build
